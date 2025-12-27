@@ -1,0 +1,15 @@
+package com.nebula.boot4.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.nebula.boot4.entity.BlogArticleTag;
+import org.apache.ibatis.annotations.Mapper;
+
+/**
+ * 文章标签关联Mapper接口
+ *
+ * @author Nebula-Hash
+ * @date 2025/11/25
+ */
+@Mapper
+public interface BlogArticleTagMapper extends BaseMapper<BlogArticleTag> {
+}

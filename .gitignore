@@ -1,0 +1,93 @@
+# ===== Node.js / Vue =====
+node_modules/
+dist/
+*.local
+.env
+.env.*
+!.env.example
+
+# Vite cache
+.vite/
+.vite-temp/
+.vue-global-types/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Lock files (optional - uncomment if team prefers)
+# package-lock.json
+# pnpm-lock.yaml
+# yarn.lock
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# ===== Java / Maven / Spring Boot =====
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+# Spring Boot
+application-local.yml
+application-local.properties
+application-dev.yml
+application-dev.properties
+
+# ===== IDE =====
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# NetBeans
+nbproject/private/
+build/
+nbbuild/
+nbdist/
+nbactions.xml
+nb-configuration.xml
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+*.swp
+*~
+desktop.ini
+ehthumbs.db
+
+# ===== Misc =====
+*.bak
+*.tmp
+*.temp
+*.orig
+*.rej
+
+# ===== Test & Coverage =====
+coverage/
+.nyc_output/
+test-results/
+junit.xml
