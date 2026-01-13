@@ -1,0 +1,65 @@
+{
+  "properties": [
+    {
+      "name": "upload.mode",
+      "type": "java.lang.String",
+      "description": "文件上传模式：minio 或 oss.",
+      "defaultValue": "oss"
+    },
+    {
+      "name": "upload.minio.endpoint",
+      "type": "java.lang.String",
+      "description": "MinIO 服务端点地址."
+    },
+    {
+      "name": "upload.minio.access-key",
+      "type": "java.lang.String",
+      "description": "MinIO 访问密钥."
+    },
+    {
+      "name": "upload.minio.secret-key",
+      "type": "java.lang.String",
+      "description": "MinIO 私有密钥."
+    },
+    {
+      "name": "upload.minio.bucket-name",
+      "type": "java.lang.String",
+      "description": "MinIO 存储桶名称."
+    },
+    {
+      "name": "upload.oss.endpoint",
+      "type": "java.lang.String",
+      "description": "阿里云 OSS 服务端点地址."
+    },
+    {
+      "name": "upload.oss.access-key-id",
+      "type": "java.lang.String",
+      "description": "阿里云 OSS AccessKey ID."
+    },
+    {
+      "name": "upload.oss.access-key-secret",
+      "type": "java.lang.String",
+      "description": "阿里云 OSS AccessKey Secret."
+    },
+    {
+      "name": "upload.oss.bucket-name",
+      "type": "java.lang.String",
+      "description": "阿里云 OSS 存储桶名称."
+    }
+  ],
+  "hints": [
+    {
+      "name": "upload.mode",
+      "values": [
+        {
+          "value": "minio",
+          "description": "使用 MinIO 对象存储."
+        },
+        {
+          "value": "oss",
+          "description": "使用阿里云 OSS 对象存储."
+        }
+      ]
+    }
+  ]
+}
