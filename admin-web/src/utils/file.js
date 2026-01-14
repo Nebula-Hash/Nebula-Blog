@@ -13,3 +13,6 @@ export const uploadImage = (file) => {
     }
   })
 }
+
+// 删除图片
+

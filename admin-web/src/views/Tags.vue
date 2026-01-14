@@ -39,7 +39,7 @@
 import { ref, h, onMounted, computed } from 'vue'
 import { NButton, NSpace, NIcon, NPopconfirm, NTag } from 'naive-ui'
 import { AddOutline, CreateOutline, TrashOutline } from '@vicons/ionicons5'
-import { getTagList, createTag, updateTag, deleteTag } from '@/api/category'
+import { getTagList, createTag, updateTag, deleteTag } from '@/api/tag'
 
 const loading = ref(false)
 const saveLoading = ref(false)

@@ -1,6 +1,6 @@
 <template>
   <div class="dashboard">
-    <!-- 顶部统计卡片 -->
+    <!-- 数据面板 -->
     <n-grid :cols="4" :x-gap="16" :y-gap="16" class="stats-grid">
       <n-gi>
         <n-card class="stat-card card-1" hoverable>
@@ -143,12 +143,7 @@
             <n-tag type="info" size="small">Latest</n-tag>
           </template>
           <n-timeline>
-            <n-timeline-item
-              type="success"
-              title="v1.0.0"
-              time="2025-11-27"
-              :line-type="'dashed'"
-            >
+            <n-timeline-item type="success" title="v1.0.0" time="2025-11-27" :line-type="'dashed'">
               <template #icon>
                 <n-icon :component="CheckmarkCircleOutline" />
               </template>
@@ -160,12 +155,7 @@
                 <li>📊 添加数据统计和图表展示</li>
               </ul>
             </n-timeline-item>
-            <n-timeline-item
-              type="warning"
-              title="v0.9.0"
-              time="2025-11-20"
-              :line-type="'dashed'"
-            >
+            <n-timeline-item type="warning" title="v0.9.0" time="2025-11-20" :line-type="'dashed'">
               <template #icon>
                 <n-icon :component="BuildOutline" />
               </template>
@@ -175,11 +165,7 @@
                 <li>💾 数据库设计完成</li>
               </ul>
             </n-timeline-item>
-            <n-timeline-item
-              type="info"
-              title="v0.5.0"
-              time="2025-11-15"
-            >
+            <n-timeline-item type="info" title="v0.5.0" time="2025-11-15">
               <template #icon>
                 <n-icon :component="RocketOutline" />
               </template>

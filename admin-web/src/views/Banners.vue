@@ -22,13 +22,8 @@
 
         <n-form-item label="图片" path="imageUrl">
           <n-space vertical style="width: 100%">
-            <n-upload
-              :max="1"
-              :custom-request="handleImageUpload"
-              list-type="image-card"
-              :default-file-list="imageFileList"
-              @remove="handleImageRemove"
-            >
+            <n-upload :max="1" :custom-request="handleImageUpload" list-type="image-card"
+              :default-file-list="imageFileList" @remove="handleImageRemove">
               点击上传图片
             </n-upload>
             <n-input v-model:value="formData.imageUrl" placeholder="或直接输入图片URL" />
@@ -62,7 +57,6 @@
 import { ref, h, onMounted, computed } from 'vue'
 import { NButton, NTag, NSpace, NIcon, NPopconfirm, NImage } from 'naive-ui'
 import { AddOutline, CreateOutline, TrashOutline } from '@vicons/ionicons5'
-import { uploadImage } from '@/api/file'
 
 const loading = ref(false)
 const saveLoading = ref(false)

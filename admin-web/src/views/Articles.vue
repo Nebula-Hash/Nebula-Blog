@@ -13,12 +13,7 @@
       <n-space vertical :size="16">
         <!-- 搜索栏 -->
         <n-space>
-          <n-input
-            v-model:value="searchKeyword"
-            placeholder="搜索文章标题"
-            clearable
-            style="width: 300px"
-          >
+          <n-input v-model:value="searchKeyword" placeholder="搜索文章标题" clearable style="width: 300px">
             <template #prefix>
               <n-icon :component="SearchOutline" />
             </template>
@@ -27,13 +22,8 @@
         </n-space>
 
         <!-- 文章列表 -->
-        <n-data-table
-          :columns="columns"
-          :data="articleList"
-          :loading="loading"
-          :pagination="pagination"
-          @update:page="handlePageChange"
-        />
+        <n-data-table :columns="columns" :data="articleList" :loading="loading" :pagination="pagination"
+          @update:page="handlePageChange" />
       </n-space>
     </n-card>
 
@@ -45,23 +35,13 @@
         </n-form-item>
 
         <n-form-item label="文章摘要" path="summary">
-          <n-input
-            v-model:value="formData.summary"
-            type="textarea"
-            placeholder="请输入文章摘要"
-            :rows="3"
-          />
+          <n-input v-model:value="formData.summary" type="textarea" placeholder="请输入文章摘要" :rows="3" />
         </n-form-item>
 
         <n-form-item label="封面图">
           <n-space vertical style="width: 100%">
-            <n-upload
-              :max="1"
-              :custom-request="handleCoverUpload"
-              list-type="image-card"
-              :default-file-list="coverFileList"
-              @remove="handleCoverRemove"
-            >
+            <n-upload :max="1" :custom-request="handleCoverUpload" list-type="image-card"
+              :default-file-list="coverFileList" @remove="handleCoverRemove">
               点击上传封面图
             </n-upload>
             <n-input v-model:value="formData.coverImage" placeholder="或直接输入封面图URL" />
@@ -69,29 +49,15 @@
         </n-form-item>
 
         <n-form-item label="文章分类" path="categoryId">
-          <n-select
-            v-model:value="formData.categoryId"
-            :options="categoryOptions"
-            placeholder="请选择分类"
-          />
+          <n-select v-model:value="formData.categoryId" :options="categoryOptions" placeholder="请选择分类" />
         </n-form-item>
 
         <n-form-item label="文章标签">
-          <n-select
-            v-model:value="formData.tagIds"
-            :options="tagOptions"
-            multiple
-            placeholder="请选择标签"
-          />
+          <n-select v-model:value="formData.tagIds" :options="tagOptions" multiple placeholder="请选择标签" />
         </n-form-item>
 
         <n-form-item label="文章内容" path="content">
-          <n-input
-            v-model:value="formData.content"
-            type="textarea"
-            placeholder="请输入文章内容(支持Markdown)"
-            :rows="15"
-          />
+          <n-input v-model:value="formData.content" type="textarea" placeholder="请输入文章内容(支持Markdown)" :rows="15" />
         </n-form-item>
 
         <n-form-item label="是否置顶">
@@ -115,8 +81,7 @@ import { NButton, NTag, NSpace, NIcon, NPopconfirm } from 'naive-ui'
 import { AddOutline, SearchOutline, CreateOutline, TrashOutline } from '@vicons/ionicons5'
 import { getArticleList, publishArticle, updateArticle, deleteArticle } from '@/api/article'
 import { getCategoryList } from '@/api/category'
-import { getTagList } from '@/api/category'
-import { uploadImage } from '@/api/file'
+import { getTagList } from '@/api/tag'
 
 const loading = ref(false)
 const saveLoading = ref(false)

@@ -45,6 +45,23 @@
       "name": "upload.oss.bucket-name",
       "type": "java.lang.String",
       "description": "阿里云 OSS 存储桶名称."
+    },
+    {
+      "name": "springdoc.info.title",
+      "type": "java.lang.String",
+      "description": "API 文档标题.",
+      "defaultValue": "API"
+    },
+    {
+      "name": "springdoc.info.description",
+      "type": "java.lang.String",
+      "description": "API 文档描述."
+    },
+    {
+      "name": "springdoc.info.version",
+      "type": "java.lang.String",
+      "description": "API 版本号.",
+      "defaultValue": "1.0.0"
     }
   ],
   "hints": [

@@ -11,12 +11,12 @@ const routes = [
   {
     path: '/',
     component: () => import('@/layout/MainLayout.vue'),
-    redirect: '/dashboard',
+    redirect: '/datapanel',
     children: [
       {
-        path: '/dashboard',
-        name: 'Dashboard',
-        component: () => import('@/views/Dashboard.vue'),
+        path: '/datapanel',
+        name: 'DataPanel',
+        component: () => import('@/views/DataPanel.vue'),
         meta: { title: '首页' }
       },
       {
@@ -67,7 +67,7 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
-  
+
   if (to.path !== '/login' && !userStore.token) {
     next('/login')
   } else if (to.path === '/login' && userStore.token) {

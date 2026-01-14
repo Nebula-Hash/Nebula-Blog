@@ -11,7 +11,7 @@
  Target Server Version : 80041 (8.0.41)
  File Encoding         : 65001
 
- Date: 23/12/2025 16:04:19
+ Date: 14/01/2026 10:33:09
 */
 
 SET NAMES utf8mb4;
@@ -49,6 +49,13 @@ CREATE TABLE `blog_article`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '文章表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
+-- Records of blog_article
+-- ----------------------------
+INSERT INTO `blog_article` VALUES (1, 2, 1, 'Spring Boot 4.0 入门教程', 'Spring Boot 4.0是Spring框架的最新版本,本文将带你快速入门', 'https://picsum.photos/800/600?random=10', '# Spring Boot 4.0 入门教程\n\n## 简介\n\nSpring Boot 4.0 是 Spring 框架的最新版本...\n\n## 快速开始\n\n1. 创建项目\n2. 配置依赖\n3. 编写代码\n\n## 总结\n\n本文介绍了Spring Boot 4.0的基本使用...', NULL, 1, 0, 1, 161, 23, 5, 0, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_article` VALUES (2, 2, 3, 'Vue3 组合式API完全指南', 'Vue3带来了全新的组合式API,让代码更加优雅和可维护', 'https://picsum.photos/800/600?random=11', '# Vue3 组合式API完全指南\n\n## 什么是组合式API\n\n组合式API是Vue3的核心特性...\n\n## 基本使用\n\n```js\nsetup() {\n  // your code\n}\n```', NULL, 0, 0, 1, 239, 45, 12, 0, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_article` VALUES (3, 1, 2, 'MyBatis-Plus实战教程', 'MyBatis-Plus为简化开发而生,让你的CRUD操作更加简单', 'https://picsum.photos/800/600?random=12', '# MyBatis-Plus实战教程\n\n## 简介\n\nMyBatis-Plus是一个MyBatis的增强工具...', NULL, 0, 0, 1, 190, 34, 8, 0, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+
+-- ----------------------------
 -- Table structure for blog_article_collect
 -- ----------------------------
 DROP TABLE IF EXISTS `blog_article_collect`;
@@ -61,6 +68,10 @@ CREATE TABLE `blog_article_collect`  (
   UNIQUE INDEX `uk_article_user`(`article_id` ASC, `user_id` ASC) USING BTREE,
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '文章收藏表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of blog_article_collect
+-- ----------------------------
 
 -- ----------------------------
 -- Table structure for blog_article_history
@@ -78,6 +89,10 @@ CREATE TABLE `blog_article_history`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '文章历史版本表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
+-- Records of blog_article_history
+-- ----------------------------
+
+-- ----------------------------
 -- Table structure for blog_article_like
 -- ----------------------------
 DROP TABLE IF EXISTS `blog_article_like`;
@@ -92,6 +107,10 @@ CREATE TABLE `blog_article_like`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '文章点赞表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
+-- Records of blog_article_like
+-- ----------------------------
+
+-- ----------------------------
 -- Table structure for blog_article_tag
 -- ----------------------------
 DROP TABLE IF EXISTS `blog_article_tag`;
@@ -104,6 +123,15 @@ CREATE TABLE `blog_article_tag`  (
   INDEX `idx_article_id`(`article_id` ASC) USING BTREE,
   INDEX `idx_tag_id`(`tag_id` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '文章标签关联表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of blog_article_tag
+-- ----------------------------
+INSERT INTO `blog_article_tag` VALUES (1, 1, 1, '2025-12-02 20:54:12');
+INSERT INTO `blog_article_tag` VALUES (2, 1, 2, '2025-12-02 20:54:12');
+INSERT INTO `blog_article_tag` VALUES (3, 2, 3, '2025-12-02 20:54:12');
+INSERT INTO `blog_article_tag` VALUES (4, 3, 2, '2025-12-02 20:54:12');
+INSERT INTO `blog_article_tag` VALUES (5, 3, 4, '2025-12-02 20:54:12');
 
 -- ----------------------------
 -- Table structure for blog_banner
@@ -123,6 +151,13 @@ CREATE TABLE `blog_banner`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '轮播图表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
+-- Records of blog_banner
+-- ----------------------------
+INSERT INTO `blog_banner` VALUES (1, '欢迎来到博客系统', 'https://picsum.photos/1920/500?random=1', '/article/1', 1, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_banner` VALUES (2, '技术分享平台', 'https://picsum.photos/1920/500?random=2', '/article/2', 2, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_banner` VALUES (3, '知识创造价值', 'https://picsum.photos/1920/500?random=3', '/article/3', 3, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+
+-- ----------------------------
 -- Table structure for blog_category
 -- ----------------------------
 DROP TABLE IF EXISTS `blog_category`;
@@ -136,6 +171,16 @@ CREATE TABLE `blog_category`  (
   `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '分类表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of blog_category
+-- ----------------------------
+INSERT INTO `blog_category` VALUES (1, 'Java', 'Java技术相关文章', 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_category` VALUES (2, 'Spring', 'Spring框架相关文章', 2, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_category` VALUES (3, '前端', '前端技术相关文章', 3, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_category` VALUES (4, '数据库', '数据库相关文章', 4, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_category` VALUES (5, '算法', '算法与数据结构', 5, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_category` VALUES (6, '架构', '系统架构与设计', 6, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
 
 -- ----------------------------
 -- Table structure for blog_comment
@@ -160,6 +205,14 @@ CREATE TABLE `blog_comment`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '评论表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
+-- Records of blog_comment
+-- ----------------------------
+INSERT INTO `blog_comment` VALUES (1, 1, 3, NULL, NULL, '写得真好,学习了!', 5, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_comment` VALUES (2, 1, 1, NULL, NULL, '感谢分享,很有帮助', 3, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_comment` VALUES (3, 2, 3, NULL, NULL, 'Vue3确实很强大', 8, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_comment` VALUES (4, 1, 2, 1, 3, '谢谢支持!', 2, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+
+-- ----------------------------
 -- Table structure for blog_comment_like
 -- ----------------------------
 DROP TABLE IF EXISTS `blog_comment_like`;
@@ -172,6 +225,10 @@ CREATE TABLE `blog_comment_like`  (
   UNIQUE INDEX `uk_comment_user`(`comment_id` ASC, `user_id` ASC) USING BTREE,
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '评论点赞表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of blog_comment_like
+-- ----------------------------
 
 -- ----------------------------
 -- Table structure for blog_message
@@ -193,6 +250,10 @@ CREATE TABLE `blog_message`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '消息通知表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
+-- Records of blog_message
+-- ----------------------------
+
+-- ----------------------------
 -- Table structure for blog_tag
 -- ----------------------------
 DROP TABLE IF EXISTS `blog_tag`;
@@ -204,6 +265,20 @@ CREATE TABLE `blog_tag`  (
   `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '标签表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of blog_tag
+-- ----------------------------
+INSERT INTO `blog_tag` VALUES (1, 'Spring Boot', 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_tag` VALUES (2, 'MyBatis', 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_tag` VALUES (3, 'Vue3', 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_tag` VALUES (4, 'MySQL', 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_tag` VALUES (5, 'Redis', 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_tag` VALUES (6, '微服务', 1, '2025-12-02 20:54:12', '2025-12-29 18:06:23');
+INSERT INTO `blog_tag` VALUES (7, '分布式', 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_tag` VALUES (8, '高并发', 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_tag` VALUES (9, '设计模式', 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_tag` VALUES (10, '算法', 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
 
 -- ----------------------------
 -- Table structure for blog_view_history
@@ -218,7 +293,22 @@ CREATE TABLE `blog_view_history`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_article_id`(`article_id` ASC) USING BTREE,
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '浏览记录表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '浏览记录表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of blog_view_history
+-- ----------------------------
+INSERT INTO `blog_view_history` VALUES (1, 2, NULL, NULL, '2025-12-02 22:46:13');
+INSERT INTO `blog_view_history` VALUES (2, 1, NULL, NULL, '2025-12-23 16:19:25');
+INSERT INTO `blog_view_history` VALUES (3, 1, NULL, NULL, '2025-12-23 16:25:40');
+INSERT INTO `blog_view_history` VALUES (4, 2, NULL, NULL, '2025-12-23 16:25:55');
+INSERT INTO `blog_view_history` VALUES (5, 2, NULL, NULL, '2025-12-23 16:26:28');
+INSERT INTO `blog_view_history` VALUES (6, 2, NULL, NULL, '2025-12-23 16:26:30');
+INSERT INTO `blog_view_history` VALUES (7, 2, NULL, NULL, '2025-12-29 18:07:54');
+INSERT INTO `blog_view_history` VALUES (8, 3, NULL, NULL, '2025-12-29 18:08:13');
+INSERT INTO `blog_view_history` VALUES (9, 1, NULL, NULL, '2025-12-29 18:10:28');
+INSERT INTO `blog_view_history` VALUES (10, 1, NULL, NULL, '2025-12-29 18:12:46');
+INSERT INTO `blog_view_history` VALUES (11, 1, NULL, NULL, '2026-01-07 16:30:55');
 
 -- ----------------------------
 -- Table structure for sys_login_log
@@ -238,6 +328,10 @@ CREATE TABLE `sys_login_log`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '登录日志表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of sys_login_log
+-- ----------------------------
 
 -- ----------------------------
 -- Table structure for sys_operation_log
@@ -260,6 +354,10 @@ CREATE TABLE `sys_operation_log`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '操作日志表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
+-- Records of sys_operation_log
+-- ----------------------------
+
+-- ----------------------------
 -- Table structure for sys_role
 -- ----------------------------
 DROP TABLE IF EXISTS `sys_role`;
@@ -275,6 +373,13 @@ CREATE TABLE `sys_role`  (
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `uk_role_key`(`role_key` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of sys_role
+-- ----------------------------
+INSERT INTO `sys_role` VALUES (1, '管理员', 'admin', 1, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `sys_role` VALUES (2, '作者', 'author', 2, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `sys_role` VALUES (3, '普通用户', 'user', 3, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
 
 -- ----------------------------
 -- Table structure for sys_user
@@ -300,6 +405,13 @@ CREATE TABLE `sys_user`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
+-- Records of sys_user
+-- ----------------------------
+INSERT INTO `sys_user` VALUES (1, 'admin', 'e10adc3949ba59abbe56e057f20f883e', '管理员', 'admin@example.com', '13800138000', 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin', '这是管理员的个人简介', 1, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `sys_user` VALUES (2, 'author', 'e10adc3949ba59abbe56e057f20f883e', '作者小王', 'author@example.com', '13800138001', 'https://api.dicebear.com/7.x/avataaars/svg?seed=author', '热爱写作的程序员', 2, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `sys_user` VALUES (3, 'user', 'e10adc3949ba59abbe56e057f20f883e', '普通用户', 'user@example.com', '13800138002', 'https://api.dicebear.com/7.x/avataaars/svg?seed=user', '喜欢阅读技术文章', 3, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+
+-- ----------------------------
 -- Table structure for sys_user_role
 -- ----------------------------
 DROP TABLE IF EXISTS `sys_user_role`;
@@ -312,5 +424,12 @@ CREATE TABLE `sys_user_role`  (
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   INDEX `idx_role_id`(`role_id` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户角色关联表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of sys_user_role
+-- ----------------------------
+INSERT INTO `sys_user_role` VALUES (1, 1, 1, '2025-12-02 20:54:12');
+INSERT INTO `sys_user_role` VALUES (2, 2, 2, '2025-12-02 20:54:12');
+INSERT INTO `sys_user_role` VALUES (3, 3, 3, '2025-12-02 20:54:12');
 
 SET FOREIGN_KEY_CHECKS = 1;
