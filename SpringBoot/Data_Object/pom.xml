@@ -23,7 +23,6 @@
 		<dependency>
 			<groupId>org.mybatis</groupId>
 			<artifactId>mybatis</artifactId>
-			<scope>provided</scope>
 		</dependency>
 
 		<!-- 参数校验注解（@NotNull, @Size 等） -->

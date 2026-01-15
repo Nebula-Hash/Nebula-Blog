@@ -1,3 +1,5 @@
+// 通信请求与响应封装
+
 import axios from 'axios'
 import { useUserStore } from '@/stores/user'
 
