@@ -28,6 +28,7 @@ public class SaTokenConfig implements WebMvcConfigurer {
      * 管理端放行 URL（自动添加 /api/admin 前缀）
      */
     private static final String[] ADMIN_EXCLUDE_PATHS = {
+            /* 登录注册 */
             "/auth/login",
             "/auth/register"
     };
@@ -36,6 +37,7 @@ public class SaTokenConfig implements WebMvcConfigurer {
      * 客户端放行 URL（自动添加 /api/client 前缀）
      */
     private static final String[] CLIENT_EXCLUDE_PATHS = {
+            /* 登录注册 */
             "/auth/login",
             "/auth/register",
 
@@ -50,17 +52,23 @@ public class SaTokenConfig implements WebMvcConfigurer {
      * 其他放行 URL
      */
     private static final String[] OTHERS_EXCLUDE_PATHS = {
-            "/",
-            "/favicon.ico",
-            "/error",
+            /* 检测服务 */
+            "/ping", // 部署测试
+            "/health", // 健康检查
+            "/visits", // 访问统计
 
+            /* 调试 */
             "/test/**", // 测试接口
 
-            /* Swagger 接口文档相关 */
+            /* Swagger 接口文档 */
             "/swagger-ui.html",
             "/swagger-ui/**",
             "/v3/api-docs/**",
-            "/webjars/**"
+            "/webjars/**",
+
+            /* 基础设施级别端点 */
+            "/favicon.ico", // 浏览器获取标签页小图标
+            "/error", // Spring Boot 错误错误处理端点
     };
 
     /**

@@ -8,7 +8,7 @@ import org.apache.ibatis.annotations.Mapper;
  * 浏览记录Mapper接口
  *
  * @author Nebula-Hash
- * @date 2025/11/25
+ * @date 2026/1/22
  */
 @Mapper
 public interface BlogViewHistoryMapper extends BaseMapper<BlogViewHistory> {

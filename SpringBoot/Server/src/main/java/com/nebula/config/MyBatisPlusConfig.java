@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
  * MyBatis-Plus 配置类
  *
  * @author Nebula-Hash
- * @date 2025/11/25
+ * @date 2026/1/22
  */
 @Configuration
 public class MyBatisPlusConfig {

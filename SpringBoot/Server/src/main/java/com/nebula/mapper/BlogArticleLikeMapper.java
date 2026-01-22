@@ -8,7 +8,7 @@ import org.apache.ibatis.annotations.Mapper;
  * 文章点赞Mapper接口
  *
  * @author Nebula-Hash
- * @date 2025/11/25
+ * @date 2026/1/22
  */
 @Mapper
 public interface BlogArticleLikeMapper extends BaseMapper<BlogArticleLike> {

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * 全局异常处理器
  *
  * @author Nebula-Hash
- * @date 2025/11/25
+ * @date 2026/1/22
  */
 @Slf4j
 @RestControllerAdvice

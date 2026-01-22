@@ -6,7 +6,7 @@ import lombok.Data;
  * 轮播图VO
  *
  * @author Nebula-Hash
- * @date 2025/11/25
+ * @date 2026/1/22
  */
 @Data
 public class BannerVO {

@@ -13,7 +13,7 @@ import java.util.List;
  * 跨域配置
  *
  * @author Nebula-Hash
- * @date 2025/11/25
+ * @date 2026/1/22
  */
 @Configuration  // 标记为Spring配置类，启动时自动加载
 public class CorsConfig {

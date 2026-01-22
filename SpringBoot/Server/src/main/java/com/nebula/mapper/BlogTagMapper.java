@@ -8,7 +8,7 @@ import org.apache.ibatis.annotations.Mapper;
  * 标签Mapper接口
  *
  * @author Nebula-Hash
- * @date 2025/11/25
+ * @date 2026/1/22
  */
 @Mapper
 public interface BlogTagMapper extends BaseMapper<BlogTag> {

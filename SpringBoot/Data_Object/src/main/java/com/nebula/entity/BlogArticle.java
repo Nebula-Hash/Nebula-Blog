@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * 文章实体类
  *
  * @author Nebula-Hash
- * @date 2025/11/25
+ * @date 2026/1/22
  */
 @Data
 @TableName("blog_article")

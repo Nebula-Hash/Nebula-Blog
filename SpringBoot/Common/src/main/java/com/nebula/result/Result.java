@@ -9,7 +9,7 @@ import java.io.Serializable;
  * 统一返回结果
  *
  * @author Nebula-Hash
- * @date 2025/11/25
+ * @date 2026/1/22
  */
 @Data
 public class Result<T> implements Serializable {

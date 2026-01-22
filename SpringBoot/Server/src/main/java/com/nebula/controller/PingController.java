@@ -26,7 +26,7 @@ import java.util.Map;
 @Slf4j
 @RestController
 @AllArgsConstructor
-public class IndexController {
+public class PingController {
 
     private final StringRedisTemplate redisTemplate;
 
@@ -44,7 +44,7 @@ public class IndexController {
     /**
      * 欢迎页
      */
-    @GetMapping("/")
+    @GetMapping("/ping")
     public Result<String> index() {
         // 记录访问
         recordVisit();
@@ -83,7 +83,7 @@ public class IndexController {
      * 访问统计接口
      * 返回总访问量和今日访问量
      */
-    @GetMapping("/stats/visit")
+    @GetMapping("/visits")
     public Result<VisitStatsVO> visitStats() {
         LocalDate today = LocalDate.now();
         String dailyKey = VISIT_DAILY_KEY_PREFIX + today.format(DateTimeFormatter.BASIC_ISO_DATE);

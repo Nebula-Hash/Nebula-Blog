@@ -9,7 +9,7 @@ import com.nebula.vo.UserInfoVO;
  * 认证服务接口
  *
  * @author Nebula-Hash
- * @date 2025/11/25
+ * @date 2026/1/22
  */
 public interface AuthService {
 

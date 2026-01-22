@@ -8,7 +8,7 @@ import java.util.List;
  * 轮播图服务接口
  *
  * @author Nebula-Hash
- * @date 2025/11/25
+ * @date 2026/1/22
  */
 public interface BlogBannerService {
 
