@@ -11,7 +11,7 @@
  Target Server Version : 80041 (8.0.41)
  File Encoding         : 65001
 
- Date: 14/01/2026 10:33:09
+ Date: 22/01/2026 15:11:18
 */
 
 SET NAMES utf8mb4;
@@ -51,8 +51,8 @@ CREATE TABLE `blog_article`  (
 -- ----------------------------
 -- Records of blog_article
 -- ----------------------------
-INSERT INTO `blog_article` VALUES (1, 2, 1, 'Spring Boot 4.0 入门教程', 'Spring Boot 4.0是Spring框架的最新版本,本文将带你快速入门', 'https://picsum.photos/800/600?random=10', '# Spring Boot 4.0 入门教程\n\n## 简介\n\nSpring Boot 4.0 是 Spring 框架的最新版本...\n\n## 快速开始\n\n1. 创建项目\n2. 配置依赖\n3. 编写代码\n\n## 总结\n\n本文介绍了Spring Boot 4.0的基本使用...', NULL, 1, 0, 1, 161, 23, 5, 0, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
-INSERT INTO `blog_article` VALUES (2, 2, 3, 'Vue3 组合式API完全指南', 'Vue3带来了全新的组合式API,让代码更加优雅和可维护', 'https://picsum.photos/800/600?random=11', '# Vue3 组合式API完全指南\n\n## 什么是组合式API\n\n组合式API是Vue3的核心特性...\n\n## 基本使用\n\n```js\nsetup() {\n  // your code\n}\n```', NULL, 0, 0, 1, 239, 45, 12, 0, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_article` VALUES (1, 2, 1, 'Spring Boot 4.0 入门教程', 'Spring Boot 4.0是Spring框架的最新版本,本文将带你快速入门', 'https://picsum.photos/800/600?random=10', '# Spring Boot 4.0 入门教程\n\n## 简介\n\nSpring Boot 4.0 是 Spring 框架的最新版本...\n\n## 快速开始\n\n1. 创建项目\n2. 配置依赖\n3. 编写代码\n\n## 总结\n\n本文介绍了Spring Boot 4.0的基本使用...', NULL, 1, 0, 1, 162, 23, 5, 0, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
+INSERT INTO `blog_article` VALUES (2, 2, 3, 'Vue3 组合式API完全指南', 'Vue3带来了全新的组合式API,让代码更加优雅和可维护', 'https://picsum.photos/800/600?random=11', '# Vue3 组合式API完全指南\n\n## 什么是组合式API\n\n组合式API是Vue3的核心特性...\n\n## 基本使用\n\n```js\nsetup() {\n  // your code\n}\n```', NULL, 0, 0, 1, 240, 45, 12, 0, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
 INSERT INTO `blog_article` VALUES (3, 1, 2, 'MyBatis-Plus实战教程', 'MyBatis-Plus为简化开发而生,让你的CRUD操作更加简单', 'https://picsum.photos/800/600?random=12', '# MyBatis-Plus实战教程\n\n## 简介\n\nMyBatis-Plus是一个MyBatis的增强工具...', NULL, 0, 0, 1, 190, 34, 8, 0, 1, 0, '2025-12-02 20:54:12', '2025-12-02 20:54:12');
 
 -- ----------------------------
@@ -293,7 +293,7 @@ CREATE TABLE `blog_view_history`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_article_id`(`article_id` ASC) USING BTREE,
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '浏览记录表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 14 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '浏览记录表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of blog_view_history
@@ -309,6 +309,8 @@ INSERT INTO `blog_view_history` VALUES (8, 3, NULL, NULL, '2025-12-29 18:08:13')
 INSERT INTO `blog_view_history` VALUES (9, 1, NULL, NULL, '2025-12-29 18:10:28');
 INSERT INTO `blog_view_history` VALUES (10, 1, NULL, NULL, '2025-12-29 18:12:46');
 INSERT INTO `blog_view_history` VALUES (11, 1, NULL, NULL, '2026-01-07 16:30:55');
+INSERT INTO `blog_view_history` VALUES (12, 2, NULL, NULL, '2026-01-14 11:12:18');
+INSERT INTO `blog_view_history` VALUES (13, 1, NULL, NULL, '2026-01-14 11:12:25');
 
 -- ----------------------------
 -- Table structure for sys_login_log

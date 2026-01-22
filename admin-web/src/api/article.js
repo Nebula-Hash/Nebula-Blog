@@ -14,7 +14,7 @@ export const getArticleList = (params) => {
 // 获取文章详情
 export const getArticleDetail = (id) => {
   return request({
-    url: `/article/${id}`,
+    url: `/article/detail/${id}`,
     method: 'get'
   })
 }

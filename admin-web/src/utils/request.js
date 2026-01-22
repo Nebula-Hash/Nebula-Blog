@@ -4,7 +4,7 @@ import axios from 'axios'
 import { useUserStore } from '@/stores/user'
 
 const request = axios.create({
-  baseURL: '/api',
+  baseURL: '/api/admin',
   timeout: 5000
 })
 
@@ -29,8 +29,8 @@ request.interceptors.response.use(
     if (res.code === 200) {
       return res
     } else {
-      window.$message?.error(res.msg || '请求失败')
-      return Promise.reject(new Error(res.msg || '请求失败'))
+      window.$message?.error(res.message || '请求失败')
+      return Promise.reject(new Error(res.message || '请求失败'))
     }
   },
   (error) => {

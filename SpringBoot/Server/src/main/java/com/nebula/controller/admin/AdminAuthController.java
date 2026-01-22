@@ -1,9 +1,10 @@
-package com.nebula.controller;
+package com.nebula.controller.admin;
 
 import cn.dev33.satoken.stp.StpUtil;
-import com.nebula.result.Result;
+import com.nebula.controller.config.AdminController;
 import com.nebula.dto.LoginDTO;
 import com.nebula.dto.RegisterDTO;
+import com.nebula.result.Result;
 import com.nebula.service.AuthService;
 import com.nebula.vo.LoginVO;
 import com.nebula.vo.UserInfoVO;
@@ -17,10 +18,10 @@ import org.springframework.web.bind.annotation.*;
  * @author Nebula-Hash
  * @date 2025/11/25
  */
-@RestController
+@AdminController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
-public class AuthController {
+public class AdminAuthController {
 
     private final AuthService authService;
 
