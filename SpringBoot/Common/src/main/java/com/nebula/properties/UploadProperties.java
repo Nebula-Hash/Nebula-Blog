@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
  * 文件上传配置属性
  *
  * @author Nebula-Hash
- * @date 2025/11/27
+ * @date 2026/1/22
  */
 @Data
 @Configuration

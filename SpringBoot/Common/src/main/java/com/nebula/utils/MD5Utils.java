@@ -5,7 +5,7 @@ import java.security.MessageDigest;
 /**
  * @className: MD5Utils
  * @author: Nebula-Hash
- * @date: 2025/11/25 22:50
+ * @date: 2026/1/22
  */
 public class MD5Utils {
 

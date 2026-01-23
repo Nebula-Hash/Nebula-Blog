@@ -1,4 +1,4 @@
-package com.nebula.strategy;
+package com.nebula.upload;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -6,7 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
  * 文件上传策略接口
  *
  * @author Nebula-Hash
- * @date 2025/11/27
+ * @date 2026/1/22
  */
 public interface UploadStrategy {
 

@@ -1,4 +1,4 @@
-package com.nebula.strategy;
+package com.nebula.upload;
 
 import com.nebula.properties.UploadProperties;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +10,7 @@ import java.util.Map;
  * 上传策略工厂
  *
  * @author Nebula-Hash
- * @date 2025/11/27
+ * @date 2026/1/22
  */
 @Component
 @RequiredArgsConstructor
@@ -26,7 +26,7 @@ public class UploadStrategyFactory {
      */
     public UploadStrategy getStrategy() {
         String mode = uploadProperties.getMode();
-        String beanName = mode + "UploadStrategyImpl";
+        String beanName = mode + "UploadStrategy";
         return uploadStrategyMap.get(beanName);
     }
 }
