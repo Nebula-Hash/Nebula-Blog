@@ -1,34 +1,34 @@
-package com.nebula.controller;
+package com.nebula.controller.client;
 
+import com.nebula.controller.config.ClientController;
 import com.nebula.result.Result;
 import com.nebula.service.BlogBannerService;
-import com.nebula.vo.BannerVO;
+import com.nebula.vo.BannerClientVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 /**
- * 轮播图控制器
+ * 轮播图控制器（客户端）
  *
  * @author Nebula-Hash
- * @date 2026/1/22
+ * @date 2026/1/23
  */
-@RestController
+@ClientController
 @RequestMapping("/banner")
 @RequiredArgsConstructor
-public class BannerController {
+public class ClientBannerController {
 
     private final BlogBannerService bannerService;
 
     /**
-     * 获取轮播图列表
+     * 获取当前可用轮播图列表
      */
     @GetMapping("/list")
-    public Result<List<BannerVO>> getActiveBanners() {
-        List<BannerVO> banners = bannerService.getActiveBanners();
+    public Result<List<BannerClientVO>> getActiveBanners() {
+        List<BannerClientVO> banners = bannerService.getActiveBanners();
         return Result.success(banners);
     }
 }

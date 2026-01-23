@@ -1,6 +1,7 @@
 package com.nebula.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.nebula.controller.config.AdminController;
 import com.nebula.result.Result;
 import com.nebula.entity.SysUser;
 import com.nebula.service.SysUserService;
@@ -15,7 +16,7 @@ import java.util.List;
  * @author Nebula-Hash
  * @date 2026/1/22
  */
-@RestController
+@AdminController
 @RequestMapping("/user")
 @RequiredArgsConstructor
 public class AdminUserController {

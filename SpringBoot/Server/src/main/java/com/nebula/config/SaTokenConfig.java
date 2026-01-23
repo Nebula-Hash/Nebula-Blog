@@ -41,11 +41,14 @@ public class SaTokenConfig implements WebMvcConfigurer {
             "/auth/login",
             "/auth/register",
 
-            // 文章模块（公开接口）
+            // 文章模块
             "/article/list",
             "/article/detail/*",
             "/article/hot",
             "/article/recommend",
+
+            // 轮播图模块
+            "/banner/list",
     };
 
     /**
