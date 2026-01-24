@@ -37,7 +37,7 @@ public class OssUploadStrategyImpl implements UploadStrategy {
             // 安全获取文件后缀
             String suffix = getFileSuffix(file.getOriginalFilename());
             // 生成新文件名：日期/UUID.后缀
-            String fileName = DateUtil.today() + "/" + IdUtil.fastSimpleUUID() + suffix;
+            String fileName = DateUtil.today() + IdUtil.fastSimpleUUID() + suffix;
             // 拼接完整路径
             String objectName = path + "/" + fileName;
 
@@ -51,9 +51,14 @@ public class OssUploadStrategyImpl implements UploadStrategy {
                 ossClient.putObject(putObjectRequest);
             }
 
-            // 返回文件访问路径
-            return "https://" + uploadProperties.getOss().getBucketName() + "." +
-                    uploadProperties.getOss().getEndpoint() + "/" + objectName;
+            /* 返回文件访问路径 */
+
+            // 使用OSS提供的默认域名格式拼接文件访问路径
+//            return "https://" + uploadProperties.getOss().getBucketName() + "." +
+//                    uploadProperties.getOss().getEndpoint() + "/" + objectName;
+
+            // 使用自定义域名拼接文件访问路径
+            return "https://" + uploadProperties.getOss().getCustomDomain() + "/" + objectName;
 
         } catch (Exception e) {
             log.error("OSS文件上传失败：{}", e.getMessage(), e);
@@ -66,7 +71,10 @@ public class OssUploadStrategyImpl implements UploadStrategy {
         try {
             // 从URL中提取对象名称
             String bucketName = uploadProperties.getOss().getBucketName();
-            String host = bucketName + "." + uploadProperties.getOss().getEndpoint();
+
+            // String host = bucketName + "." + uploadProperties.getOss().getEndpoint(); // 使用默认域名
+            String host = uploadProperties.getOss().getCustomDomain(); // 使用自定义域名
+
             int hostIndex = fileUrl.indexOf(host);
             if (hostIndex == -1) {
                 throw new BusinessException("无效的文件URL");

@@ -47,6 +47,11 @@
       "description": "阿里云 OSS 存储桶名称."
     },
     {
+      "name": "upload.oss.custom-domain",
+      "type": "java.lang.String",
+      "description": "阿里云 OSS 自定义域名."
+    },
+    {
       "name": "springdoc.info.title",
       "type": "java.lang.String",
       "description": "API 文档标题.",

@@ -74,5 +74,10 @@ public class UploadProperties {
          * 存储桶名称
          */
         private String bucketName;
+
+        /**
+         * 自定义域名
+         */
+        private String customDomain;
     }
 }

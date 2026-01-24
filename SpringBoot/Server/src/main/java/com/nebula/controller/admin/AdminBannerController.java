@@ -32,7 +32,8 @@ public class AdminBannerController {
     @GetMapping("/list")
     public Result<Page<BannerAdminVO>> getBannerList(
             @RequestParam(defaultValue = "1") Long current,
-            @RequestParam(defaultValue = "10") Long size) {
+            @RequestParam(defaultValue = "5") Long size)
+    {
         Page<BannerAdminVO> page = bannerService.getBannerList(current, size);
         return Result.success(page);
     }
@@ -55,7 +56,7 @@ public class AdminBannerController {
      */
     @PostMapping("/upload")
     public Result<String> uploadBannerImage(@RequestParam("file") MultipartFile file) {
-        String imageUrl = fileUploadUtil.uploadImage(file, "banner");
+        String imageUrl = fileUploadUtil.uploadImage(file, "images/banners");
         return Result.success("上传成功", imageUrl);
     }
 
