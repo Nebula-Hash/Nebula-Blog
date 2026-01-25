@@ -56,6 +56,11 @@ const routes = [
         meta: { title: '评论管理' }
       }
     ]
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('@/components/NotFound.vue')
   }
 ]
 

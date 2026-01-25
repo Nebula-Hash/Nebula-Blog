@@ -16,8 +16,8 @@
                 <div class="circle"></div>
             </div>
 
-            <router-link to="/datapanel" class="home-button">
-                <span class="button-text">返回控制台</span>
+            <router-link to="/" class="home-button">
+                <span class="button-text">返回主星系</span>
                 <span class="button-icon">→</span>
             </router-link>
         </div>
