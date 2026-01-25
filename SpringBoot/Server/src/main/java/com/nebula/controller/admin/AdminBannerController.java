@@ -48,16 +48,20 @@ public class AdminBannerController {
     }
 
     /**
-     * 上传轮播图图片
+     * 上传轮播图图片（上传到临时目录）
      * /选择图片后立即上传并显示预览
      * /单独显示图片上传进度条
      * /图片上传和表单提交分离，最终提交时更快
-     * /前端拿到ImageURL后提交表单，后端业务只管数据库
+     * /前端拿到临时ImageURL后提交表单，后端业务层将临时文件转正
+     *
+     * @param file 图片文件
+     * @return 临时图片的访问URL
      */
     @PostMapping("/upload")
     public Result<String> uploadBannerImage(@RequestParam("file") MultipartFile file) {
-        String imageUrl = fileUploadUtil.uploadImage(file, "images/banners");
-        return Result.success("上传成功", imageUrl);
+        // 上传到临时目录
+        String tempImageUrl = fileUploadUtil.uploadImageToTemp(file, "images/banners");
+        return Result.success("上传成功", tempImageUrl);
     }
 
     /**

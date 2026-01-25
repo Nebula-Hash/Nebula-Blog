@@ -6,9 +6,8 @@ import cn.hutool.core.util.StrUtil;
 import com.nebula.exception.BusinessException;
 import com.nebula.properties.UploadProperties;
 import com.nebula.upload.UploadStrategy;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
-import io.minio.RemoveObjectArgs;
+import io.minio.*;
+import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -16,6 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * MinIO上传策略实现
@@ -67,13 +70,8 @@ public class MinioUploadStrategyImpl implements UploadStrategy {
     @Override
     public void deleteFile(String fileUrl) {
         try {
-            // 从URL中提取对象名称
             String bucketName = uploadProperties.getMinio().getBucketName();
-            int bucketIndex = fileUrl.indexOf(bucketName);
-            if (bucketIndex == -1) {
-                throw new BusinessException("无效的文件URL");
-            }
-            String objectName = fileUrl.substring(bucketIndex + bucketName.length() + 1);
+            String objectName = extractObjectName(fileUrl);
 
             minioClient.removeObject(
                     RemoveObjectArgs.builder()
@@ -87,6 +85,87 @@ public class MinioUploadStrategyImpl implements UploadStrategy {
             log.error("MinIO文件删除失败：{}", e.getMessage(), e);
             throw new BusinessException("文件删除失败");
         }
+    }
+
+    @Override
+    public String moveFile(String sourceUrl, String targetPath) {
+        try {
+            String bucketName = uploadProperties.getMinio().getBucketName();
+            String sourceObjectName = extractObjectName(sourceUrl);
+
+            // 提取文件名
+            String fileName = sourceObjectName.substring(sourceObjectName.lastIndexOf("/") + 1);
+            String targetObjectName = targetPath + "/" + fileName;
+
+            // 复制文件到新位置
+            minioClient.copyObject(
+                    CopyObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(targetObjectName)
+                            .source(CopySource.builder()
+                                    .bucket(bucketName)
+                                    .object(sourceObjectName)
+                                    .build())
+                            .build()
+            );
+
+            // 删除原文件
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(sourceObjectName)
+                            .build()
+            );
+
+            // 返回新的访问URL
+            return uploadProperties.getMinio().getEndpoint() + "/" + bucketName + "/" + targetObjectName;
+        } catch (Exception e) {
+            log.error("MinIO文件移动失败：{}", e.getMessage(), e);
+            throw new BusinessException("文件移动失败");
+        }
+    }
+
+    @Override
+    public List<FileInfo> listFiles(String prefix) {
+        try {
+            String bucketName = uploadProperties.getMinio().getBucketName();
+            List<FileInfo> fileInfoList = new ArrayList<>();
+
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(bucketName)
+                            .prefix(prefix)
+                            .recursive(true)
+                            .build()
+            );
+
+            for (Result<Item> result : results) {
+                Item item = result.get();
+                String url = uploadProperties.getMinio().getEndpoint() + "/" + bucketName + "/" + item.objectName();
+                LocalDateTime lastModified = item.lastModified()
+                        .toInstant()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDateTime();
+                fileInfoList.add(new FileInfo(item.objectName(), url, lastModified));
+            }
+
+            return fileInfoList;
+        } catch (Exception e) {
+            log.error("MinIO文件列表获取失败：{}", e.getMessage(), e);
+            throw new BusinessException("获取文件列表失败");
+        }
+    }
+
+    /**
+     * 从URL中提取对象名称
+     */
+    private String extractObjectName(String fileUrl) {
+        String bucketName = uploadProperties.getMinio().getBucketName();
+        int bucketIndex = fileUrl.indexOf(bucketName);
+        if (bucketIndex == -1) {
+            throw new BusinessException("无效的文件URL");
+        }
+        return fileUrl.substring(bucketIndex + bucketName.length() + 1);
     }
 
     /**

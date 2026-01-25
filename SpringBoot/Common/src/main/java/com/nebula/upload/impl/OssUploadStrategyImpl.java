@@ -4,6 +4,9 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.aliyun.oss.OSS;
+import com.aliyun.oss.model.ListObjectsRequest;
+import com.aliyun.oss.model.OSSObjectSummary;
+import com.aliyun.oss.model.ObjectListing;
 import com.aliyun.oss.model.PutObjectRequest;
 import com.nebula.exception.BusinessException;
 import com.nebula.properties.UploadProperties;
@@ -15,6 +18,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 阿里云OSS上传策略实现
@@ -69,18 +76,8 @@ public class OssUploadStrategyImpl implements UploadStrategy {
     @Override
     public void deleteFile(String fileUrl) {
         try {
-            // 从URL中提取对象名称
             String bucketName = uploadProperties.getOss().getBucketName();
-
-            // String host = bucketName + "." + uploadProperties.getOss().getEndpoint(); // 使用默认域名
-            String host = uploadProperties.getOss().getCustomDomain(); // 使用自定义域名
-
-            int hostIndex = fileUrl.indexOf(host);
-            if (hostIndex == -1) {
-                throw new BusinessException("无效的文件URL");
-            }
-            String objectName = fileUrl.substring(hostIndex + host.length() + 1);
-
+            String objectName = extractObjectName(fileUrl);
             ossClient.deleteObject(bucketName, objectName);
         } catch (BusinessException e) {
             throw e;
@@ -88,6 +85,72 @@ public class OssUploadStrategyImpl implements UploadStrategy {
             log.error("OSS文件删除失败：{}", e.getMessage(), e);
             throw new BusinessException("文件删除失败");
         }
+    }
+
+    @Override
+    public String moveFile(String sourceUrl, String targetPath) {
+        try {
+            String bucketName = uploadProperties.getOss().getBucketName();
+            String sourceObjectName = extractObjectName(sourceUrl);
+
+            // 提取文件名
+            String fileName = sourceObjectName.substring(sourceObjectName.lastIndexOf("/") + 1);
+            String targetObjectName = targetPath + "/" + fileName;
+
+            // 复制文件到新位置
+            ossClient.copyObject(bucketName, sourceObjectName, bucketName, targetObjectName);
+            // 删除原文件
+            ossClient.deleteObject(bucketName, sourceObjectName);
+
+            // 返回新的访问URL
+            return "https://" + uploadProperties.getOss().getCustomDomain() + "/" + targetObjectName;
+        } catch (Exception e) {
+            log.error("OSS文件移动失败：{}", e.getMessage(), e);
+            throw new BusinessException("文件移动失败");
+        }
+    }
+
+    @Override
+    public List<FileInfo> listFiles(String prefix) {
+        try {
+            String bucketName = uploadProperties.getOss().getBucketName();
+            List<FileInfo> fileInfoList = new ArrayList<>();
+
+            ListObjectsRequest request = new ListObjectsRequest(bucketName);
+            request.setPrefix(prefix);
+            request.setMaxKeys(1000);
+
+            ObjectListing listing;
+            do {
+                listing = ossClient.listObjects(request);
+                for (OSSObjectSummary summary : listing.getObjectSummaries()) {
+                    String url = "https://" + uploadProperties.getOss().getCustomDomain() + "/" + summary.getKey();
+                    LocalDateTime lastModified = summary.getLastModified()
+                            .toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime();
+                    fileInfoList.add(new FileInfo(summary.getKey(), url, lastModified));
+                }
+                request.setMarker(listing.getNextMarker());
+            } while (listing.isTruncated());
+
+            return fileInfoList;
+        } catch (Exception e) {
+            log.error("OSS文件列表获取失败：{}", e.getMessage(), e);
+            throw new BusinessException("获取文件列表失败");
+        }
+    }
+
+    /**
+     * 从URL中提取对象名称
+     */
+    private String extractObjectName(String fileUrl) {
+        String host = uploadProperties.getOss().getCustomDomain();
+        int hostIndex = fileUrl.indexOf(host);
+        if (hostIndex == -1) {
+            throw new BusinessException("无效的文件URL");
+        }
+        return fileUrl.substring(hostIndex + host.length() + 1);
     }
 
     /**

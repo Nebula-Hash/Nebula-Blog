@@ -68,6 +68,14 @@ public class BlogBannerServiceImpl implements BlogBannerService {
     public Long addBanner(BannerDTO bannerDTO) {
         BlogBanner banner = new BlogBanner();
         BeanUtils.copyProperties(bannerDTO, banner);
+
+        // 如果图片是临时文件，转为正式文件
+        String imageUrl = bannerDTO.getImageUrl();
+        if (fileUploadUtil.isTempFile(imageUrl)) {
+            imageUrl = fileUploadUtil.moveToFormal(imageUrl);
+            banner.setImageUrl(imageUrl);
+        }
+
         // 设置默认值
         if (banner.getSort() == null) {
             banner.setSort(0);
@@ -90,13 +98,25 @@ public class BlogBannerServiceImpl implements BlogBannerService {
             throw new BusinessException("轮播图不存在");
         }
 
-        // 如果图片URL变更，删除旧图片
-        if (StringUtils.hasText(bannerDTO.getImageUrl())
-                && !bannerDTO.getImageUrl().equals(existBanner.getImageUrl())) {
-            try {
-                fileUploadUtil.delete(existBanner.getImageUrl());
-            } catch (Exception e) {
-                // 删除旧文件失败不影响更新操作
+        String newImageUrl = bannerDTO.getImageUrl();
+        String oldImageUrl = existBanner.getImageUrl();
+
+        // 判断图片是否变更
+        if (StringUtils.hasText(newImageUrl) && !newImageUrl.equals(oldImageUrl)) {
+            // 如果新图片是临时文件，说明用户更换了图片
+            if (fileUploadUtil.isTempFile(newImageUrl)) {
+                // 新图片转正
+                newImageUrl = fileUploadUtil.moveToFormal(newImageUrl);
+                bannerDTO.setImageUrl(newImageUrl);
+
+                // 旧图片移至临时目录等待清理
+                if (StringUtils.hasText(oldImageUrl)) {
+                    try {
+                        fileUploadUtil.moveToTemp(oldImageUrl);
+                    } catch (Exception e) {
+                        // 移动失败不影响更新操作
+                    }
+                }
             }
         }
 
@@ -114,11 +134,13 @@ public class BlogBannerServiceImpl implements BlogBannerService {
         }
         // 删除轮播图记录（逻辑删除）
         bannerMapper.deleteById(id);
-        // 删除对应的图片文件
+        // 将正式图片移至临时目录，等待定时任务清理
         try {
-            fileUploadUtil.delete(banner.getImageUrl());
+            if (StringUtils.hasText(banner.getImageUrl())) {
+                fileUploadUtil.moveToTemp(banner.getImageUrl());
+            }
         } catch (Exception e) {
-            // 删除文件失败不影响删除操作
+            // 移动文件失败不影响删除操作
         }
     }
 

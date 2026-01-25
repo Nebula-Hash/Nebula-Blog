@@ -1,6 +1,11 @@
 {
   "properties": [
     {
+      "name": "app.task.temp-clean.enabled",
+      "type": "java.lang.String",
+      "description": "临时文件清理任务开关."
+    },
+    {
       "name": "upload.mode",
       "type": "java.lang.String",
       "description": "文件上传模式：minio 或 oss.",

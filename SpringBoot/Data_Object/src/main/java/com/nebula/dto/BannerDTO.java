@@ -20,6 +20,7 @@ public class BannerDTO {
     /**
      * 标题
      */
+    @NotBlank(message = "标题不能为空")
     private String title;
 
     /**
