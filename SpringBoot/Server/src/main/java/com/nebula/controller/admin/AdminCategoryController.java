@@ -1,9 +1,10 @@
-package com.nebula.controller;
+package com.nebula.controller.admin;
 
-import com.nebula.result.Result;
+import com.nebula.controller.config.AdminController;
 import com.nebula.dto.CategoryDTO;
+import com.nebula.result.Result;
 import com.nebula.service.BlogCategoryService;
-import com.nebula.vo.CategoryVO;
+import com.nebula.vo.CategoryAdminVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -11,17 +12,26 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 分类控制器
+ * 分类控制器（管理端）
  *
  * @author Nebula-Hash
- * @date 2026/1/22
+ * @date 2026/1/25
  */
-@RestController
+@AdminController
 @RequestMapping("/category")
 @RequiredArgsConstructor
-public class CategoryController {
+public class AdminCategoryController {
 
     private final BlogCategoryService categoryService;
+
+    /**
+     * 获取所有分类
+     */
+    @GetMapping("/list")
+    public Result<List<CategoryAdminVO>> getAllCategories() {
+        List<CategoryAdminVO> categories = categoryService.getAllCategoriesForAdmin();
+        return Result.success(categories);
+    }
 
     /**
      * 创建分类
@@ -48,14 +58,5 @@ public class CategoryController {
     public Result<String> deleteCategory(@PathVariable Long id) {
         categoryService.deleteCategory(id);
         return Result.success("删除成功");
-    }
-
-    /**
-     * 获取所有分类
-     */
-    @GetMapping("/list")
-    public Result<List<CategoryVO>> getAllCategories() {
-        List<CategoryVO> categories = categoryService.getAllCategories();
-        return Result.success(categories);
     }
 }

@@ -1,7 +1,8 @@
 package com.nebula.service;
 
 import com.nebula.dto.CategoryDTO;
-import com.nebula.vo.CategoryVO;
+import com.nebula.vo.CategoryAdminVO;
+import com.nebula.vo.CategoryClientVO;
 
 import java.util.List;
 
@@ -9,7 +10,7 @@ import java.util.List;
  * 分类服务接口
  *
  * @author Nebula-Hash
- * @date 2026/1/22
+ * @date 2026/1/25
  */
 public interface BlogCategoryService {
 
@@ -36,9 +37,16 @@ public interface BlogCategoryService {
     void deleteCategory(Long id);
 
     /**
-     * 获取所有分类
+     * 获取所有分类（管理端）
      *
      * @return 分类列表
      */
-    List<CategoryVO> getAllCategories();
+    List<CategoryAdminVO> getAllCategoriesForAdmin();
+
+    /**
+     * 获取所有分类（客户端）
+     *
+     * @return 分类列表
+     */
+    List<CategoryClientVO> getAllCategoriesForClient();
 }

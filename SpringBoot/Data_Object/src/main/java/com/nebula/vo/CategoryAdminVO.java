@@ -5,13 +5,13 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 分类VO
+ * 分类VO（管理端）
  *
  * @author Nebula-Hash
  * @date 2026/1/22
  */
 @Data
-public class CategoryVO {
+public class CategoryAdminVO {
 
     /**
      * 分类ID
