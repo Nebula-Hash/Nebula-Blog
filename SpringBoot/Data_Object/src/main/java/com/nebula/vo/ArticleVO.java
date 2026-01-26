@@ -102,7 +102,7 @@ public class ArticleVO {
     /**
      * 标签列表
      */
-    private List<TagVO> tags;
+    private List<TagClientVO> tags;
 
     /**
      * 是否已点赞

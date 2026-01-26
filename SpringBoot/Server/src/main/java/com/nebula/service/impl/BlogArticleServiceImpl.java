@@ -10,7 +10,7 @@ import com.nebula.mapper.*;
 import com.nebula.service.BlogArticleService;
 import com.nebula.vo.ArticleListVO;
 import com.nebula.vo.ArticleVO;
-import com.nebula.vo.TagVO;
+import com.nebula.vo.TagClientVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -157,11 +157,11 @@ public class BlogArticleServiceImpl implements BlogArticleService {
         tagWrapper.eq(BlogArticleTag::getArticleId, id);
         List<BlogArticleTag> articleTags = articleTagMapper.selectList(tagWrapper);
         
-        List<TagVO> tags = new ArrayList<>();
+        List<TagClientVO> tags = new ArrayList<>();
         for (BlogArticleTag articleTag : articleTags) {
             BlogTag tag = tagMapper.selectById(articleTag.getTagId());
             if (tag != null) {
-                TagVO tagVO = new TagVO();
+                TagClientVO tagVO = new TagClientVO();
                 BeanUtils.copyProperties(tag, tagVO);
                 tags.add(tagVO);
             }

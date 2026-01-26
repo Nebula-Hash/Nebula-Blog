@@ -1,9 +1,10 @@
-package com.nebula.controller;
+package com.nebula.controller.admin;
 
-import com.nebula.result.Result;
+import com.nebula.controller.config.AdminController;
 import com.nebula.dto.TagDTO;
+import com.nebula.result.Result;
 import com.nebula.service.BlogTagService;
-import com.nebula.vo.TagVO;
+import com.nebula.vo.TagAdminVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -11,17 +12,26 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 标签控制器
+ * 标签控制器（管理端）
  *
  * @author Nebula-Hash
- * @date 2026/1/22
+ * @date 2026/1/26
  */
-@RestController
+@AdminController
 @RequestMapping("/tag")
 @RequiredArgsConstructor
-public class TagController {
+public class AdminTagController {
 
     private final BlogTagService tagService;
+
+    /**
+     * 获取所有标签
+     */
+    @GetMapping("/list")
+    public Result<List<TagAdminVO>> getAllTags() {
+        List<TagAdminVO> tags = tagService.getAllTagsForAdmin();
+        return Result.success(tags);
+    }
 
     /**
      * 创建标签
@@ -48,14 +58,5 @@ public class TagController {
     public Result<String> deleteTag(@PathVariable Long id) {
         tagService.deleteTag(id);
         return Result.success("删除成功");
-    }
-
-    /**
-     * 获取所有标签
-     */
-    @GetMapping("/list")
-    public Result<List<TagVO>> getAllTags() {
-        List<TagVO> tags = tagService.getAllTags();
-        return Result.success(tags);
     }
 }

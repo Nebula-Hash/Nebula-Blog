@@ -5,13 +5,13 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 标签VO
+ * 标签VO（管理端）
  *
  * @author Nebula-Hash
- * @date 2026/1/22
+ * @date 2026/1/26
  */
 @Data
-public class TagVO {
+public class TagAdminVO {
 
     /**
      * 标签ID
@@ -29,7 +29,7 @@ public class TagVO {
     private Long articleCount;
 
     /**
-     * 创建时间
+     * 更新时间
      */
-    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 }

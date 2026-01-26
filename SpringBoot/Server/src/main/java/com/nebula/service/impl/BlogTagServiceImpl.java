@@ -8,14 +8,22 @@ import com.nebula.exception.BusinessException;
 import com.nebula.mapper.BlogArticleTagMapper;
 import com.nebula.mapper.BlogTagMapper;
 import com.nebula.service.BlogTagService;
-import com.nebula.vo.TagVO;
+import com.nebula.vo.TagAdminVO;
+import com.nebula.vo.TagClientVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * 标签服务实现类
+ *
+ * @author Nebula-Hash
+ * @date 2026/1/22
+ */
 @Service
 @RequiredArgsConstructor
 public class BlogTagServiceImpl implements BlogTagService {
@@ -25,12 +33,7 @@ public class BlogTagServiceImpl implements BlogTagService {
 
     @Override
     public Long createTag(TagDTO tagDTO) {
-        LambdaQueryWrapper<BlogTag> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(BlogTag::getTagName, tagDTO.getTagName());
-        Long count = tagMapper.selectCount(wrapper);
-        if (count > 0) {
-            throw new BusinessException("标签名称已存在");
-        }
+        checkTagNameExists(tagDTO.getTagName(), null);
         BlogTag tag = new BlogTag();
         BeanUtils.copyProperties(tagDTO, tag);
         tagMapper.insert(tag);
@@ -42,6 +45,10 @@ public class BlogTagServiceImpl implements BlogTagService {
         BlogTag tag = tagMapper.selectById(tagDTO.getId());
         if (tag == null) {
             throw new BusinessException("标签不存在");
+        }
+        // 如果标签名发生变更，检查新名称是否已存在
+        if (!tag.getTagName().equals(tagDTO.getTagName())) {
+            checkTagNameExists(tagDTO.getTagName(), tagDTO.getId());
         }
         BeanUtils.copyProperties(tagDTO, tag);
         tagMapper.updateById(tag);
@@ -56,16 +63,58 @@ public class BlogTagServiceImpl implements BlogTagService {
     }
 
     @Override
-    public List<TagVO> getAllTags() {
+    public List<TagAdminVO> getAllTagsForAdmin() {
         List<BlogTag> tags = tagMapper.selectList(null);
+        Map<Long, Long> articleCountMap = getArticleCountMap();
         return tags.stream().map(tag -> {
-            TagVO vo = new TagVO();
+            TagAdminVO vo = new TagAdminVO();
             BeanUtils.copyProperties(tag, vo);
-            LambdaQueryWrapper<BlogArticleTag> wrapper = new LambdaQueryWrapper<>();
-            wrapper.eq(BlogArticleTag::getTagId, tag.getId());
-            Long count = articleTagMapper.selectCount(wrapper);
-            vo.setArticleCount(count);
+            vo.setArticleCount(articleCountMap.getOrDefault(tag.getId(), 0L));
             return vo;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TagClientVO> getAllTagsForClient() {
+        List<BlogTag> tags = tagMapper.selectList(null);
+        Map<Long, Long> articleCountMap = getArticleCountMap();
+        return tags.stream().map(tag -> {
+            TagClientVO vo = new TagClientVO();
+            BeanUtils.copyProperties(tag, vo);
+            vo.setArticleCount(articleCountMap.getOrDefault(tag.getId(), 0L));
+            return vo;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * 检查标签名称是否已存在
+     *
+     * @param tagName   标签名称
+     * @param excludeId 排除的标签ID（更新时排除自身）
+     */
+    private void checkTagNameExists(String tagName, Long excludeId) {
+        LambdaQueryWrapper<BlogTag> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(BlogTag::getTagName, tagName);
+        if (excludeId != null) {
+            wrapper.ne(BlogTag::getId, excludeId);
+        }
+        Long count = tagMapper.selectCount(wrapper);
+        if (count > 0) {
+            throw new BusinessException("标签名称已存在");
+        }
+    }
+
+    /**
+     * 获取所有标签的文章数量映射（解决N+1查询问题）
+     *
+     * @return Map<tagId, articleCount>
+     */
+    private Map<Long, Long> getArticleCountMap() {
+        List<BlogArticleTag> articleTags = articleTagMapper.selectList(null);
+        return articleTags.stream()
+                .collect(Collectors.groupingBy(
+                        BlogArticleTag::getTagId,
+                        Collectors.counting()
+                ));
     }
 }

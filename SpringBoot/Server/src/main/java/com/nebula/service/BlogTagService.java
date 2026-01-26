@@ -1,7 +1,8 @@
 package com.nebula.service;
 
 import com.nebula.dto.TagDTO;
-import com.nebula.vo.TagVO;
+import com.nebula.vo.TagAdminVO;
+import com.nebula.vo.TagClientVO;
 
 import java.util.List;
 
@@ -36,9 +37,16 @@ public interface BlogTagService {
     void deleteTag(Long id);
 
     /**
-     * 获取所有标签
+     * 获取所有标签（管理端）
      *
      * @return 标签列表
      */
-    List<TagVO> getAllTags();
+    List<TagAdminVO> getAllTagsForAdmin();
+
+    /**
+     * 获取所有标签（客户端）
+     *
+     * @return 标签列表
+     */
+    List<TagClientVO> getAllTagsForClient();
 }
