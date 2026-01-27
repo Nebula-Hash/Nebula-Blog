@@ -39,7 +39,7 @@ public class CategoryAdminVO {
     private Long articleCount;
 
     /**
-     * 创建时间
+     * 更新时间
      */
-    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 }

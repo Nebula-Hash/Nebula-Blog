@@ -29,16 +29,31 @@ request.interceptors.response.use(
     if (res.code === 200) {
       return res
     } else {
-      window.$message?.error(res.message || '请求失败')
+      // Token无效或其他业务错误
+      if (res.code === 401) {
+        window.$message?.error(res.message || '登录已过期，请重新登录')
+        const userStore = useUserStore()
+        userStore.logout()
+        // 跳转到登录页
+        setTimeout(() => {
+          window.location.href = '/login'
+        }, 1000)
+      } else {
+        window.$message?.error(res.message || '请求失败')
+      }
       return Promise.reject(new Error(res.message || '请求失败'))
     }
   },
   (error) => {
+    // HTTP状态码401 - Token验证失败
     if (error.response?.status === 401) {
       window.$message?.error('登录已过期，请重新登录')
       const userStore = useUserStore()
       userStore.logout()
-      window.location.href = '/login'
+      // 跳转到登录页
+      setTimeout(() => {
+        window.location.href = '/login'
+      }, 1000)
     } else {
       window.$message?.error(error.message || '网络错误')
     }

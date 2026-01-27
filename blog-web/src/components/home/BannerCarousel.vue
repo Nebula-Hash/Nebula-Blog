@@ -289,6 +289,7 @@ onUnmounted(() => {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+    line-clamp: 2;
     overflow: hidden;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
 }
@@ -446,6 +447,7 @@ onUnmounted(() => {
         font-size: 14px;
         max-width: 90%;
         -webkit-line-clamp: 1;
+        line-clamp: 1;
     }
 
     .banner-info {
