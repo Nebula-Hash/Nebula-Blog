@@ -22,6 +22,14 @@ public interface AuthService {
     LoginVO login(LoginDTO loginDTO);
 
     /**
+     * 管理端用户登录（需校验管理员角色）
+     *
+     * @param loginDTO 登录参数
+     * @return 登录结果
+     */
+    LoginVO adminLogin(LoginDTO loginDTO);
+
+    /**
      * 用户注册
      *
      * @param registerDTO 注册参数
@@ -47,4 +55,11 @@ public interface AuthService {
      * @return 新的 Token 信息
      */
     LoginVO refreshToken();
+
+    /**
+     * 管理端刷新 Token（需校验管理员角色）
+     *
+     * @return 新的 Token 信息
+     */
+    LoginVO adminRefreshToken();
 }

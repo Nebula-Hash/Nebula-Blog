@@ -80,7 +80,8 @@ const handleLogin = async () => {
 
     const res = await login(formData.value)
 
-    userStore.setToken(res.data.token)
+    // 保存Token和过期时间
+    userStore.setToken(res.data.token, res.data.tokenTimeout)
     userStore.setUserInfo({
       userId: res.data.userId,
       username: res.data.username,

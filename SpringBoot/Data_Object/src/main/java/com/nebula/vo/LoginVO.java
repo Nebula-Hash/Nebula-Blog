@@ -44,4 +44,14 @@ public class LoginVO {
      * Token 有效期（秒）
      */
     private Long tokenTimeout;
+
+    /**
+     * 用户头像
+     */
+    private String avatar;
+
+    /**
+     * 角色标识
+     */
+    private String roleKey;
 }

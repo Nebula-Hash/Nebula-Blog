@@ -3,7 +3,6 @@ package com.nebula.controller.admin;
 import cn.dev33.satoken.stp.StpUtil;
 import com.nebula.controller.config.AdminController;
 import com.nebula.dto.LoginDTO;
-import com.nebula.dto.RegisterDTO;
 import com.nebula.result.Result;
 import com.nebula.service.AuthService;
 import com.nebula.vo.LoginVO;
@@ -26,27 +25,15 @@ public class AdminAuthController {
     private final AuthService authService;
 
     /**
-     * 用户登录
+     * 用户登录（需校验管理员角色）
      *
      * @param loginDTO 登录参数
      * @return 登录结果
      */
     @PostMapping("/login")
     public Result<LoginVO> login(@Valid @RequestBody LoginDTO loginDTO) {
-        LoginVO loginVO = authService.login(loginDTO);
+        LoginVO loginVO = authService.adminLogin(loginDTO);
         return Result.success("登录成功", loginVO);
-    }
-
-    /**
-     * 用户注册
-     *
-     * @param registerDTO 注册参数
-     * @return 注册结果
-     */
-    @PostMapping("/register")
-    public Result<LoginVO> register(@Valid @RequestBody RegisterDTO registerDTO) {
-        LoginVO loginVO = authService.register(registerDTO);
-        return Result.success("注册成功", loginVO);
     }
 
     /**
@@ -72,13 +59,13 @@ public class AdminAuthController {
     }
 
     /**
-     * 刷新 Token
+     * 刷新 Token（需校验管理员角色）
      *
      * @return 新的 Token 信息
      */
     @PostMapping("/refresh")
     public Result<LoginVO> refreshToken() {
-        LoginVO loginVO = authService.refreshToken();
+        LoginVO loginVO = authService.adminRefreshToken();
         return Result.success("Token 刷新成功", loginVO);
     }
 

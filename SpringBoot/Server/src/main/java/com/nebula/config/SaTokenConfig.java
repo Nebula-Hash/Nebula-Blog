@@ -3,11 +3,11 @@ package com.nebula.config;
 import cn.dev33.satoken.interceptor.SaInterceptor;
 import cn.dev33.satoken.router.SaRouter;
 import cn.dev33.satoken.stp.StpUtil;
+import com.nebula.service.helper.AuthHelper;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,9 +28,8 @@ public class SaTokenConfig implements WebMvcConfigurer {
      * 管理端放行 URL（自动添加 /api/admin 前缀）
      */
     private static final String[] ADMIN_EXCLUDE_PATHS = {
-            /* 登录注册 */
-            "/auth/login",
-            "/auth/register"
+            /* 登录 */
+            "/auth/login"
     };
 
     /**
@@ -103,35 +102,50 @@ public class SaTokenConfig implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        List<String> excludePaths = buildExcludePaths();
+        // 构建管理端和客户端的放行路径
+        List<String> adminExcludePaths = buildAdminExcludePaths();
+        List<String> clientExcludePaths = buildClientExcludePaths();
+        List<String> otherExcludePaths = Arrays.asList(OTHERS_EXCLUDE_PATHS);
 
         registry.addInterceptor(new SaInterceptor(handle -> {
+                    // 管理端接口：需要登录 + admin 角色
+                    SaRouter.match(ADMIN_PREFIX + "/**")
+                            .notMatch(adminExcludePaths)
+                            .check(r -> {
+                                StpUtil.checkLogin();
+                                StpUtil.checkRole(AuthHelper.ADMIN_ROLE_KEY);
+                            });
+
+                    // 客户端接口：只需要登录
+                    SaRouter.match(CLIENT_PREFIX + "/**")
+                            .notMatch(clientExcludePaths)
+                            .check(r -> StpUtil.checkLogin());
+
+                    // 其他接口：放行或登录校验
                     SaRouter.match("/**")
-                            .notMatch(excludePaths) // 放行指定路径
-                            .check(r -> StpUtil.checkLogin()); // 校验规则为 StpUtil.checkLogin() 登录校验
+                            .notMatch(ADMIN_PREFIX + "/**")
+                            .notMatch(CLIENT_PREFIX + "/**")
+                            .notMatch(otherExcludePaths)
+                            .check(r -> StpUtil.checkLogin());
                 }))
                 .addPathPatterns("/**");
     }
 
     /**
-     * 构建所有放行路径列表
+     * 构建管理端放行路径列表
      */
-    private List<String> buildExcludePaths() {
-        List<String> excludePaths = new ArrayList<>();
-
-        // 添加管理端放行路径
-        Arrays.stream(ADMIN_EXCLUDE_PATHS)
+    private List<String> buildAdminExcludePaths() {
+        return Arrays.stream(ADMIN_EXCLUDE_PATHS)
                 .map(path -> ADMIN_PREFIX + path)
-                .forEach(excludePaths::add);
+                .collect(java.util.stream.Collectors.toList());
+    }
 
-        // 添加客户端放行路径
-        Arrays.stream(CLIENT_EXCLUDE_PATHS)
+    /**
+     * 构建客户端放行路径列表
+     */
+    private List<String> buildClientExcludePaths() {
+        return Arrays.stream(CLIENT_EXCLUDE_PATHS)
                 .map(path -> CLIENT_PREFIX + path)
-                .forEach(excludePaths::add);
-
-        // 添加通用放行路径
-        excludePaths.addAll(Arrays.asList(OTHERS_EXCLUDE_PATHS));
-
-        return excludePaths;
+                .collect(java.util.stream.Collectors.toList());
     }
 }

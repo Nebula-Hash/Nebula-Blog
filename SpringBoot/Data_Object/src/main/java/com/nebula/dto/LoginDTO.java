@@ -1,6 +1,7 @@
 package com.nebula.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 /**
@@ -22,5 +23,6 @@ public class LoginDTO {
      * 密码
      */
     @NotBlank(message = "密码不能为空")
+    @Size(max = 100, message = "密码长度不能超过100个字符")
     private String password;
 }

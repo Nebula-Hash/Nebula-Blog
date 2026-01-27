@@ -44,6 +44,26 @@ public class UserInfoVO {
     private Integer status;
 
     /**
+     * 头像
+     */
+    private String avatar;
+
+    /**
+     * 个人简介
+     */
+    private String intro;
+
+    /**
+     * 角色ID
+     */
+    private Long roleId;
+
+    /**
+     * 角色标识
+     */
+    private String roleKey;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;

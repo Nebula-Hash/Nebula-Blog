@@ -33,3 +33,19 @@ export const logout = () => {
     method: 'post'
   })
 }
+
+// 刷新Token
+export const refreshToken = () => {
+  return request({
+    url: '/auth/refresh',
+    method: 'post'
+  })
+}
+
+// 检查登录状态
+export const checkLogin = () => {
+  return request({
+    url: '/auth/check',
+    method: 'get'
+  })
+}

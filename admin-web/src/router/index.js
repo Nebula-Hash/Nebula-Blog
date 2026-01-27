@@ -73,13 +73,32 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
 
-  if (to.path !== '/login' && !userStore.token) {
-    next('/login')
-  } else if (to.path === '/login' && userStore.token) {
-    next('/')
-  } else {
-    next()
+  // 访问登录页
+  if (to.path === '/login') {
+    // 已登录且Token未过期，跳转到首页
+    if (userStore.token && !userStore.isTokenExpired) {
+      next('/')
+    } else {
+      next()
+    }
+    return
   }
+
+  // 访问其他页面，需要登录
+  if (!userStore.token) {
+    next('/login')
+    return
+  }
+
+  // Token已过期，清除状态并跳转登录
+  if (userStore.isTokenExpired) {
+    userStore.logout()
+    window.$message?.warning('登录已过期，请重新登录')
+    next('/login')
+    return
+  }
+
+  next()
 })
 
 export default router

@@ -1,6 +1,5 @@
 package com.nebula.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -43,14 +42,14 @@ public class RegisterDTO {
     private String nickname;
 
     /**
-     * 邮箱
+     * 邮箱（可选，允许空字符串或符合邮箱格式）
      */
-    @Email(message = "邮箱格式不正确")
+    @Pattern(regexp = "^$|^[\\w.+-]+@[\\w.-]+\\.[a-zA-Z]{2,}$", message = "邮箱格式不正确")
     private String email;
 
     /**
-     * 手机号
+     * 手机号（可选，允许空字符串或符合手机号格式）
      */
-    @Pattern(regexp = "^1[3-9]\\d{9}$", message = "手机号格式不正确")
+    @Pattern(regexp = "^$|^1[3-9]\\d{9}$", message = "手机号格式不正确")
     private String phone;
 }

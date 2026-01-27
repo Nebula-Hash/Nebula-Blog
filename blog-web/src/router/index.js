@@ -60,12 +60,26 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
-  if (to.meta.requiresAuth && !userStore.token) {
-    window.$message?.warning('请先登录')
-    next('/')
-  } else {
-    next()
+
+  // 需要登录的页面
+  if (to.meta.requiresAuth) {
+    // 未登录
+    if (!userStore.token) {
+      window.$message?.warning('请先登录')
+      next('/')
+      return
+    }
+
+    // Token已过期，清除状态并提示
+    if (userStore.isTokenExpired) {
+      userStore.clearAuth()
+      window.$message?.warning('登录已过期，请重新登录')
+      next('/')
+      return
+    }
   }
+
+  next()
 })
 
 export default router
