@@ -1,6 +1,9 @@
 import request from '@/utils/request'
 
-// 获取标签列表
+/**
+ * 获取标签列表（客户端）
+ * @returns {Promise} 标签列表
+ */
 export const getTagList = () => {
   return request({
     url: '/tag/list',
@@ -8,28 +11,14 @@ export const getTagList = () => {
   })
 }
 
-// 创建标签
-export const createTag = (data) => {
+/**
+ * 根据ID获取标签详情
+ * @param {number} id 标签ID
+ * @returns {Promise} 标签详情
+ */
+export const getTagDetail = (id) => {
   return request({
-    url: '/tag/create',
-    method: 'post',
-    data
-  })
-}
-
-// 更新标签
-export const updateTag = (data) => {
-  return request({
-    url: '/tag/update',
-    method: 'put',
-    data
-  })
-}
-
-// 删除标签
-export const deleteTag = (id) => {
-  return request({
-    url: `/tag/${id}`,
-    method: 'delete'
+    url: `/tag/detail/${id}`,
+    method: 'get'
   })
 }

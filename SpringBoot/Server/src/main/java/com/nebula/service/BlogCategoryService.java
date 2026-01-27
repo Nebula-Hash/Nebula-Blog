@@ -49,4 +49,12 @@ public interface BlogCategoryService {
      * @return 分类列表
      */
     List<CategoryClientVO> getAllCategoriesForClient();
+
+    /**
+     * 根据ID获取分类详情（客户端）
+     *
+     * @param id 分类ID
+     * @return 分类详情
+     */
+    CategoryClientVO getCategoryById(Long id);
 }

@@ -10,18 +10,20 @@
         </n-button>
       </template>
 
-      <n-data-table
-        :columns="columns"
-        :data="tagList"
-        :loading="loading"
-      />
+      <n-data-table :columns="columns" :data="tagList" :loading="loading" :pagination="false" :bordered="false"
+        :single-line="false" />
     </n-card>
 
     <!-- 新增/编辑标签弹窗 -->
     <n-modal v-model:show="showModal" preset="card" :title="modalTitle" style="width: 500px">
       <n-form ref="formRef" :model="formData" :rules="rules" label-placement="left" label-width="100">
         <n-form-item label="标签名称" path="tagName">
-          <n-input v-model:value="formData.tagName" placeholder="请输入标签名称" />
+          <n-input v-model:value="formData.tagName" placeholder="请输入标签名称" :maxlength="20" show-count />
+        </n-form-item>
+
+        <n-form-item label="排序" path="sort">
+          <n-input-number v-model:value="formData.sort" placeholder="排序值（数字越小越靠前）" style="width: 100%" :min="0"
+            :step="1" />
         </n-form-item>
       </n-form>
 
@@ -49,11 +51,18 @@ const tagList = ref([])
 const formRef = ref(null)
 const formData = ref({
   id: null,
-  tagName: ''
+  tagName: '',
+  sort: 0
 })
 
 const rules = {
-  tagName: [{ required: true, message: '请输入标签名称', trigger: 'blur' }]
+  tagName: [
+    { required: true, message: '请输入标签名称', trigger: 'blur' },
+    { min: 1, max: 20, message: '标签名称长度应在1-20个字符之间', trigger: 'blur' }
+  ],
+  sort: [
+    { type: 'number', message: '排序必须是数字', trigger: 'blur' }
+  ]
 }
 
 const modalTitle = computed(() => (formData.value.id ? '编辑标签' : '新增标签'))
@@ -65,7 +74,19 @@ const columns = [
     key: 'tagName',
     render: (row) => h(NTag, { type: 'info' }, { default: () => row.tagName })
   },
-  { title: '创建时间', key: 'createTime', width: 180 },
+  { title: '排序', key: 'sort', width: 100 },
+  {
+    title: '文章数量',
+    key: 'articleCount',
+    width: 120,
+    render: (row) => row.articleCount || 0
+  },
+  {
+    title: '上次更新',
+    key: 'updateTime',
+    width: 180,
+    render: (row) => formatDateTime(row.updateTime)
+  },
   {
     title: '操作',
     key: 'actions',
@@ -85,7 +106,7 @@ const columns = [
           h(
             NPopconfirm,
             {
-              onPositiveClick: () => handleDelete(row.id)
+              onPositiveClick: () => handleDelete(row.id, row.articleCount)
             },
             {
               trigger: () =>
@@ -94,13 +115,30 @@ const columns = [
                   { size: 'small', type: 'error' },
                   { icon: () => h(NIcon, null, { default: () => h(TrashOutline) }), default: () => '删除' }
                 ),
-              default: () => '确定要删除这个标签吗？'
+              default: () => row.articleCount > 0
+                ? `该标签下有 ${row.articleCount} 篇文章，确定要删除吗？`
+                : '确定要删除这个标签吗？'
             }
           )
         ]
       })
   }
 ]
+
+// 格式化日期时间
+const formatDateTime = (dateTime) => {
+  if (!dateTime) return '-'
+  const date = new Date(dateTime)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  })
+}
 
 const loadTags = async () => {
   try {
@@ -109,6 +147,7 @@ const loadTags = async () => {
     tagList.value = res.data
   } catch (error) {
     console.error('加载标签列表失败:', error)
+    window.$message.error('加载标签列表失败，请稍后重试')
   } finally {
     loading.value = false
   }
@@ -124,13 +163,14 @@ const handleEdit = (row) => {
   showModal.value = true
 }
 
-const handleDelete = async (id) => {
+const handleDelete = async (id, articleCount) => {
   try {
     await deleteTag(id)
     window.$message.success('删除成功')
-    loadTags()
+    await loadTags()
   } catch (error) {
     console.error('删除失败:', error)
+    window.$message.error(error.response?.data?.message || '删除失败，请稍后重试')
   }
 }
 
@@ -148,9 +188,14 @@ const handleSave = async () => {
     }
 
     showModal.value = false
-    loadTags()
+    await loadTags()
   } catch (error) {
     console.error('保存失败:', error)
+    if (error.errors) {
+      // 表单验证错误
+      return
+    }
+    window.$message.error(error.response?.data?.message || '保存失败，请稍后重试')
   } finally {
     saveLoading.value = false
   }
@@ -159,7 +204,8 @@ const handleSave = async () => {
 const resetForm = () => {
   formData.value = {
     id: null,
-    tagName: ''
+    tagName: '',
+    sort: 0
   }
 }
 

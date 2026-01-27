@@ -1,6 +1,9 @@
 import request from '@/utils/request'
 
-// 获取分类列表
+/**
+ * 获取分类列表（客户端）
+ * @returns {Promise} 分类列表
+ */
 export const getCategoryList = () => {
   return request({
     url: '/category/list',
@@ -8,28 +11,14 @@ export const getCategoryList = () => {
   })
 }
 
-// 创建分类
-export const createCategory = (data) => {
+/**
+ * 根据ID获取分类详情
+ * @param {number} id 分类ID
+ * @returns {Promise} 分类详情
+ */
+export const getCategoryDetail = (id) => {
   return request({
-    url: '/category/create',
-    method: 'post',
-    data
-  })
-}
-
-// 更新分类
-export const updateCategory = (data) => {
-  return request({
-    url: '/category/update',
-    method: 'put',
-    data
-  })
-}
-
-// 删除分类
-export const deleteCategory = (id) => {
-  return request({
-    url: `/category/${id}`,
-    method: 'delete'
+    url: `/category/detail/${id}`,
+    method: 'get'
   })
 }

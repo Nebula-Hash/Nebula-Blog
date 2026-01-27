@@ -24,6 +24,11 @@ public class TagAdminVO {
     private String tagName;
 
     /**
+     * 排序
+     */
+    private Integer sort;
+
+    /**
      * 文章数量
      */
     private Long articleCount;

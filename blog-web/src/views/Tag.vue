@@ -1,22 +1,19 @@
 <template>
   <div class="tag-page">
-    <n-card :title="`标签: ${tagName}`">
+    <n-card :title="`标签: ${tagName || '加载中...'}`">
       <n-spin :show="loading">
-        <n-list v-if="articles.length > 0">
+        <n-list v-if="!loading && articles.length > 0">
           <n-list-item v-for="article in articles" :key="article.id">
             <ArticleCard :article="article" @click="goToArticle(article.id)" />
           </n-list-item>
         </n-list>
-        <n-empty v-else description="该标签下暂无文章" />
+        <n-empty v-else-if="!loading && articles.length === 0" description="该标签下暂无文章" />
       </n-spin>
 
-      <n-pagination
-        v-if="totalPages > 1"
-        v-model:page="currentPage"
-        :page-count="totalPages"
-        style="margin-top: 20px; justify-content: center"
-        @update:page="loadArticles"
-      />
+      <n-pagination v-if="total > pageSize" v-model:page="currentPage" :page-count="totalPages" :page-size="pageSize"
+        :item-count="total" show-size-picker :page-sizes="[10, 20, 30, 50]"
+        style="margin-top: 20px; justify-content: center" @update:page="handlePageChange"
+        @update:page-size="handlePageSizeChange" />
     </n-card>
   </div>
 </template>
@@ -25,43 +22,112 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getArticleList } from '@/api/article'
+import { getTagDetail } from '@/api/tag'
 import ArticleCard from '@/components/ArticleCard.vue'
-import { NCard, NList, NListItem, NEmpty, NSpin, NPagination } from 'naive-ui'
+import { NCard, NList, NListItem, NEmpty, NSpin, NPagination, useMessage } from 'naive-ui'
 
 const route = useRoute()
 const router = useRouter()
+const message = useMessage()
 
 const loading = ref(false)
 const articles = ref([])
 const tagName = ref('')
 const currentPage = ref(1)
 const pageSize = ref(10)
+const total = ref(0)
 const totalPages = ref(0)
 
+/**
+ * 获取标签名称
+ */
+const fetchTagName = async (tagId) => {
+  try {
+    const res = await getTagDetail(tagId)
+    if (res.code === 200 && res.data) {
+      tagName.value = res.data.tagName
+    } else {
+      tagName.value = '未知标签'
+    }
+  } catch (error) {
+    console.error('获取标签名称失败:', error)
+    tagName.value = '未知标签'
+  }
+}
+
+/**
+ * 加载文章列表
+ */
 const loadArticles = async () => {
+  const tagId = route.params.id
+  if (!tagId) {
+    message.error('标签ID不能为空')
+    return
+  }
+
   loading.value = true
   try {
-    const res = await getArticleList({
-      current: currentPage.value,
-      size: pageSize.value,
-      tagId: route.params.id
-    })
-    articles.value = res.data.records
-    totalPages.value = Math.ceil(res.data.total / pageSize.value)
-    tagName.value = `标签 ${route.params.id}`
+    // 并行获取标签名称和文章列表
+    const [articlesRes] = await Promise.all([
+      getArticleList({
+        current: currentPage.value,
+        size: pageSize.value,
+        tagId
+      }),
+      tagName.value ? Promise.resolve() : fetchTagName(tagId)
+    ])
+
+    if (articlesRes.code === 200 && articlesRes.data) {
+      articles.value = articlesRes.data.records || []
+      total.value = articlesRes.data.total || 0
+      totalPages.value = articlesRes.data.pages || 0
+    } else {
+      message.error(articlesRes.message || '加载文章列表失败')
+      articles.value = []
+    }
+  } catch (error) {
+    console.error('加载文章列表失败:', error)
+    message.error('加载文章列表失败，请稍后重试')
+    articles.value = []
   } finally {
     loading.value = false
   }
 }
 
+/**
+ * 跳转到文章详情
+ */
 const goToArticle = (id) => {
   router.push(`/article/${id}`)
 }
 
-watch(() => route.params.id, () => {
+/**
+ * 页码变化处理
+ */
+const handlePageChange = (page) => {
+  currentPage.value = page
+  loadArticles()
+  // 滚动到顶部
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+/**
+ * 每页数量变化处理
+ */
+const handlePageSizeChange = (size) => {
+  pageSize.value = size
   currentPage.value = 1
   loadArticles()
-})
+}
+
+// 监听路由参数变化
+watch(() => route.params.id, (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    currentPage.value = 1
+    tagName.value = ''
+    loadArticles()
+  }
+}, { immediate: false })
 
 onMounted(() => {
   loadArticles()
@@ -72,5 +138,12 @@ onMounted(() => {
 .tag-page {
   max-width: 900px;
   margin: 0 auto;
+  padding: 20px;
+}
+
+@media (max-width: 768px) {
+  .tag-page {
+    padding: 10px;
+  }
 }
 </style>

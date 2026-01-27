@@ -1,22 +1,19 @@
 <template>
   <div class="category-page">
-    <n-card :title="`分类: ${categoryName}`">
+    <n-card :title="`分类: ${categoryName || '加载中...'}`">
       <n-spin :show="loading">
-        <n-list v-if="articles.length > 0">
+        <n-list v-if="!loading && articles.length > 0">
           <n-list-item v-for="article in articles" :key="article.id">
             <ArticleCard :article="article" @click="goToArticle(article.id)" />
           </n-list-item>
         </n-list>
-        <n-empty v-else description="该分类下暂无文章" />
+        <n-empty v-else-if="!loading && articles.length === 0" description="该分类下暂无文章" />
       </n-spin>
 
-      <n-pagination
-        v-if="totalPages > 1"
-        v-model:page="currentPage"
-        :page-count="totalPages"
-        style="margin-top: 20px; justify-content: center"
-        @update:page="loadArticles"
-      />
+      <n-pagination v-if="total > pageSize" v-model:page="currentPage" :page-count="totalPages" :page-size="pageSize"
+        :item-count="total" show-size-picker :page-sizes="[10, 20, 30, 50]"
+        style="margin-top: 20px; justify-content: center" @update:page="handlePageChange"
+        @update:page-size="handlePageSizeChange" />
     </n-card>
   </div>
 </template>
@@ -25,45 +22,112 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getArticleList } from '@/api/article'
+import { getCategoryDetail } from '@/api/category'
 import ArticleCard from '@/components/ArticleCard.vue'
-import { NCard, NList, NListItem, NEmpty, NSpin, NPagination } from 'naive-ui'
+import { NCard, NList, NListItem, NEmpty, NSpin, NPagination, useMessage } from 'naive-ui'
 
 const route = useRoute()
 const router = useRouter()
+const message = useMessage()
 
 const loading = ref(false)
 const articles = ref([])
 const categoryName = ref('')
 const currentPage = ref(1)
 const pageSize = ref(10)
+const total = ref(0)
 const totalPages = ref(0)
 
+/**
+ * 获取分类名称
+ */
+const fetchCategoryName = async (categoryId) => {
+  try {
+    const res = await getCategoryDetail(categoryId)
+    if (res.code === 200 && res.data) {
+      categoryName.value = res.data.categoryName
+    } else {
+      categoryName.value = '未知分类'
+    }
+  } catch (error) {
+    console.error('获取分类名称失败:', error)
+    categoryName.value = '未知分类'
+  }
+}
+
+/**
+ * 加载文章列表
+ */
 const loadArticles = async () => {
+  const categoryId = route.params.id
+  if (!categoryId) {
+    message.error('分类ID不能为空')
+    return
+  }
+
   loading.value = true
   try {
-    const res = await getArticleList({
-      current: currentPage.value,
-      size: pageSize.value,
-      categoryId: route.params.id
-    })
-    articles.value = res.data.records
-    totalPages.value = Math.ceil(res.data.total / pageSize.value)
-    if (res.data.records.length > 0) {
-      categoryName.value = res.data.records[0].categoryName
+    // 并行获取分类名称和文章列表
+    const [articlesRes] = await Promise.all([
+      getArticleList({
+        current: currentPage.value,
+        size: pageSize.value,
+        categoryId
+      }),
+      categoryName.value ? Promise.resolve() : fetchCategoryName(categoryId)
+    ])
+
+    if (articlesRes.code === 200 && articlesRes.data) {
+      articles.value = articlesRes.data.records || []
+      total.value = articlesRes.data.total || 0
+      totalPages.value = articlesRes.data.pages || 0
+    } else {
+      message.error(articlesRes.message || '加载文章列表失败')
+      articles.value = []
     }
+  } catch (error) {
+    console.error('加载文章列表失败:', error)
+    message.error('加载文章列表失败，请稍后重试')
+    articles.value = []
   } finally {
     loading.value = false
   }
 }
 
+/**
+ * 跳转到文章详情
+ */
 const goToArticle = (id) => {
   router.push(`/article/${id}`)
 }
 
-watch(() => route.params.id, () => {
+/**
+ * 页码变化处理
+ */
+const handlePageChange = (page) => {
+  currentPage.value = page
+  loadArticles()
+  // 滚动到顶部
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+/**
+ * 每页数量变化处理
+ */
+const handlePageSizeChange = (size) => {
+  pageSize.value = size
   currentPage.value = 1
   loadArticles()
-})
+}
+
+// 监听路由参数变化
+watch(() => route.params.id, (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    currentPage.value = 1
+    categoryName.value = ''
+    loadArticles()
+  }
+}, { immediate: false })
 
 onMounted(() => {
   loadArticles()
@@ -74,5 +138,12 @@ onMounted(() => {
 .category-page {
   max-width: 900px;
   margin: 0 auto;
+  padding: 20px;
+}
+
+@media (max-width: 768px) {
+  .category-page {
+    padding: 10px;
+  }
 }
 </style>

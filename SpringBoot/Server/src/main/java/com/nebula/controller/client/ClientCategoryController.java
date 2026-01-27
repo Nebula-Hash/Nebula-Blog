@@ -6,6 +6,7 @@ import com.nebula.service.BlogCategoryService;
 import com.nebula.vo.CategoryClientVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
@@ -30,5 +31,14 @@ public class ClientCategoryController {
     public Result<List<CategoryClientVO>> getAllCategories() {
         List<CategoryClientVO> categories = categoryService.getAllCategoriesForClient();
         return Result.success(categories);
+    }
+
+    /**
+     * 根据ID获取分类详情
+     */
+    @GetMapping("/detail/{id}")
+    public Result<CategoryClientVO> getCategoryById(@PathVariable Long id) {
+        CategoryClientVO category = categoryService.getCategoryById(id);
+        return Result.success(category);
     }
 }

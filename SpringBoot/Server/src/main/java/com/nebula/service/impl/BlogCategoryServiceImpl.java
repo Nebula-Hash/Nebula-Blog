@@ -114,6 +114,21 @@ public class BlogCategoryServiceImpl implements BlogCategoryService {
         }).collect(Collectors.toList());
     }
 
+    @Override
+    public CategoryClientVO getCategoryById(Long id) {
+        BlogCategory category = categoryMapper.selectById(id);
+        if (category == null) {
+            throw new BusinessException("分类不存在");
+        }
+        CategoryClientVO vo = new CategoryClientVO();
+        vo.setId(category.getId());
+        vo.setCategoryName(category.getCategoryName());
+        // 获取该分类下的文章数量
+        Map<Long, Long> articleCountMap = getArticleCountByCategoryIds(List.of(id));
+        vo.setArticleCount(articleCountMap.getOrDefault(id, 0L));
+        return vo;
+    }
+
     /**
      * 批量查询分类下的文章数量
      *

@@ -22,4 +22,9 @@ public class TagDTO {
      */
     @NotBlank(message = "标签名称不能为空")
     private String tagName;
+
+    /**
+     * 排序
+     */
+    private Integer sort;
 }

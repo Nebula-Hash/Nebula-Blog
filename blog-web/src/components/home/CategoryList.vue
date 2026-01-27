@@ -6,33 +6,57 @@
                 <span style="font-weight: 600; font-size: 16px; color: rgba(255, 255, 255, 0.9);">分类</span>
             </n-space>
         </template>
-        <n-space vertical>
-            <div v-for="cat in categories.slice(0, 6)" :key="cat.id" class="category-item"
-                @click="goToCategory(cat.id)">
-                <span style="color: rgba(255, 255, 255, 0.85);">{{ cat.categoryName }}</span>
-                <n-tag :bordered="false" size="small">{{ cat.articleCount }}</n-tag>
-            </div>
-        </n-space>
+        <n-spin :show="loading" size="small">
+            <n-space v-if="!loading && categories.length > 0" vertical>
+                <div v-for="cat in displayCategories" :key="cat.id" class="category-item" @click="goToCategory(cat.id)">
+                    <span style="color: rgba(255, 255, 255, 0.85);">{{ cat.categoryName }}</span>
+                    <n-tag :bordered="false" size="small">{{ cat.articleCount || 0 }}</n-tag>
+                </div>
+            </n-space>
+            <n-empty v-else-if="!loading && categories.length === 0" description="暂无分类" size="small" />
+        </n-spin>
     </n-card>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getCategoryList } from '@/api/category'
-import { NCard, NTag, NSpace, NIcon } from 'naive-ui'
+import { NCard, NTag, NSpace, NIcon, NSpin, NEmpty, useMessage } from 'naive-ui'
 import { FolderOutline } from '@vicons/ionicons5'
 
 const router = useRouter()
+const message = useMessage()
+
+const loading = ref(false)
 const categories = ref([])
 
-// 加载分类列表
+// 显示前6个分类
+const displayCategories = computed(() => categories.value.slice(0, 6))
+
+/**
+ * 加载分类列表
+ */
 const loadCategories = async () => {
-    const res = await getCategoryList()
-    categories.value = res.data
+    loading.value = true
+    try {
+        const res = await getCategoryList()
+        if (res.code === 200 && res.data) {
+            categories.value = res.data
+        } else {
+            console.error('加载分类列表失败:', res.message)
+        }
+    } catch (error) {
+        console.error('加载分类列表失败:', error)
+        message.error('加载分类列表失败')
+    } finally {
+        loading.value = false
+    }
 }
 
-// 跳转到分类页面
+/**
+ * 跳转到分类页面
+ */
 const goToCategory = (id) => {
     router.push(`/category/${id}`)
 }

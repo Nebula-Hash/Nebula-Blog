@@ -2,9 +2,11 @@ package com.nebula.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.nebula.dto.TagDTO;
+import com.nebula.entity.BlogArticle;
 import com.nebula.entity.BlogArticleTag;
 import com.nebula.entity.BlogTag;
 import com.nebula.exception.BusinessException;
+import com.nebula.mapper.BlogArticleMapper;
 import com.nebula.mapper.BlogArticleTagMapper;
 import com.nebula.mapper.BlogTagMapper;
 import com.nebula.service.BlogTagService;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -30,6 +33,7 @@ public class BlogTagServiceImpl implements BlogTagService {
 
     private final BlogTagMapper tagMapper;
     private final BlogArticleTagMapper articleTagMapper;
+    private final BlogArticleMapper articleMapper;
 
     @Override
     public Long createTag(TagDTO tagDTO) {
@@ -64,7 +68,9 @@ public class BlogTagServiceImpl implements BlogTagService {
 
     @Override
     public List<TagAdminVO> getAllTagsForAdmin() {
-        List<BlogTag> tags = tagMapper.selectList(null);
+        LambdaQueryWrapper<BlogTag> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByAsc(BlogTag::getSort);
+        List<BlogTag> tags = tagMapper.selectList(wrapper);
         Map<Long, Long> articleCountMap = getArticleCountMap();
         return tags.stream().map(tag -> {
             TagAdminVO vo = new TagAdminVO();
@@ -76,7 +82,9 @@ public class BlogTagServiceImpl implements BlogTagService {
 
     @Override
     public List<TagClientVO> getAllTagsForClient() {
-        List<BlogTag> tags = tagMapper.selectList(null);
+        LambdaQueryWrapper<BlogTag> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByAsc(BlogTag::getSort);
+        List<BlogTag> tags = tagMapper.selectList(wrapper);
         Map<Long, Long> articleCountMap = getArticleCountMap();
         return tags.stream().map(tag -> {
             TagClientVO vo = new TagClientVO();
@@ -84,6 +92,20 @@ public class BlogTagServiceImpl implements BlogTagService {
             vo.setArticleCount(articleCountMap.getOrDefault(tag.getId(), 0L));
             return vo;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public TagClientVO getTagById(Long id) {
+        BlogTag tag = tagMapper.selectById(id);
+        if (tag == null) {
+            throw new BusinessException("标签不存在");
+        }
+        TagClientVO vo = new TagClientVO();
+        BeanUtils.copyProperties(tag, vo);
+        // 获取该标签下的文章数量
+        Map<Long, Long> articleCountMap = getArticleCountMap();
+        vo.setArticleCount(articleCountMap.getOrDefault(id, 0L));
+        return vo;
     }
 
     /**
@@ -106,12 +128,29 @@ public class BlogTagServiceImpl implements BlogTagService {
 
     /**
      * 获取所有标签的文章数量映射（解决N+1查询问题）
+     * 只统计已发布的文章（过滤草稿）
      *
      * @return Map<tagId, articleCount>
      */
     private Map<Long, Long> getArticleCountMap() {
+        // 查询所有已发布文章的ID
+        LambdaQueryWrapper<BlogArticle> articleWrapper = new LambdaQueryWrapper<>();
+        articleWrapper.eq(BlogArticle::getIsDraft, 0);
+        articleWrapper.select(BlogArticle::getId);
+        List<BlogArticle> publishedArticles = articleMapper.selectList(articleWrapper);
+        
+        if (publishedArticles.isEmpty()) {
+            return Map.of();
+        }
+        
+        Set<Long> publishedArticleIds = publishedArticles.stream()
+                .map(BlogArticle::getId)
+                .collect(Collectors.toSet());
+        
+        // 查询文章-标签关联，过滤出已发布文章的关联
         List<BlogArticleTag> articleTags = articleTagMapper.selectList(null);
         return articleTags.stream()
+                .filter(at -> publishedArticleIds.contains(at.getArticleId()))
                 .collect(Collectors.groupingBy(
                         BlogArticleTag::getTagId,
                         Collectors.counting()

@@ -6,6 +6,7 @@ import com.nebula.service.BlogTagService;
 import com.nebula.vo.TagClientVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
@@ -30,5 +31,14 @@ public class ClientTagController {
     public Result<List<TagClientVO>> getAllTags() {
         List<TagClientVO> tags = tagService.getAllTagsForClient();
         return Result.success(tags);
+    }
+
+    /**
+     * 根据ID获取标签详情
+     */
+    @GetMapping("/detail/{id}")
+    public Result<TagClientVO> getTagById(@PathVariable Long id) {
+        TagClientVO tag = tagService.getTagById(id);
+        return Result.success(tag);
     }
 }

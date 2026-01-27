@@ -49,4 +49,12 @@ public interface BlogTagService {
      * @return 标签列表
      */
     List<TagClientVO> getAllTagsForClient();
+
+    /**
+     * 根据ID获取标签详情（客户端）
+     *
+     * @param id 标签ID
+     * @return 标签详情
+     */
+    TagClientVO getTagById(Long id);
 }

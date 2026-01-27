@@ -10,31 +10,25 @@
         </n-button>
       </template>
 
-      <n-data-table
-        :columns="columns"
-        :data="categoryList"
-        :loading="loading"
-      />
+      <n-data-table :columns="columns" :data="categoryList" :loading="loading" :pagination="false" :bordered="false"
+        :single-line="false" />
     </n-card>
 
     <!-- 新增/编辑分类弹窗 -->
     <n-modal v-model:show="showModal" preset="card" :title="modalTitle" style="width: 500px">
       <n-form ref="formRef" :model="formData" :rules="rules" label-placement="left" label-width="100">
         <n-form-item label="分类名称" path="categoryName">
-          <n-input v-model:value="formData.categoryName" placeholder="请输入分类名称" />
+          <n-input v-model:value="formData.categoryName" placeholder="请输入分类名称" :maxlength="20" show-count />
         </n-form-item>
 
-        <n-form-item label="分类描述">
-          <n-input
-            v-model:value="formData.categoryDesc"
-            type="textarea"
-            placeholder="请输入分类描述"
-            :rows="3"
-          />
+        <n-form-item label="分类描述" path="categoryDesc">
+          <n-input v-model:value="formData.categoryDesc" type="textarea" placeholder="请输入分类描述（选填）" :rows="3"
+            :maxlength="200" show-count />
         </n-form-item>
 
-        <n-form-item label="排序">
-          <n-input-number v-model:value="formData.sort" placeholder="排序值" style="width: 100%" />
+        <n-form-item label="排序" path="sort">
+          <n-input-number v-model:value="formData.sort" placeholder="排序值（数字越小越靠前）" style="width: 100%" :min="0"
+            :step="1" />
         </n-form-item>
       </n-form>
 
@@ -68,17 +62,37 @@ const formData = ref({
 })
 
 const rules = {
-  categoryName: [{ required: true, message: '请输入分类名称', trigger: 'blur' }]
+  categoryName: [
+    { required: true, message: '请输入分类名称', trigger: 'blur' },
+    { min: 1, max: 20, message: '分类名称长度应在1-20个字符之间', trigger: 'blur' }
+  ],
+  categoryDesc: [
+    { max: 200, message: '分类描述不能超过200个字符', trigger: 'blur' }
+  ],
+  sort: [
+    { type: 'number', message: '排序必须是数字', trigger: 'blur' }
+  ]
 }
 
 const modalTitle = computed(() => (formData.value.id ? '编辑分类' : '新增分类'))
 
 const columns = [
   { title: 'ID', key: 'id', width: 80 },
-  { title: '分类名称', key: 'categoryName' },
+  { title: '分类名称', key: 'categoryName', width: 150 },
   { title: '分类描述', key: 'categoryDesc', ellipsis: { tooltip: true } },
   { title: '排序', key: 'sort', width: 100 },
-  { title: '创建时间', key: 'createTime', width: 180 },
+  {
+    title: '文章数量',
+    key: 'articleCount',
+    width: 120,
+    render: (row) => row.articleCount || 0
+  },
+  {
+    title: '上次更新',
+    key: 'updateTime',
+    width: 180,
+    render: (row) => formatDateTime(row.updateTime)
+  },
   {
     title: '操作',
     key: 'actions',
@@ -98,7 +112,7 @@ const columns = [
           h(
             NPopconfirm,
             {
-              onPositiveClick: () => handleDelete(row.id)
+              onPositiveClick: () => handleDelete(row.id, row.articleCount)
             },
             {
               trigger: () =>
@@ -107,13 +121,30 @@ const columns = [
                   { size: 'small', type: 'error' },
                   { icon: () => h(NIcon, null, { default: () => h(TrashOutline) }), default: () => '删除' }
                 ),
-              default: () => '确定要删除这个分类吗？'
+              default: () => row.articleCount > 0
+                ? `该分类下有 ${row.articleCount} 篇文章，确定要删除吗？`
+                : '确定要删除这个分类吗？'
             }
           )
         ]
       })
   }
 ]
+
+// 格式化日期时间
+const formatDateTime = (dateTime) => {
+  if (!dateTime) return '-'
+  const date = new Date(dateTime)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  })
+}
 
 const loadCategories = async () => {
   try {
@@ -122,6 +153,7 @@ const loadCategories = async () => {
     categoryList.value = res.data
   } catch (error) {
     console.error('加载分类列表失败:', error)
+    window.$message.error('加载分类列表失败，请稍后重试')
   } finally {
     loading.value = false
   }
@@ -137,13 +169,14 @@ const handleEdit = (row) => {
   showModal.value = true
 }
 
-const handleDelete = async (id) => {
+const handleDelete = async (id, articleCount) => {
   try {
     await deleteCategory(id)
     window.$message.success('删除成功')
-    loadCategories()
+    await loadCategories()
   } catch (error) {
     console.error('删除失败:', error)
+    window.$message.error(error.response?.data?.message || '删除失败，请稍后重试')
   }
 }
 
@@ -161,9 +194,14 @@ const handleSave = async () => {
     }
 
     showModal.value = false
-    loadCategories()
+    await loadCategories()
   } catch (error) {
     console.error('保存失败:', error)
+    if (error.errors) {
+      // 表单验证错误
+      return
+    }
+    window.$message.error(error.response?.data?.message || '保存失败，请稍后重试')
   } finally {
     saveLoading.value = false
   }
