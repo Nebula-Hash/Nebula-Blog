@@ -4,7 +4,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.nebula.controller.config.AdminController;
 import com.nebula.dto.LoginDTO;
 import com.nebula.result.Result;
-import com.nebula.service.AuthService;
+import com.nebula.service.authority.AuthService;
 import com.nebula.vo.LoginVO;
 import com.nebula.vo.UserInfoVO;
 import jakarta.validation.Valid;

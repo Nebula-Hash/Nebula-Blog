@@ -1,4 +1,4 @@
-package com.nebula.service.security;
+package com.nebula.service.authority.security;
 
 /**
  * 登录防护服务接口

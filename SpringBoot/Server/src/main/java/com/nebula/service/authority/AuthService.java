@@ -1,4 +1,4 @@
-package com.nebula.service;
+package com.nebula.service.authority;
 
 import com.nebula.dto.LoginDTO;
 import com.nebula.dto.RegisterDTO;
@@ -14,12 +14,12 @@ import com.nebula.vo.UserInfoVO;
 public interface AuthService {
 
     /**
-     * 用户登录
+     * 客户端用户登录
      *
      * @param loginDTO 登录参数
      * @return 登录结果
      */
-    LoginVO login(LoginDTO loginDTO);
+    LoginVO clientLogin(LoginDTO loginDTO);
 
     /**
      * 管理端用户登录（需校验管理员角色）
@@ -50,11 +50,11 @@ public interface AuthService {
     UserInfoVO getCurrentUser();
 
     /**
-     * 刷新 Token
+     * 客户端刷新 Token
      *
      * @return 新的 Token 信息
      */
-    LoginVO refreshToken();
+    LoginVO clientRefreshToken();
 
     /**
      * 管理端刷新 Token（需校验管理员角色）

@@ -1,4 +1,4 @@
-package com.nebula.service.security;
+package com.nebula.service.authority.security;
 
 /**
  * 注册限流服务接口
@@ -24,11 +24,4 @@ public interface RegisterLimitService {
      * @param ip 客户端IP
      */
     void recordRegister(String ip);
-
-    /**
-     * 获取客户端IP地址
-     *
-     * @return 客户端IP
-     */
-    String getClientIp();
 }

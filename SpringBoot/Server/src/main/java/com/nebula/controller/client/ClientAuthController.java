@@ -5,7 +5,7 @@ import com.nebula.controller.config.ClientController;
 import com.nebula.dto.LoginDTO;
 import com.nebula.dto.RegisterDTO;
 import com.nebula.result.Result;
-import com.nebula.service.AuthService;
+import com.nebula.service.authority.AuthService;
 import com.nebula.vo.LoginVO;
 import com.nebula.vo.UserInfoVO;
 import jakarta.validation.Valid;
@@ -33,7 +33,7 @@ public class ClientAuthController {
      */
     @PostMapping("/login")
     public Result<LoginVO> login(@Valid @RequestBody LoginDTO loginDTO) {
-        LoginVO loginVO = authService.login(loginDTO);
+        LoginVO loginVO = authService.clientLogin(loginDTO);
         return Result.success("登录成功", loginVO);
     }
 
@@ -78,7 +78,7 @@ public class ClientAuthController {
      */
     @PostMapping("/refresh")
     public Result<LoginVO> refreshToken() {
-        LoginVO loginVO = authService.refreshToken();
+        LoginVO loginVO = authService.clientRefreshToken();
         return Result.success("Token 刷新成功", loginVO);
     }
 

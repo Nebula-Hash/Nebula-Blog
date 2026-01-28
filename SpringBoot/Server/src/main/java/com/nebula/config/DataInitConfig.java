@@ -5,7 +5,7 @@ import com.nebula.entity.SysRole;
 import com.nebula.entity.SysUser;
 import com.nebula.mapper.SysRoleMapper;
 import com.nebula.mapper.SysUserMapper;
-import com.nebula.service.helper.AuthHelper;
+import com.nebula.service.authority.helper.AuthHelper;
 import com.nebula.utils.PasswordUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -94,19 +94,9 @@ public class DataInitConfig implements CommandLineRunner {
      * 初始化管理员账号
      */
     private void initAdminUser() {
-        // 检查是否已存在管理员账号
-        LambdaQueryWrapper<SysRole> roleQuery = new LambdaQueryWrapper<>();
-        roleQuery.eq(SysRole::getRoleKey, AuthHelper.ADMIN_ROLE_KEY);
-        SysRole adminRole = sysRoleMapper.selectOne(roleQuery);
-
-        if (adminRole == null) {
-            log.warn("管理员角色不存在，跳过管理员账号初始化");
-            return;
-        }
-
         // 检查是否已有管理员用户
         LambdaQueryWrapper<SysUser> userQuery = new LambdaQueryWrapper<>();
-        userQuery.eq(SysUser::getRoleId, adminRole.getId());
+        userQuery.eq(SysUser::getRoleKey, AuthHelper.ADMIN_ROLE_KEY);
         Long adminCount = sysUserMapper.selectCount(userQuery);
 
         if (adminCount > 0) {
@@ -119,7 +109,7 @@ public class DataInitConfig implements CommandLineRunner {
         adminUser.setUsername(adminUsername);
         adminUser.setPassword(PasswordUtils.encode(adminPassword));
         adminUser.setNickname(adminNickname);
-        adminUser.setRoleId(adminRole.getId());
+        adminUser.setRoleKey(AuthHelper.ADMIN_ROLE_KEY);
         adminUser.setStatus(1);
         sysUserMapper.insert(adminUser);
 

@@ -60,9 +60,9 @@ public class SysUser implements Serializable {
     private String intro;
 
     /**
-     * 角色ID
+     * 角色标识
      */
-    private Long roleId;
+    private String roleKey;
 
     /**
      * 状态 0-禁用 1-启用

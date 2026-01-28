@@ -1,16 +1,15 @@
-package com.nebula.service.impl;
+package com.nebula.service.authority.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.nebula.dto.LoginDTO;
 import com.nebula.dto.RegisterDTO;
-import com.nebula.entity.SysRole;
 import com.nebula.entity.SysUser;
 import com.nebula.exception.BusinessException;
 import com.nebula.mapper.SysUserMapper;
-import com.nebula.service.AuthService;
-import com.nebula.service.helper.AuthHelper;
-import com.nebula.service.security.LoginProtectionService;
-import com.nebula.service.security.RegisterLimitService;
+import com.nebula.service.authority.AuthService;
+import com.nebula.service.authority.helper.AuthHelper;
+import com.nebula.service.authority.security.LoginProtectionService;
+import com.nebula.service.authority.security.RegisterLimitService;
 import com.nebula.utils.PasswordUtils;
 import com.nebula.vo.LoginVO;
 import com.nebula.vo.UserInfoVO;
@@ -37,80 +36,20 @@ public class AuthServiceImpl implements AuthService {
     private final AuthHelper authHelper;
 
     @Override
-    public LoginVO login(LoginDTO loginDTO) {
-        String username = loginDTO.getUsername();
-
-        // 1. 检查账号是否被锁定
-        loginProtectionService.checkAccountLocked(username);
-
-        // 2. 查询用户
-        SysUser user = authHelper.findByUsername(username);
-        if (user == null) {
-            loginProtectionService.recordLoginFail(username);
-            throw new BusinessException("用户名或密码错误");
-        }
-
-        // 3. 校验密码
-        if (!PasswordUtils.matches(loginDTO.getPassword(), user.getPassword())) {
-            loginProtectionService.recordLoginFail(username);
-            throw new BusinessException("用户名或密码错误");
-        }
-
-        // 4. 校验用户状态
-        authHelper.checkUserStatus(user);
-
-        // 5. 登录成功处理
-        loginProtectionService.clearLoginFail(username);
-        String roleKey = authHelper.getRoleKey(user.getRoleId());
-
-        StpUtil.login(user.getId());
-        if (roleKey != null) {
-            StpUtil.getSession().set("roleKey", roleKey);
-        }
-
-        return authHelper.buildLoginVO(user, roleKey);
+    public LoginVO clientLogin(LoginDTO loginDTO) {
+        return doLogin(loginDTO, false);
     }
 
     @Override
     public LoginVO adminLogin(LoginDTO loginDTO) {
-        String username = loginDTO.getUsername();
-
-        // 1. 检查账号是否被锁定
-        loginProtectionService.checkAccountLocked(username);
-
-        // 2. 查询用户
-        SysUser user = authHelper.findByUsername(username);
-        if (user == null) {
-            loginProtectionService.recordLoginFail(username);
-            throw new BusinessException("用户名或密码错误");
-        }
-
-        // 3. 校验密码
-        if (!PasswordUtils.matches(loginDTO.getPassword(), user.getPassword())) {
-            loginProtectionService.recordLoginFail(username);
-            throw new BusinessException("用户名或密码错误");
-        }
-
-        // 4. 校验用户状态
-        authHelper.checkUserStatus(user);
-
-        // 5. 校验管理员角色
-        SysRole role = authHelper.checkAdminRole(user);
-
-        // 6. 登录成功处理
-        loginProtectionService.clearLoginFail(username);
-
-        StpUtil.login(user.getId());
-        StpUtil.getSession().set("roleKey", role.getRoleKey());
-
-        return authHelper.buildLoginVO(user, role.getRoleKey());
+        return doLogin(loginDTO, true);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public LoginVO register(RegisterDTO registerDTO) {
         // 1. 检查注册频率限制
-        String clientIp = registerLimitService.getClientIp();
+        String clientIp = AuthHelper.getClientIp();
         registerLimitService.checkRegisterLimit(clientIp);
 
         // 2. 校验两次密码是否一致
@@ -121,19 +60,16 @@ public class AuthServiceImpl implements AuthService {
         // 3. 检查用户名/邮箱/手机号是否已存在（合并为一次查询）
         authHelper.checkUserExists(registerDTO);
 
-        // 4. 查询普通用户角色ID
-        Long userRoleId = authHelper.getUserRoleId();
+        // 4. 创建用户
+        SysUser user = buildNewUser(registerDTO);
 
-        // 5. 创建用户
-        SysUser user = buildNewUser(registerDTO, userRoleId);
-
-        // 6. 保存用户（捕获唯一键冲突异常）
+        // 5. 保存用户（捕获唯一键冲突异常）
         saveUserWithDuplicateCheck(user);
 
-        // 7. 记录注册次数
+        // 6. 记录注册次数
         registerLimitService.recordRegister(clientIp);
 
-        // 8. 自动登录
+        // 7. 自动登录
         StpUtil.login(user.getId());
         StpUtil.getSession().set("roleKey", AuthHelper.USER_ROLE_KEY);
 
@@ -156,61 +92,103 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException("用户不存在");
         }
 
-        String roleKey = authHelper.getRoleKey(user.getRoleId());
-
         UserInfoVO userInfoVO = new UserInfoVO();
         BeanUtils.copyProperties(user, userInfoVO);
-        userInfoVO.setRoleKey(roleKey);
+        userInfoVO.setRoleKey(user.getRoleKey());
         return userInfoVO;
     }
 
     @Override
-    public LoginVO refreshToken() {
-        if (!StpUtil.isLogin()) {
-            throw new BusinessException(401, "Token已失效，请重新登录");
-        }
-
-        Long userId = StpUtil.getLoginIdAsLong();
-        SysUser user = sysUserMapper.selectById(userId);
-        if (user == null) {
-            throw new BusinessException("用户不存在");
-        }
-
-        authHelper.checkUserStatus(user);
-        String roleKey = authHelper.getRoleKey(user.getRoleId());
-
-        StpUtil.renewTimeout(86400);
-
-        return authHelper.buildLoginVO(user, roleKey);
+    public LoginVO clientRefreshToken() {
+        return doRefreshToken(false);
     }
 
     @Override
     public LoginVO adminRefreshToken() {
-        if (!StpUtil.isLogin()) {
-            throw new BusinessException(401, "Token已失效，请重新登录");
-        }
-
-        Long userId = StpUtil.getLoginIdAsLong();
-        SysUser user = sysUserMapper.selectById(userId);
-        if (user == null) {
-            throw new BusinessException("用户不存在");
-        }
-
-        authHelper.checkUserStatus(user);
-        SysRole role = authHelper.checkAdminRole(user);
-
-        StpUtil.renewTimeout(86400);
-        StpUtil.getSession().set("roleKey", role.getRoleKey());
-
-        return authHelper.buildLoginVO(user, role.getRoleKey());
+        return doRefreshToken(true);
     }
 
     // ======================== 私有方法 ========================
 
     /**
+     * 统一登录处理
+     *
+     * @param loginDTO     登录参数
+     * @param requireAdmin 是否需要管理员角色
+     * @return 登录结果
+     */
+    private LoginVO doLogin(LoginDTO loginDTO, boolean requireAdmin) {
+        String username = loginDTO.getUsername();
+
+        // 1. 检查账号是否被锁定
+        loginProtectionService.checkAccountLocked(username);
+
+        // 2. 查询用户
+        SysUser user = authHelper.findByUsername(username);
+        if (user == null) {
+            loginProtectionService.recordLoginFail(username);
+            throw new BusinessException("用户名或密码错误");
+        }
+
+        // 3. 校验密码
+        if (!PasswordUtils.matches(loginDTO.getPassword(), user.getPassword())) {
+            loginProtectionService.recordLoginFail(username);
+            throw new BusinessException("用户名或密码错误");
+        }
+
+        // 4. 校验用户状态
+        authHelper.checkUserStatus(user);
+
+        // 5. 校验管理员角色（仅管理端）
+        if (requireAdmin) {
+            authHelper.checkAdminRole(user);
+        }
+
+        // 6. 登录成功处理
+        loginProtectionService.clearLoginFail(username);
+        String roleKey = user.getRoleKey();
+
+        StpUtil.login(user.getId());
+        if (roleKey != null) {
+            StpUtil.getSession().set("roleKey", roleKey);
+        }
+
+        return authHelper.buildLoginVO(user, roleKey);
+    }
+
+    /**
+     * 统一刷新 Token 处理
+     *
+     * @param requireAdmin 是否需要管理员角色
+     * @return 登录结果
+     */
+    private LoginVO doRefreshToken(boolean requireAdmin) {
+        if (!StpUtil.isLogin()) {
+            throw new BusinessException(401, "Token已失效，请重新登录");
+        }
+
+        Long userId = StpUtil.getLoginIdAsLong();
+        SysUser user = sysUserMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException("用户不存在");
+        }
+
+        authHelper.checkUserStatus(user);
+
+        if (requireAdmin) {
+            authHelper.checkAdminRole(user);
+        }
+
+        StpUtil.renewTimeout(AuthHelper.TOKEN_TIMEOUT_SECONDS);
+        StpUtil.getSession().set("roleKey", user.getRoleKey());
+
+        return authHelper.buildLoginVO(user, user.getRoleKey());
+    }
+
+    /**
      * 构建新用户对象
      */
-    private SysUser buildNewUser(RegisterDTO registerDTO, Long userRoleId) {
+    private SysUser buildNewUser(RegisterDTO registerDTO) {
         SysUser user = new SysUser();
         user.setUsername(registerDTO.getUsername());
         user.setPassword(PasswordUtils.encode(registerDTO.getPassword()));
@@ -218,7 +196,7 @@ public class AuthServiceImpl implements AuthService {
                 ? registerDTO.getNickname() : registerDTO.getUsername());
         user.setEmail(StringUtils.hasText(registerDTO.getEmail()) ? registerDTO.getEmail() : null);
         user.setPhone(StringUtils.hasText(registerDTO.getPhone()) ? registerDTO.getPhone() : null);
-        user.setRoleId(userRoleId);
+        user.setRoleKey(AuthHelper.USER_ROLE_KEY);
         user.setStatus(1);
         return user;
     }

@@ -1,7 +1,8 @@
-package com.nebula.service.security.impl;
+package com.nebula.service.authority.security.impl;
 
 import com.nebula.exception.BusinessException;
-import com.nebula.service.security.LoginProtectionService;
+import com.nebula.service.authority.helper.AuthHelper;
+import com.nebula.service.authority.security.LoginProtectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -22,30 +23,15 @@ public class LoginProtectionServiceImpl implements LoginProtectionService {
 
     private final StringRedisTemplate redisTemplate;
 
-    /**
-     * 登录失败记录 Redis Key 前缀
-     */
-    private static final String LOGIN_FAIL_KEY_PREFIX = "nebula:login:fail:";
-
-    /**
-     * 最大登录失败次数
-     */
-    private static final int MAX_LOGIN_ATTEMPTS = 5;
-
-    /**
-     * 账号锁定时间（分钟）
-     */
-    private static final int LOCK_TIME_MINUTES = 30;
-
     @Override
     public void checkAccountLocked(String username) {
-        String key = LOGIN_FAIL_KEY_PREFIX + username;
+        String key = AuthHelper.LOGIN_FAIL_KEY_PREFIX + username;
         String failCountStr = redisTemplate.opsForValue().get(key);
         if (failCountStr != null) {
             int failCount = Integer.parseInt(failCountStr);
-            if (failCount >= MAX_LOGIN_ATTEMPTS) {
+            if (failCount >= AuthHelper.MAX_LOGIN_ATTEMPTS) {
                 Long ttl = redisTemplate.getExpire(key);
-                long remainMinutes = ttl != null ? (ttl / 60) + 1 : LOCK_TIME_MINUTES;
+                long remainMinutes = ttl != null ? (ttl / 60) + 1 : AuthHelper.LOCK_TIME_MINUTES;
                 throw new BusinessException("账号已被锁定，请" + remainMinutes + "分钟后再试");
             }
         }
@@ -53,18 +39,18 @@ public class LoginProtectionServiceImpl implements LoginProtectionService {
 
     @Override
     public void recordLoginFail(String username) {
-        String key = LOGIN_FAIL_KEY_PREFIX + username;
+        String key = AuthHelper.LOGIN_FAIL_KEY_PREFIX + username;
         // 使用原子操作 increment，避免竞态条件
         Long count = redisTemplate.opsForValue().increment(key);
         // 只在首次失败时设置过期时间，后续只增加计数
         if (count != null && count == 1) {
-            redisTemplate.expire(key, Duration.ofMinutes(LOCK_TIME_MINUTES));
+            redisTemplate.expire(key, Duration.ofMinutes(AuthHelper.LOCK_TIME_MINUTES));
         }
     }
 
     @Override
     public void clearLoginFail(String username) {
-        String key = LOGIN_FAIL_KEY_PREFIX + username;
+        String key = AuthHelper.LOGIN_FAIL_KEY_PREFIX + username;
         redisTemplate.delete(key);
     }
 }
