@@ -116,7 +116,7 @@ public class AuthHelper {
     }
 
     /**
-     * 检查用户名/邮箱/手机号是否已存在（合并为一次查询）
+     * 检查用户名/邮箱是否已存在（合并为一次查询）
      *
      * @param registerDTO 注册参数
      * @throws BusinessException 如果存在重复
@@ -132,11 +132,6 @@ public class AuthHelper {
             queryWrapper.or().eq(SysUser::getEmail, registerDTO.getEmail());
         }
 
-        // 手机号可选检查
-        if (StringUtils.hasText(registerDTO.getPhone())) {
-            queryWrapper.or().eq(SysUser::getPhone, registerDTO.getPhone());
-        }
-
         // 查询存在的用户
         List<SysUser> existUsers = sysUserMapper.selectList(queryWrapper);
 
@@ -148,10 +143,6 @@ public class AuthHelper {
                 if (StringUtils.hasText(registerDTO.getEmail())
                         && registerDTO.getEmail().equals(existUser.getEmail())) {
                     throw new BusinessException("邮箱已被注册");
-                }
-                if (StringUtils.hasText(registerDTO.getPhone())
-                        && registerDTO.getPhone().equals(existUser.getPhone())) {
-                    throw new BusinessException("手机号已被注册");
                 }
             }
         }

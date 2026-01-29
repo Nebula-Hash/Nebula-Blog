@@ -195,7 +195,6 @@ public class AuthServiceImpl implements AuthService {
         user.setNickname(StringUtils.hasText(registerDTO.getNickname()) 
                 ? registerDTO.getNickname() : registerDTO.getUsername());
         user.setEmail(StringUtils.hasText(registerDTO.getEmail()) ? registerDTO.getEmail() : null);
-        user.setPhone(StringUtils.hasText(registerDTO.getPhone()) ? registerDTO.getPhone() : null);
         user.setRoleKey(AuthHelper.USER_ROLE_KEY);
         user.setStatus(1);
         return user;
@@ -217,11 +216,9 @@ public class AuthServiceImpl implements AuthService {
                     throw new BusinessException("用户名已存在");
                 } else if (message.contains("email")) {
                     throw new BusinessException("邮箱已被注册");
-                } else if (message.contains("phone")) {
-                    throw new BusinessException("手机号已被注册");
                 }
             }
-            throw new BusinessException("用户名、邮箱或手机号已被注册");
+            throw new BusinessException("用户名或邮箱已被注册");
         }
     }
 }

@@ -1,70 +1,75 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import * as tokenService from '@/services/tokenService'
+import { getItem, setItem, removeItem } from '@/utils/storage'
 
 export const useUserStore = defineStore('user', () => {
-  const token = ref(localStorage.getItem('admin_token') || '')
-  const tokenExpireTime = ref(Number(localStorage.getItem('admin_token_expire')) || 0)
-  const userInfo = ref(JSON.parse(localStorage.getItem('admin_userInfo') || '{}'))
+  // 用户信息状态
+  const userInfo = ref(null)
 
   /**
    * 检查Token是否已过期
    */
   const isTokenExpired = computed(() => {
-    if (!token.value || !tokenExpireTime.value) return true
-    return Date.now() > tokenExpireTime.value
+    return tokenService.isTokenExpired()
   })
 
   /**
    * 检查是否已登录（Token存在且未过期）
    */
   const isLoggedIn = computed(() => {
-    return !!token.value && !isTokenExpired.value
+    return !!tokenService.getToken() && !isTokenExpired.value
   })
 
   /**
-   * 设置Token和过期时间
-   * @param {string} newToken - 新Token
-   * @param {number} timeout - 过期时间（秒）
-   */
-  const setToken = (newToken, timeout) => {
-    token.value = newToken
-    localStorage.setItem('admin_token', newToken)
-
-    if (timeout && timeout > 0) {
-      const expireTime = Date.now() + timeout * 1000
-      tokenExpireTime.value = expireTime
-      localStorage.setItem('admin_token_expire', String(expireTime))
-    }
-  }
-
-  /**
    * 设置用户信息
+   * @param {Object} info - 用户信息
    */
   const setUserInfo = (info) => {
     userInfo.value = info
-    localStorage.setItem('admin_userInfo', JSON.stringify(info))
+    setItem('admin_userInfo', info)
   }
 
   /**
-   * 登出，清除所有认证信息
+   * 清除用户信息
    */
-  const logout = () => {
-    token.value = ''
-    tokenExpireTime.value = 0
-    userInfo.value = {}
-    localStorage.removeItem('admin_token')
-    localStorage.removeItem('admin_token_expire')
-    localStorage.removeItem('admin_userInfo')
+  const clearUserInfo = () => {
+    userInfo.value = null
+    removeItem('admin_userInfo')
+  }
+
+  /**
+   * 清除所有认证信息
+   */
+  const clearAuth = () => {
+    userInfo.value = null
+    tokenService.clearToken()
+    removeItem('admin_userInfo')
+  }
+
+  /**
+   * 初始化 - 从localStorage恢复状态
+   */
+  const initialize = () => {
+    // 恢复用户信息
+    const savedUserInfo = getItem('admin_userInfo', null)
+    if (savedUserInfo) {
+      userInfo.value = savedUserInfo
+    }
+
+    // 检查Token是否过期
+    if (tokenService.isTokenExpired()) {
+      clearAuth()
+    }
   }
 
   return {
-    token,
-    tokenExpireTime,
     userInfo,
     isTokenExpired,
     isLoggedIn,
-    setToken,
     setUserInfo,
-    logout
+    clearUserInfo,
+    clearAuth,
+    initialize
   }
 })

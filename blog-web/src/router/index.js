@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import * as tokenService from '@/services/tokenService'
+import * as authService from '@/services/authService'
 import { useUserStore } from '@/stores/user'
 
 const routes = [
@@ -58,22 +60,38 @@ const router = createRouter({
 })
 
 // 路由守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
 
-  // 需要登录的页面
-  if (to.meta.requiresAuth) {
-    // 未登录
-    if (!userStore.token) {
-      window.$message?.warning('请先登录')
-      next('/')
-      return
-    }
+  // 不需要认证的页面
+  if (!to.meta.requiresAuth) {
+    next()
+    return
+  }
 
-    // Token已过期，清除状态并提示
-    if (userStore.isTokenExpired) {
+  // 需要认证的页面
+  if (!tokenService.getToken()) {
+    window.$message?.warning('请先登录')
+    next('/')
+    return
+  }
+
+  // Token已过期
+  if (tokenService.isTokenExpired()) {
+    userStore.clearAuth()
+    window.$message?.warning('登录已过期，请重新登录')
+    next('/')
+    return
+  }
+
+  // 检查用户信息
+  if (!userStore.userInfo) {
+    try {
+      await authService.getCurrentUser()
+    } catch (error) {
+      console.error('[Router] 获取用户信息失败:', error)
       userStore.clearAuth()
-      window.$message?.warning('登录已过期，请重新登录')
+      window.$message?.warning('获取用户信息失败，请重新登录')
       next('/')
       return
     }

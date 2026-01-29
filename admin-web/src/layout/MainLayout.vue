@@ -41,7 +41,7 @@
             <template #icon>
               <n-icon :component="PersonCircleOutline" />
             </template>
-            {{ userStore.userInfo.nickname || '用户' }}
+            {{ userInfo?.nickname || '用户' }}
           </n-button>
         </n-dropdown>
       </n-layout-header>
@@ -68,12 +68,15 @@ import {
   LogOutOutline,
   HomeOutline
 } from '@vicons/ionicons5'
-import { useUserStore } from '@/stores/user'
-import { logout } from '@/api/auth'
+import { useAuth } from '@/composables/useAuth'
+import { useTokenRefresh } from '@/composables/useTokenRefresh'
 
 const router = useRouter()
 const route = useRoute()
-const userStore = useUserStore()
+const { userInfo, logout } = useAuth()
+
+// 启动Token自动刷新
+useTokenRefresh()
 
 const collapsed = ref(false)
 const activeKey = ref(route.path)
@@ -85,7 +88,7 @@ const renderIcon = (icon) => {
 const menuOptions = [
   {
     label: '首页',
-    key: '/',
+    key: '/datapanel',
     icon: renderIcon(HomeOutline)
   },
   {
@@ -143,14 +146,7 @@ const handleMenuSelect = (key) => {
 
 const handleUserSelect = async (key) => {
   if (key === 'logout') {
-    try {
-      await logout()
-      userStore.logout()
-      window.$message.success('退出登录成功')
-      router.push('/login')
-    } catch (error) {
-      console.error('退出登录失败:', error)
-    }
+    await logout()
   }
 }
 </script>

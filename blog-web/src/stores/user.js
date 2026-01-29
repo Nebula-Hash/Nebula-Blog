@@ -1,116 +1,75 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { login, register, getUserInfo, logout } from '@/api/auth'
+import * as tokenService from '@/services/tokenService'
+import { getItem, setItem, removeItem } from '@/utils/storage'
 
 export const useUserStore = defineStore('user', () => {
-  const token = ref(localStorage.getItem('token') || '')
-  const tokenExpireTime = ref(Number(localStorage.getItem('token_expire')) || 0)
-  const userInfo = ref(JSON.parse(localStorage.getItem('userInfo') || 'null'))
+  // 用户信息状态
+  const userInfo = ref(null)
 
   /**
    * 检查Token是否已过期
    */
   const isTokenExpired = computed(() => {
-    if (!token.value || !tokenExpireTime.value) return true
-    return Date.now() > tokenExpireTime.value
+    return tokenService.isTokenExpired()
   })
 
   /**
    * 检查是否已登录（Token存在且未过期）
    */
   const isLoggedIn = computed(() => {
-    return !!token.value && !isTokenExpired.value
+    return !!tokenService.getToken() && !isTokenExpired.value
   })
 
   /**
-   * 设置Token和过期时间
-   * @param {string} newToken - 新Token
-   * @param {number} timeout - 过期时间（秒）
+   * 设置用户信息
+   * @param {Object} info - 用户信息
    */
-  const setToken = (newToken, timeout) => {
-    token.value = newToken
-    localStorage.setItem('token', newToken)
-
-    if (timeout && timeout > 0) {
-      const expireTime = Date.now() + timeout * 1000
-      tokenExpireTime.value = expireTime
-      localStorage.setItem('token_expire', String(expireTime))
-    }
-  }
-
-  // 登录
-  const handleLogin = async (loginForm) => {
-    const res = await login(loginForm)
-    setToken(res.data.token, res.data.tokenTimeout)
-    const info = {
-      userId: res.data.userId,
-      username: res.data.username,
-      nickname: res.data.nickname,
-      avatar: res.data.avatar,
-      roleKey: res.data.roleKey
-    }
+  const setUserInfo = (info) => {
     userInfo.value = info
-    localStorage.setItem('userInfo', JSON.stringify(info))
-    return res
-  }
-
-  // 注册
-  const handleRegister = async (registerForm) => {
-    const res = await register(registerForm)
-    setToken(res.data.token, res.data.tokenTimeout)
-    const info = {
-      userId: res.data.userId,
-      username: res.data.username,
-      nickname: res.data.nickname,
-      avatar: res.data.avatar,
-      roleKey: res.data.roleKey
-    }
-    userInfo.value = info
-    localStorage.setItem('userInfo', JSON.stringify(info))
-    return res
-  }
-
-  // 获取用户信息
-  const fetchUserInfo = async () => {
-    const res = await getUserInfo()
-    userInfo.value = res.data
-    localStorage.setItem('userInfo', JSON.stringify(res.data))
-    return res
-  }
-
-  // 登出
-  const handleLogout = async () => {
-    try {
-      await logout()
-    } catch (e) {
-      // 忽略登出接口错误
-    }
-    clearAuth()
+    setItem('userInfo', info)
   }
 
   /**
-   * 清除认证信息（静默清除，不调用接口）
+   * 清除用户信息
+   */
+  const clearUserInfo = () => {
+    userInfo.value = null
+    removeItem('userInfo')
+  }
+
+  /**
+   * 清除所有认证信息
    */
   const clearAuth = () => {
-    token.value = ''
-    tokenExpireTime.value = 0
     userInfo.value = null
-    localStorage.removeItem('token')
-    localStorage.removeItem('token_expire')
-    localStorage.removeItem('userInfo')
+    tokenService.clearToken()
+    removeItem('userInfo')
+  }
+
+  /**
+   * 初始化 - 从localStorage恢复状态
+   */
+  const initialize = () => {
+    // 恢复用户信息
+    const savedUserInfo = getItem('userInfo', null)
+    if (savedUserInfo) {
+      userInfo.value = savedUserInfo
+    }
+
+    // 检查Token是否过期
+    if (tokenService.isTokenExpired()) {
+      clearAuth()
+    }
   }
 
   return {
-    token,
-    tokenExpireTime,
     userInfo,
     isTokenExpired,
     isLoggedIn,
-    setToken,
-    handleLogin,
-    handleRegister,
-    fetchUserInfo,
-    handleLogout,
-    clearAuth
+    setUserInfo,
+    clearUserInfo,
+    clearAuth,
+    initialize
   }
 })

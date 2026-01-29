@@ -21,7 +21,12 @@
 
         <n-form ref="formRef" :model="formData" :rules="rules" size="large">
           <n-form-item path="username">
-            <n-input v-model:value="formData.username" placeholder="请输入用户名" @keyup.enter="handleLogin">
+            <n-input 
+              v-model:value="formData.username" 
+              placeholder="请输入用户名"
+              autocomplete="username"
+              @keyup.enter="handleLogin"
+            >
               <template #prefix>
                 <n-icon :component="PersonOutline" />
               </template>
@@ -29,8 +34,14 @@
           </n-form-item>
 
           <n-form-item path="password">
-            <n-input v-model:value="formData.password" type="password" show-password-on="click" placeholder="请输入密码"
-              @keyup.enter="handleLogin">
+            <n-input 
+              v-model:value="formData.password" 
+              type="password" 
+              show-password-on="click" 
+              placeholder="请输入密码"
+              autocomplete="current-password"
+              @keyup.enter="handleLogin"
+            >
               <template #prefix>
                 <n-icon :component="LockClosedOutline" />
               </template>
@@ -54,14 +65,12 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { NForm, NFormItem, NInput, NButton, NIcon } from 'naive-ui'
 import { PersonOutline, LockClosedOutline } from '@vicons/ionicons5'
-import { login } from '@/api/auth'
-import { useUserStore } from '@/stores/user'
+import { useAuth } from '@/composables/useAuth'
 
 const router = useRouter()
-const userStore = useUserStore()
+const { loading, login } = useAuth()
 
 const formRef = ref(null)
-const loading = ref(false)
 
 const formData = ref({
   username: '',
@@ -76,24 +85,13 @@ const rules = {
 const handleLogin = async () => {
   try {
     await formRef.value?.validate()
-    loading.value = true
-
-    const res = await login(formData.value)
-
-    // 保存Token和过期时间
-    userStore.setToken(res.data.token, res.data.tokenTimeout)
-    userStore.setUserInfo({
-      userId: res.data.userId,
-      username: res.data.username,
-      nickname: res.data.nickname
-    })
-
-    window.$message.success('登录成功')
-    router.push('/')
+    const success = await login(formData.value.username, formData.value.password)
+    if (success) {
+      router.push('/')
+    }
   } catch (error) {
-    console.error('登录失败:', error)
-  } finally {
-    loading.value = false
+    // 验证失败
+    console.error('表单验证失败:', error)
   }
 }
 </script>

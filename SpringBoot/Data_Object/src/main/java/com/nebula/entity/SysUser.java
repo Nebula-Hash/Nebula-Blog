@@ -45,11 +45,6 @@ public class SysUser implements Serializable {
     private String email;
 
     /**
-     * 手机号
-     */
-    private String phone;
-
-    /**
      * 头像
      */
     private String avatar;

@@ -50,7 +50,7 @@
           </n-button>
         </n-space>
 
-        <n-space class="user-actions" v-if="userStore.token">
+        <n-space class="user-actions" v-if="isLoggedIn">
           <n-button type="primary" @click="router.push('/write')">
             <template #icon>
               <n-icon :component="CreateOutline" />
@@ -58,12 +58,12 @@
             写文章
           </n-button>
           <n-dropdown :options="userOptions" @select="handleUserAction">
-            <n-avatar round :size="40" :src="userStore.userInfo?.avatar" />
+            <n-avatar round :size="40" :src="userInfo?.avatar" />
           </n-dropdown>
         </n-space>
         <n-space v-else>
-          <n-button @click="showLogin = true">登录</n-button>
-          <n-button type="primary" @click="showRegister = true">注册</n-button>
+          <n-button @click="showLoginModal = true">登录</n-button>
+          <n-button type="primary" @click="showRegisterModal = true">注册</n-button>
         </n-space>
       </div>
     </n-layout-header>
@@ -109,69 +109,29 @@
     </n-drawer-content>
   </n-drawer>
 
-  <!-- 登录对话框 -->
-  <n-modal v-model:show="showLogin" preset="card" title="登录" style="width: 400px">
-    <n-form ref="loginFormRef" :model="loginForm" :rules="loginRules">
-      <n-form-item path="username" label="用户名">
-        <n-input v-model:value="loginForm.username" placeholder="请输入用户名" />
-      </n-form-item>
-      <n-form-item path="password" label="密码">
-        <n-input
-          v-model:value="loginForm.password"
-          type="password"
-          placeholder="请输入密码"
-          @keyup.enter="handleLogin"
-        />
-      </n-form-item>
-    </n-form>
-    <template #footer>
-      <n-space justify="end">
-        <n-button @click="showLogin = false">取消</n-button>
-        <n-button type="primary" @click="handleLogin" :loading="loginLoading">登录</n-button>
-      </n-space>
-    </template>
-  </n-modal>
-
-  <!-- 注册对话框 -->
-  <n-modal v-model:show="showRegister" preset="card" title="注册" style="width: 400px">
-    <n-form ref="registerFormRef" :model="registerForm" :rules="registerRules">
-      <n-form-item path="username" label="用户名">
-        <n-input v-model:value="registerForm.username" placeholder="请输入用户名" />
-      </n-form-item>
-      <n-form-item path="nickname" label="昵称">
-        <n-input v-model:value="registerForm.nickname" placeholder="请输入昵称" />
-      </n-form-item>
-      <n-form-item path="email" label="邮箱">
-        <n-input v-model:value="registerForm.email" placeholder="请输入邮箱" />
-      </n-form-item>
-      <n-form-item path="password" label="密码">
-        <n-input v-model:value="registerForm.password" type="password" placeholder="请输入密码" />
-      </n-form-item>
-      <n-form-item path="confirmPassword" label="确认密码">
-        <n-input
-          v-model:value="registerForm.confirmPassword"
-          type="password"
-          placeholder="请再次输入密码"
-          @keyup.enter="handleRegister"
-        />
-      </n-form-item>
-    </n-form>
-    <template #footer>
-      <n-space justify="end">
-        <n-button @click="showRegister = false">取消</n-button>
-        <n-button type="primary" @click="handleRegister" :loading="registerLoading">注册</n-button>
-      </n-space>
-    </template>
-  </n-modal>
+  <!-- 登录模态框 -->
+  <LoginModal 
+    v-model="showLoginModal" 
+    @switch-to-register="switchToRegister"
+  />
+  
+  <!-- 注册模态框 -->
+  <RegisterModal 
+    v-model="showRegisterModal" 
+    @switch-to-login="switchToLogin"
+  />
 </template>
 
 <script setup>
 import { ref, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user'
+import { useAuth } from '@/composables/useAuth'
+import { useTokenRefresh } from '@/composables/useTokenRefresh'
 import { useThemeStore } from '@/stores/theme'
 import { getCategoryList } from '@/api/category'
 import { getTagList } from '@/api/tag'
+import LoginModal from '@/components/LoginModal.vue'
+import RegisterModal from '@/components/RegisterModal.vue'
 import {
   NLayout,
   NLayoutHeader,
@@ -187,10 +147,7 @@ import {
   NDrawerContent,
   NList,
   NListItem,
-  NTag,
-  NModal,
-  NForm,
-  NFormItem
+  NTag
 } from 'naive-ui'
 import {
   SearchOutline,
@@ -199,7 +156,6 @@ import {
   DocumentTextOutline,
   LogOutOutline,
   BookOutline,
-  NewspaperOutline,
   PricetagOutline,
   GridOutline,
   HomeOutline,
@@ -208,55 +164,20 @@ import {
 } from '@vicons/ionicons5'
 
 const router = useRouter()
-const userStore = useUserStore()
+const { isLoggedIn, userInfo, logout } = useAuth()
 const themeStore = useThemeStore()
+
+// 启动Token自动刷新
+useTokenRefresh()
 
 const searchKeyword = ref('')
 const showCategoryDrawer = ref(false)
 const showTagDrawer = ref(false)
-const showLogin = ref(false)
-const showRegister = ref(false)
+const showLoginModal = ref(false)
+const showRegisterModal = ref(false)
 
 const categories = ref([])
 const tags = ref([])
-
-const loginForm = ref({
-  username: '',
-  password: ''
-})
-
-const registerForm = ref({
-  username: '',
-  nickname: '',
-  email: '',
-  password: '',
-  confirmPassword: ''
-})
-
-const loginFormRef = ref(null)
-const registerFormRef = ref(null)
-const loginLoading = ref(false)
-const registerLoading = ref(false)
-
-const loginRules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
-}
-
-const registerRules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  nickname: [{ required: true, message: '请输入昵称', trigger: 'blur' }],
-  email: [{ required: true, type: 'email', message: '请输入正确的邮箱', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
-  confirmPassword: [
-    { required: true, message: '请再次输入密码', trigger: 'blur' },
-    {
-      validator: (rule, value) => value === registerForm.value.password,
-      message: '两次密码不一致',
-      trigger: 'blur'
-    }
-  ]
-}
 
 const userOptions = [
   {
@@ -295,68 +216,47 @@ const goToTag = (id) => {
   router.push(`/tag/${id}`)
 }
 
-const handleLogin = async () => {
-  try {
-    await loginFormRef.value?.validate()
-    loginLoading.value = true
-    await userStore.handleLogin(loginForm.value)
-    window.$message.success('登录成功')
-    showLogin.value = false
-    loginForm.value = { username: '', password: '' }
-  } catch (error) {
-    console.error(error)
-  } finally {
-    loginLoading.value = false
-  }
-}
-
-const handleRegister = async () => {
-  try {
-    await registerFormRef.value?.validate()
-    registerLoading.value = true
-    await userStore.handleRegister(registerForm.value)
-    window.$message.success('注册成功')
-    showRegister.value = false
-    registerForm.value = {
-      username: '',
-      nickname: '',
-      email: '',
-      password: '',
-      confirmPassword: ''
-    }
-  } catch (error) {
-    console.error(error)
-  } finally {
-    registerLoading.value = false
-  }
-}
-
 const handleUserAction = (key) => {
   if (key === 'logout') {
-    userStore.handleLogout()
-    window.$message.success('已退出登录')
-    router.push('/')
+    logout()
   } else if (key === 'my') {
     router.push('/my')
+  } else if (key === 'profile') {
+    router.push('/profile')
   }
+}
+
+const switchToRegister = () => {
+  showLoginModal.value = false
+  showRegisterModal.value = true
+}
+
+const switchToLogin = () => {
+  showRegisterModal.value = false
+  showLoginModal.value = true
 }
 
 const loadCategories = async () => {
-  const res = await getCategoryList()
-  categories.value = res.data
+  try {
+    const res = await getCategoryList()
+    categories.value = res.data
+  } catch (error) {
+    console.error('加载分类失败:', error)
+  }
 }
 
 const loadTags = async () => {
-  const res = await getTagList()
-  tags.value = res.data
+  try {
+    const res = await getTagList()
+    tags.value = res.data
+  } catch (error) {
+    console.error('加载标签失败:', error)
+  }
 }
 
 onMounted(() => {
   loadCategories()
   loadTags()
-  if (userStore.token && !userStore.userInfo) {
-    userStore.fetchUserInfo()
-  }
 })
 </script>
 

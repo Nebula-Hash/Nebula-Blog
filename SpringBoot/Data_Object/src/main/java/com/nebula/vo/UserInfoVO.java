@@ -34,11 +34,6 @@ public class UserInfoVO {
     private String email;
 
     /**
-     * 手机号
-     */
-    private String phone;
-
-    /**
      * 状态 0-禁用 1-启用
      */
     private Integer status;

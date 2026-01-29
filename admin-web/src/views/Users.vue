@@ -1,13 +1,8 @@
 <template>
   <div class="users-page">
     <n-card title="用户管理">
-      <n-data-table
-        :columns="columns"
-        :data="userList"
-        :loading="loading"
-        :pagination="pagination"
-        @update:page="handlePageChange"
-      />
+      <n-data-table :columns="columns" :data="userList" :loading="loading" :pagination="pagination"
+        @update:page="handlePageChange" />
     </n-card>
   </div>
 </template>
@@ -39,7 +34,6 @@ const columns = [
   { title: '用户名', key: 'username' },
   { title: '昵称', key: 'nickname' },
   { title: '邮箱', key: 'email' },
-  { title: '手机号', key: 'phone' },
   {
     title: '角色',
     key: 'roleId',
@@ -70,7 +64,6 @@ const loadUsers = async () => {
         username: 'admin',
         nickname: '管理员',
         email: 'admin@example.com',
-        phone: '13800138000',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin',
         roleId: 1,
         status: 1,
@@ -81,7 +74,6 @@ const loadUsers = async () => {
         username: 'author',
         nickname: '作者小王',
         email: 'author@example.com',
-        phone: '13800138001',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=author',
         roleId: 2,
         status: 1,

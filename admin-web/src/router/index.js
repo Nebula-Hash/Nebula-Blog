@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import * as tokenService from '@/services/tokenService'
+import * as authService from '@/services/authService'
 import { useUserStore } from '@/stores/user'
 
 const routes = [
@@ -70,13 +72,13 @@ const router = createRouter({
 })
 
 // 路由守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
 
   // 访问登录页
   if (to.path === '/login') {
     // 已登录且Token未过期，跳转到首页
-    if (userStore.token && !userStore.isTokenExpired) {
+    if (userStore.isLoggedIn) {
       next('/')
     } else {
       next()
@@ -85,18 +87,36 @@ router.beforeEach((to, from, next) => {
   }
 
   // 访问其他页面，需要登录
-  if (!userStore.token) {
+  if (!tokenService.getToken()) {
     next('/login')
     return
   }
 
-  // Token已过期，清除状态并跳转登录
-  if (userStore.isTokenExpired) {
-    userStore.logout()
+  // Token已过期
+  if (tokenService.isTokenExpired()) {
+    userStore.clearAuth()
     window.$message?.warning('登录已过期，请重新登录')
     next('/login')
     return
   }
+
+  // 检查用户信息，不存在则自动获取
+  if (!userStore.userInfo) {
+    try {
+      await authService.getCurrentUser()
+    } catch (error) {
+      console.error('[Router] 获取用户信息失败:', error)
+      userStore.clearAuth()
+      window.$message?.error('获取用户信息失败，请重新登录')
+      next('/login')
+      return
+    }
+  }
+
+  // 注意：管理员角色检查已由后端 Sa-Token 拦截器完成
+  // 如果用户不是管理员，后端会返回 403 错误
+  // 前端可选择在登录成功后验证 roleKey，提前拦截非管理员用户
+  // 但这不是必须的，因为后端已做了完整的权限校验
 
   next()
 })
