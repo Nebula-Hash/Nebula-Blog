@@ -82,6 +82,7 @@ import { AddOutline, SearchOutline, CreateOutline, TrashOutline } from '@vicons/
 import { getArticleList, publishArticle, updateArticle, deleteArticle } from '@/api/article'
 import { getCategoryList } from '@/api/category'
 import { getTagList } from '@/api/tag'
+import { showSuccess, showError, createPagination, updatePagination } from '@/utils/common'
 
 const loading = ref(false)
 const saveLoading = ref(false)
@@ -110,14 +111,7 @@ const rules = {
   content: [{ required: true, message: '请输入文章内容', trigger: 'blur' }]
 }
 
-const pagination = ref({
-  page: 1,
-  pageSize: 10,
-  pageCount: 1,
-  itemCount: 0,
-  showSizePicker: true,
-  pageSizes: [10, 20, 50]
-})
+const pagination = ref(createPagination())
 
 const columns = [
   { title: 'ID', key: 'id', width: 80 },
@@ -200,8 +194,7 @@ const loadArticles = async () => {
       keyword: searchKeyword.value
     })
     articleList.value = res.data.records
-    pagination.value.pageCount = res.data.pages
-    pagination.value.itemCount = res.data.total
+    updatePagination(pagination.value, res.data)
   } catch (error) {
     console.error('加载文章列表失败:', error)
   } finally {
@@ -266,35 +259,39 @@ const handleEdit = (row) => {
 const handleDelete = async (id) => {
   try {
     await deleteArticle(id)
-    window.$message.success('删除成功')
+    showSuccess('删除成功')
     loadArticles()
   } catch (error) {
     console.error('删除失败:', error)
+    showError(error, '删除失败')
   }
 }
 
 const handleCoverUpload = async ({ file, onFinish, onError }) => {
   try {
-    const res = await uploadImage(file.file)
-    if (res.code === 200) {
-      formData.value.coverImage = res.data
-      coverFileList.value = [
-        {
-          id: Date.now().toString(),
-          name: file.name,
-          status: 'finished',
-          url: res.data
-        }
-      ]
-      window.$message.success('封面上传成功')
-      onFinish()
-    } else {
-      window.$message.error(res.msg || '上传失败')
-      onError()
-    }
+    // TODO: 实现图片上传功能
+    // const res = await uploadImage(file.file)
+    // if (res.code === 200) {
+    //   formData.value.coverImage = res.data
+    //   coverFileList.value = [
+    //     {
+    //       id: Date.now().toString(),
+    //       name: file.name,
+    //       status: 'finished',
+    //       url: res.data
+    //     }
+    //   ]
+    //   showSuccess('封面上传成功')
+    //   onFinish()
+    // } else {
+    //   showError(res.msg || '上传失败')
+    //   onError()
+    // }
+    showError('图片上传功能待实现')
+    onError()
   } catch (error) {
     console.error('上传失败:', error)
-    window.$message.error('上传失败')
+    showError(error, '上传失败')
     onError()
   }
 }
@@ -312,10 +309,10 @@ const handleSave = async () => {
 
     if (formData.value.id) {
       await updateArticle(formData.value)
-      window.$message.success('更新成功')
+      showSuccess('更新成功')
     } else {
       await publishArticle(formData.value)
-      window.$message.success('发布成功')
+      showSuccess('发布成功')
     }
 
     showModal.value = false
@@ -323,6 +320,11 @@ const handleSave = async () => {
     loadArticles()
   } catch (error) {
     console.error('保存失败:', error)
+    if (error?.errors) {
+      // 表单验证错误
+      return
+    }
+    showError(error, '保存失败')
   } finally {
     saveLoading.value = false
   }

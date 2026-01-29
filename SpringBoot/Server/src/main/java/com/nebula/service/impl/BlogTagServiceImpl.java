@@ -7,7 +7,7 @@ import com.nebula.entity.RelevancyArticleTag;
 import com.nebula.entity.BlogTag;
 import com.nebula.exception.BusinessException;
 import com.nebula.mapper.BlogArticleMapper;
-import com.nebula.mapper.BlogArticleTagMapper;
+import com.nebula.mapper.RelevancyArticleTagMapper;
 import com.nebula.mapper.BlogTagMapper;
 import com.nebula.service.BlogTagService;
 import com.nebula.vo.TagAdminVO;
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 public class BlogTagServiceImpl implements BlogTagService {
 
     private final BlogTagMapper tagMapper;
-    private final BlogArticleTagMapper articleTagMapper;
+    private final RelevancyArticleTagMapper articleTagMapper;
     private final BlogArticleMapper articleMapper;
 
     @Override

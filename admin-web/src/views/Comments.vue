@@ -1,13 +1,8 @@
 <template>
   <div class="comments-page">
     <n-card title="评论管理">
-      <n-data-table
-        :columns="columns"
-        :data="commentList"
-        :loading="loading"
-        :pagination="pagination"
-        @update:page="handlePageChange"
-      />
+      <n-data-table :columns="columns" :data="commentList" :loading="loading" :pagination="pagination"
+        @update:page="handlePageChange" />
     </n-card>
   </div>
 </template>
@@ -16,18 +11,12 @@
 import { ref, h, onMounted } from 'vue'
 import { NButton, NTag, NSpace, NIcon, NPopconfirm } from 'naive-ui'
 import { TrashOutline } from '@vicons/ionicons5'
+import { showSuccess, createPagination } from '@/utils/common'
 
 const loading = ref(false)
 const commentList = ref([])
 
-const pagination = ref({
-  page: 1,
-  pageSize: 10,
-  pageCount: 1,
-  itemCount: 0,
-  showSizePicker: true,
-  pageSizes: [10, 20, 50]
-})
+const pagination = ref(createPagination())
 
 const columns = [
   { title: 'ID', key: 'id', width: 80 },
@@ -107,7 +96,7 @@ const handlePageChange = (page) => {
 }
 
 const handleDelete = async (id) => {
-  window.$message.success('删除成功')
+  showSuccess('删除成功')
   loadComments()
 }
 

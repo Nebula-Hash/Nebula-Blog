@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 public class BlogArticleServiceImpl implements BlogArticleService {
 
     private final BlogArticleMapper articleMapper;
-    private final BlogArticleTagMapper articleTagMapper;
+    private final RelevancyArticleTagMapper articleTagMapper;
     private final BlogArticleLikeMapper articleLikeMapper;
     private final BlogArticleCollectMapper articleCollectMapper;
     private final BlogViewHistoryMapper viewHistoryMapper;

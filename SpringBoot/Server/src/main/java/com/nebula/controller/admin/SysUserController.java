@@ -70,6 +70,14 @@ public class SysUserController {
             return Result.error("用户名已存在");
         }
         
+        // 检查邮箱是否已存在
+        if (userDTO.getEmail() != null && !userDTO.getEmail().trim().isEmpty()) {
+            SysUser emailUser = sysUserService.getUserByEmail(userDTO.getEmail());
+            if (emailUser != null) {
+                return Result.error("邮箱已被使用");
+            }
+        }
+        
         // 检查密码是否提供
         if (userDTO.getPassword() == null || userDTO.getPassword().trim().isEmpty()) {
             return Result.error("密码不能为空");
@@ -97,11 +105,11 @@ public class SysUserController {
             return Result.error("管理员不存在");
         }
         
-        // 如果修改了用户名，检查新用户名是否已存在
-        if (userDTO.getUsername() != null) {
-            SysUser userByUsername = sysUserService.getUserByUsername(userDTO.getUsername());
-            if (userByUsername != null && !userByUsername.getId().equals(userDTO.getId())) {
-                return Result.error("用户名已存在");
+        // 检查邮箱是否与其他用户重复
+        if (userDTO.getEmail() != null && !userDTO.getEmail().trim().isEmpty()) {
+            SysUser emailUser = sysUserService.getUserByEmail(userDTO.getEmail());
+            if (emailUser != null && !emailUser.getId().equals(userDTO.getId())) {
+                return Result.error("邮箱已被使用");
             }
         }
         
@@ -173,6 +181,14 @@ public class SysUserController {
             return Result.error("用户名已存在");
         }
         
+        // 检查邮箱是否已存在
+        if (userDTO.getEmail() != null && !userDTO.getEmail().trim().isEmpty()) {
+            SysUser emailUser = sysUserService.getUserByEmail(userDTO.getEmail());
+            if (emailUser != null) {
+                return Result.error("邮箱已被使用");
+            }
+        }
+        
         // 检查密码是否提供
         if (userDTO.getPassword() == null || userDTO.getPassword().trim().isEmpty()) {
             return Result.error("密码不能为空");
@@ -200,11 +216,11 @@ public class SysUserController {
             return Result.error("用户不存在");
         }
         
-        // 如果修改了用户名，检查新用户名是否已存在
-        if (userDTO.getUsername() != null) {
-            SysUser userByUsername = sysUserService.getUserByUsername(userDTO.getUsername());
-            if (userByUsername != null && !userByUsername.getId().equals(userDTO.getId())) {
-                return Result.error("用户名已存在");
+        // 检查邮箱是否与其他用户重复
+        if (userDTO.getEmail() != null && !userDTO.getEmail().trim().isEmpty()) {
+            SysUser emailUser = sysUserService.getUserByEmail(userDTO.getEmail());
+            if (emailUser != null && !emailUser.getId().equals(userDTO.getId())) {
+                return Result.error("邮箱已被使用");
             }
         }
         

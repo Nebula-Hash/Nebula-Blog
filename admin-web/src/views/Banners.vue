@@ -10,14 +10,8 @@
         </n-button>
       </template>
 
-      <n-data-table :columns="columns" :data="bannerList" :loading="loading" :pagination="false" />
-
-      <!-- 分页器 -->
-      <n-space justify="end" style="margin-top: 16px">
-        <n-pagination v-model:page="pagination.current" :page-count="pagination.pageCount" :page-size="pagination.size"
-          show-size-picker :page-sizes="[5, 10, 20, 50]" @update:page="handlePageChange"
-          @update:page-size="handlePageSizeChange" />
-      </n-space>
+      <n-data-table :columns="columns" :data="bannerList" :loading="loading" :pagination="pagination"
+        @update:page="handlePageChange" @update:page-size="handlePageSizeChange" />
     </n-card>
 
     <!-- 新增/编辑轮播图弹窗 -->
@@ -72,6 +66,7 @@ import { ref, h, onMounted, computed } from 'vue'
 import { NButton, NTag, NSpace, NIcon, NPopconfirm, NImage, NText } from 'naive-ui'
 import { AddOutline, CreateOutline, TrashOutline } from '@vicons/ionicons5'
 import { getBannerList, getBannerDetail, uploadBannerImage, addBanner, updateBanner, deleteBanner } from '@/api/banner'
+import { formatDateTime, showSuccess, showError, showInfo, createPagination, updatePagination } from '@/utils/common'
 
 const loading = ref(false)
 const saveLoading = ref(false)
@@ -80,13 +75,7 @@ const showModal = ref(false)
 const bannerList = ref([])
 const imageFileList = ref([])
 
-// 分页数据
-const pagination = ref({
-  current: 1,
-  size: 5,
-  pageCount: 0,
-  total: 0
-})
+const pagination = ref(createPagination(10))
 
 const formRef = ref(null)
 const formData = ref({
@@ -171,32 +160,16 @@ const columns = [
   }
 ]
 
-// 格式化日期时间
-const formatDateTime = (dateTime) => {
-  if (!dateTime) return '-'
-  const date = new Date(dateTime)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  })
-}
-
 // 加载轮播图列表
 const loadBanners = async () => {
   try {
     loading.value = true
-    const res = await getBannerList(pagination.value.current, pagination.value.size)
+    const res = await getBannerList(pagination.value.page, pagination.value.pageSize)
     bannerList.value = res.data.records
-    pagination.value.total = res.data.total
-    pagination.value.pageCount = res.data.pages
+    updatePagination(pagination.value, res.data)
   } catch (error) {
     console.error('加载轮播图列表失败:', error)
-    window.$message?.error('加载轮播图列表失败')
+    showError(error, '加载轮播图列表失败')
   } finally {
     loading.value = false
   }
@@ -204,14 +177,14 @@ const loadBanners = async () => {
 
 // 页码变化
 const handlePageChange = (page) => {
-  pagination.value.current = page
+  pagination.value.page = page
   loadBanners()
 }
 
 // 每页数量变化
 const handlePageSizeChange = (pageSize) => {
-  pagination.value.size = pageSize
-  pagination.value.current = 1
+  pagination.value.pageSize = pageSize
+  pagination.value.page = 1
   loadBanners()
 }
 
@@ -252,7 +225,7 @@ const handleEdit = async (id) => {
     showModal.value = true
   } catch (error) {
     console.error('获取轮播图详情失败:', error)
-    window.$message?.error('获取轮播图详情失败')
+    showError(error, '获取轮播图详情失败')
   } finally {
     loading.value = false
   }
@@ -262,15 +235,15 @@ const handleEdit = async (id) => {
 const handleDelete = async (id) => {
   try {
     await deleteBanner(id)
-    window.$message?.success('删除成功')
+    showSuccess('删除成功')
     // 如果删除后当前页没有数据，返回上一页
-    if (bannerList.value.length === 1 && pagination.value.current > 1) {
-      pagination.value.current--
+    if (bannerList.value.length === 1 && pagination.value.page > 1) {
+      pagination.value.page--
     }
     loadBanners()
   } catch (error) {
     console.error('删除失败:', error)
-    window.$message?.error('删除失败')
+    showError(error, '删除失败')
   }
 }
 
@@ -284,13 +257,13 @@ const handleImageUpload = async ({ file, onFinish, onError }) => {
     console.log('原始文件对象:', rawFile)
 
     if (!rawFile) {
-      window.$message?.error('无法获取文件，请重试')
+      showError('无法获取文件，请重试')
       onError()
       return
     }
 
     uploadLoading.value = true
-    window.$message?.info('图片上传中...')
+    showInfo('图片上传中...')
 
     // 上传到临时目录
     const res = await uploadBannerImage(file.file)
@@ -307,15 +280,15 @@ const handleImageUpload = async ({ file, onFinish, onError }) => {
         }
       ]
 
-      window.$message?.success('图片上传成功')
+      showSuccess('图片上传成功')
       onFinish()
     } else {
-      window.$message?.error(res.message || '上传失败')
+      showError(res.message || '上传失败')
       onError()
     }
   } catch (error) {
     console.error('上传失败:', error)
-    window.$message?.error('上传失败')
+    showError(error, '上传失败')
     onError()
   } finally {
     uploadLoading.value = false
@@ -338,11 +311,11 @@ const handleSave = async () => {
     if (formData.value.id) {
       // 编辑
       await updateBanner(formData.value)
-      window.$message?.success('更新成功')
+      showSuccess('更新成功')
     } else {
       // 新增
       await addBanner(formData.value)
-      window.$message?.success('添加成功')
+      showSuccess('添加成功')
     }
 
     showModal.value = false
@@ -353,7 +326,7 @@ const handleSave = async () => {
       return
     }
     console.error('保存失败:', error)
-    window.$message?.error('保存失败')
+    showError(error, '保存失败')
   } finally {
     saveLoading.value = false
   }

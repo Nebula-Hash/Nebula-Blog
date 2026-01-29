@@ -61,6 +61,16 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     }
 
     @Override
+    public SysUser getUserByEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return null;
+        }
+        LambdaQueryWrapper<SysUser> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysUser::getEmail, email);
+        return this.getOne(queryWrapper);
+    }
+
+    @Override
     public boolean addUser(UserDTO userDTO, String roleKey) {
         SysUser user = new SysUser();
         BeanUtils.copyProperties(userDTO, user);
@@ -73,6 +83,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         if (user.getStatus() == null) {
             user.setStatus(StatusEnum.ENABLED.getCode());
         }
+        // 处理可选唯一字段
+        normalizeOptionalFields(user);
         
         return this.save(user);
     }
@@ -82,6 +94,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         SysUser user = new SysUser();
         BeanUtils.copyProperties(userDTO, user);
         
+        // 用户名不允许修改
+        user.setUsername(null);
+        
         // 如果密码不为空，则加密更新
         if (userDTO.getPassword() != null && !userDTO.getPassword().trim().isEmpty()) {
             user.setPassword(PasswordUtils.encode(userDTO.getPassword()));
@@ -89,6 +104,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
             // 不更新密码
             user.setPassword(null);
         }
+        // 处理可选唯一字段
+        normalizeOptionalFields(user);
         
         return this.updateById(user);
     }
@@ -108,5 +125,16 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         UserAdminVO vo = new UserAdminVO();
         BeanUtils.copyProperties(user, vo);
         return vo;
+    }
+
+    /**
+     * 规范化可选唯一字段，将空字符串转为null避免数据库唯一索引冲突
+     *
+     * @param user 用户实体
+     */
+    private void normalizeOptionalFields(SysUser user) {
+        if (user.getEmail() != null && user.getEmail().trim().isEmpty()) {
+            user.setEmail(null);
+        }
     }
 }

@@ -42,6 +42,7 @@ import { ref, h, onMounted, computed } from 'vue'
 import { NButton, NSpace, NIcon, NPopconfirm, NTag } from 'naive-ui'
 import { AddOutline, CreateOutline, TrashOutline } from '@vicons/ionicons5'
 import { getTagList, createTag, updateTag, deleteTag } from '@/api/tag'
+import { formatDateTime, showSuccess, showError } from '@/utils/common'
 
 const loading = ref(false)
 const saveLoading = ref(false)
@@ -125,21 +126,6 @@ const columns = [
   }
 ]
 
-// 格式化日期时间
-const formatDateTime = (dateTime) => {
-  if (!dateTime) return '-'
-  const date = new Date(dateTime)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  })
-}
-
 const loadTags = async () => {
   try {
     loading.value = true
@@ -147,7 +133,7 @@ const loadTags = async () => {
     tagList.value = res.data
   } catch (error) {
     console.error('加载标签列表失败:', error)
-    window.$message.error('加载标签列表失败，请稍后重试')
+    showError(error, '加载标签列表失败，请稍后重试')
   } finally {
     loading.value = false
   }
@@ -166,11 +152,11 @@ const handleEdit = (row) => {
 const handleDelete = async (id, articleCount) => {
   try {
     await deleteTag(id)
-    window.$message.success('删除成功')
+    showSuccess('删除成功')
     await loadTags()
   } catch (error) {
     console.error('删除失败:', error)
-    window.$message.error(error.response?.data?.message || '删除失败，请稍后重试')
+    showError(error, '删除失败，请稍后重试')
   }
 }
 
@@ -181,10 +167,10 @@ const handleSave = async () => {
 
     if (formData.value.id) {
       await updateTag(formData.value)
-      window.$message.success('更新成功')
+      showSuccess('更新成功')
     } else {
       await createTag(formData.value)
-      window.$message.success('创建成功')
+      showSuccess('创建成功')
     }
 
     showModal.value = false
@@ -195,7 +181,7 @@ const handleSave = async () => {
       // 表单验证错误
       return
     }
-    window.$message.error(error.response?.data?.message || '保存失败，请稍后重试')
+    showError(error, '保存失败，请稍后重试')
   } finally {
     saveLoading.value = false
   }
