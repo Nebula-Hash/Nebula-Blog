@@ -3,6 +3,7 @@ package com.nebula.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 @TableName("relevancy_article_tag")
 public class RelevancyArticleTag implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
