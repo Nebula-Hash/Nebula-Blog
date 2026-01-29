@@ -289,14 +289,14 @@ onMounted(() => {
   color: rgba(255, 255, 255, 0.85);
 }
 
-.article-content >>> img {
+.article-content :deep(img) {
   max-width: 100%;
   height: auto;
   border-radius: 8px;
   margin: 20px 0;
 }
 
-.article-content >>> pre {
+.article-content :deep(pre) {
   background: #1F1F1F;
   padding: 16px;
   border-radius: 8px;
@@ -305,7 +305,7 @@ onMounted(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.article-content >>> code {
+.article-content :deep(code) {
   background: #1F1F1F;
   padding: 2px 6px;
   border-radius: 4px;

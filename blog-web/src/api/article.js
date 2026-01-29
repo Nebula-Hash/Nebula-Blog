@@ -36,15 +36,6 @@ export const getRecommendArticles = (limit = 5) => {
   })
 }
 
-// 获取我的文章
-export const getMyArticles = (params) => {
-  return request({
-    url: '/article/my',
-    method: 'get',
-    params
-  })
-}
-
 // 点赞文章
 export const likeArticle = (id) => {
   return request({

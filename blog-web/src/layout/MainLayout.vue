@@ -51,12 +51,6 @@
         </n-space>
 
         <n-space class="user-actions" v-if="isLoggedIn">
-          <n-button type="primary" @click="router.push('/write')">
-            <template #icon>
-              <n-icon :component="CreateOutline" />
-            </template>
-            写文章
-          </n-button>
           <n-dropdown :options="userOptions" @select="handleUserAction">
             <n-avatar round :size="40" :src="userInfo?.avatar" />
           </n-dropdown>
@@ -151,9 +145,7 @@ import {
 } from 'naive-ui'
 import {
   SearchOutline,
-  CreateOutline,
   PersonOutline,
-  DocumentTextOutline,
   LogOutOutline,
   BookOutline,
   PricetagOutline,
@@ -186,11 +178,6 @@ const userOptions = [
     icon: () => h(NIcon, null, { default: () => h(PersonOutline) })
   },
   {
-    label: '我的文章',
-    key: 'my',
-    icon: () => h(NIcon, null, { default: () => h(DocumentTextOutline) })
-  },
-  {
     label: '退出登录',
     key: 'logout',
     icon: () => h(NIcon, null, { default: () => h(LogOutOutline) })
@@ -219,8 +206,6 @@ const goToTag = (id) => {
 const handleUserAction = (key) => {
   if (key === 'logout') {
     logout()
-  } else if (key === 'my') {
-    router.push('/my')
   } else if (key === 'profile') {
     router.push('/profile')
   }
