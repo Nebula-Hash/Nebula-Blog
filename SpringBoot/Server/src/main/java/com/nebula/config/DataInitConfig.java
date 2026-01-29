@@ -3,6 +3,7 @@ package com.nebula.config;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.nebula.entity.SysRole;
 import com.nebula.entity.SysUser;
+import com.nebula.enumeration.StatusEnum;
 import com.nebula.mapper.SysRoleMapper;
 import com.nebula.mapper.SysUserMapper;
 import com.nebula.service.authority.helper.AuthHelper;
@@ -73,7 +74,7 @@ public class DataInitConfig implements CommandLineRunner {
             adminRole.setRoleName("管理员");
             adminRole.setRoleKey(AuthHelper.ADMIN_ROLE_KEY);
             adminRole.setRoleSort(1);
-            adminRole.setStatus(1);
+            adminRole.setStatus(StatusEnum.ENABLED.getCode());
             sysRoleMapper.insert(adminRole);
             log.info("已创建管理员角色: {}", AuthHelper.ADMIN_ROLE_KEY);
         }
@@ -84,7 +85,7 @@ public class DataInitConfig implements CommandLineRunner {
             userRole.setRoleName("普通用户");
             userRole.setRoleKey(AuthHelper.USER_ROLE_KEY);
             userRole.setRoleSort(2);
-            userRole.setStatus(1);
+            userRole.setStatus(StatusEnum.ENABLED.getCode());
             sysRoleMapper.insert(userRole);
             log.info("已创建普通用户角色: {}", AuthHelper.USER_ROLE_KEY);
         }
@@ -110,7 +111,7 @@ public class DataInitConfig implements CommandLineRunner {
         adminUser.setPassword(PasswordUtils.encode(adminPassword));
         adminUser.setNickname(adminNickname);
         adminUser.setRoleKey(AuthHelper.ADMIN_ROLE_KEY);
-        adminUser.setStatus(1);
+        adminUser.setStatus(StatusEnum.ENABLED.getCode());
         sysUserMapper.insert(adminUser);
 
         log.info("========================================");

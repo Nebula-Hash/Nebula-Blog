@@ -30,9 +30,4 @@ public class BannerClientVO {
      * 链接URL
      */
     private String linkUrl;
-
-    /**
-     * 排序
-     */
-    private Integer sort;
 }

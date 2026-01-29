@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nebula.dto.UserDTO;
 import com.nebula.entity.SysUser;
+import com.nebula.enumeration.StatusEnum;
 import com.nebula.mapper.SysUserMapper;
 import com.nebula.service.SysUserService;
 import com.nebula.utils.PasswordUtils;
@@ -70,7 +71,7 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         user.setPassword(PasswordUtils.encode(userDTO.getPassword()));
         // 默认启用状态
         if (user.getStatus() == null) {
-            user.setStatus(1);
+            user.setStatus(StatusEnum.ENABLED.getCode());
         }
         
         return this.save(user);

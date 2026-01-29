@@ -1,6 +1,6 @@
 package com.nebula.upload;
 
-import com.nebula.enumeration.FileType;
+import com.nebula.enumeration.FileTypeEnum;
 import com.nebula.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -46,7 +46,7 @@ public class FileUploadUtil {
      * @return 文件访问URL
      */
     public String uploadImage(MultipartFile file, String path) {
-        validateFile(file, FileType.IMAGE);
+        validateFile(file, FileTypeEnum.IMAGE);
         return upload(file, path);
     }
 
@@ -58,7 +58,7 @@ public class FileUploadUtil {
      * @return 临时文件访问URL
      */
     public String uploadImageToTemp(MultipartFile file, String basePath) {
-        validateFile(file, FileType.IMAGE);
+        validateFile(file, FileTypeEnum.IMAGE);
         return upload(file, TEMP_PREFIX + basePath);
     }
 
@@ -70,7 +70,7 @@ public class FileUploadUtil {
      * @return 文件访问URL
      */
     public String uploadArticle(MultipartFile file, String path) {
-        validateFile(file,FileType.MARKDOWN);
+        validateFile(file, FileTypeEnum.MARKDOWN);
         return upload(file, path);
     }
 
@@ -175,7 +175,7 @@ public class FileUploadUtil {
      * @param file       文件
      * @param fileType   文件类型
      */
-    public void validateFile(MultipartFile file, FileType fileType) {
+    public void validateFile(MultipartFile file, FileTypeEnum fileType) {
         if (file == null || file.isEmpty()) {
             throw new BusinessException("文件不能为空");
         }

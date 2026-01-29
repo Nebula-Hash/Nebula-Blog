@@ -1,6 +1,7 @@
 package com.nebula.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
@@ -15,6 +16,7 @@ public class CommentDTO {
     /**
      * 文章ID
      */
+    @NotNull(message = "文章ID不能为空")
     private Long articleId;
 
     /**

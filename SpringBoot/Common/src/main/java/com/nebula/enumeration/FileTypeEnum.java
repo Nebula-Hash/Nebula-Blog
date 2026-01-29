@@ -11,7 +11,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum FileType {
+public enum FileTypeEnum {
 
     /**
      * 图片类型

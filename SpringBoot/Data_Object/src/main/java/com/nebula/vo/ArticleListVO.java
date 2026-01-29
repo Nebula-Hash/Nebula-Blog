@@ -3,6 +3,7 @@ package com.nebula.vo;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 文章列表VO
@@ -87,6 +88,11 @@ public class ArticleListVO {
      * 收藏数
      */
     private Integer collectCount;
+
+    /**
+     * 标签列表
+     */
+    private List<TagClientVO> tags;
 
     /**
      * 创建时间

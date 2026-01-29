@@ -4,6 +4,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.nebula.dto.LoginDTO;
 import com.nebula.dto.RegisterDTO;
 import com.nebula.entity.SysUser;
+import com.nebula.enumeration.StatusEnum;
 import com.nebula.exception.BusinessException;
 import com.nebula.mapper.SysUserMapper;
 import com.nebula.service.authority.AuthService;
@@ -196,7 +197,7 @@ public class AuthServiceImpl implements AuthService {
                 ? registerDTO.getNickname() : registerDTO.getUsername());
         user.setEmail(StringUtils.hasText(registerDTO.getEmail()) ? registerDTO.getEmail() : null);
         user.setRoleKey(AuthHelper.USER_ROLE_KEY);
-        user.setStatus(1);
+        user.setStatus(StatusEnum.ENABLED.getCode());
         return user;
     }
 

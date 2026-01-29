@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nebula.dto.BannerDTO;
 import com.nebula.entity.BlogBanner;
+import com.nebula.enumeration.StatusEnum;
 import com.nebula.exception.BusinessException;
 import com.nebula.mapper.BlogBannerMapper;
 import com.nebula.service.BlogBannerService;
@@ -35,7 +36,7 @@ public class BlogBannerServiceImpl implements BlogBannerService {
     @Override
     public List<BannerClientVO> getActiveBanners() {
         LambdaQueryWrapper<BlogBanner> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(BlogBanner::getStatus, 1);
+        wrapper.eq(BlogBanner::getStatus, StatusEnum.ENABLED.getCode());
         wrapper.orderByAsc(BlogBanner::getSort);
         List<BlogBanner> banners = bannerMapper.selectList(wrapper);
         return banners.stream().map(banner -> {
@@ -81,7 +82,7 @@ public class BlogBannerServiceImpl implements BlogBannerService {
             banner.setSort(0);
         }
         if (banner.getStatus() == null) {
-            banner.setStatus(1);
+            banner.setStatus(StatusEnum.ENABLED.getCode());
         }
         bannerMapper.insert(banner);
         return banner.getId();
