@@ -13,8 +13,8 @@ import java.time.LocalDateTime;
  * @date 2026/1/22
  */
 @Data
-@TableName("blog_message")
-public class BlogMessage implements Serializable {
+@TableName("sys_notification")
+public class SysNotification implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

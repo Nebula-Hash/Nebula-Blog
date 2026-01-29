@@ -67,17 +67,6 @@ public class ClientArticleController {
     }
 
     /**
-     * 获取我的文章
-     */
-    @GetMapping("/my")
-    public Result<Page<ArticleListVO>> getMyArticles(
-            @RequestParam(defaultValue = "1") Long current,
-            @RequestParam(defaultValue = "10") Long size) {
-        Page<ArticleListVO> page = articleService.getMyArticles(current, size);
-        return Result.success(page);
-    }
-
-    /**
      * 点赞文章
      */
     @PostMapping("/like/{id}")

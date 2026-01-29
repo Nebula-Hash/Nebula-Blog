@@ -52,16 +52,16 @@ public class AdminArticleController {
     }
 
     /**
-     * 获取文章详情
+     * 获取文章详情（可查看草稿）
      */
     @GetMapping("/detail/{id}")
     public Result<ArticleVO> getArticleDetail(@PathVariable Long id) {
-        ArticleVO articleVO = articleService.getArticleDetail(id);
+        ArticleVO articleVO = articleService.getAdminArticleDetail(id);
         return Result.success(articleVO);
     }
 
     /**
-     * 分页查询文章列表
+     * 分页查询文章列表（包含草稿）
      */
     @GetMapping("/list")
     public Result<Page<ArticleListVO>> getArticleList(
@@ -69,8 +69,9 @@ public class AdminArticleController {
             @RequestParam(defaultValue = "10") Long size,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long tagId,
-            @RequestParam(required = false) String keyword) {
-        Page<ArticleListVO> page = articleService.getArticleList(current, size, categoryId, tagId, keyword);
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer isDraft) {
+        Page<ArticleListVO> page = articleService.getAdminArticleList(current, size, categoryId, tagId, keyword, isDraft);
         return Result.success(page);
     }
 }

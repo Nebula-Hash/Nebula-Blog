@@ -1,7 +1,7 @@
 package com.nebula.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.nebula.entity.BlogMessage;
+import com.nebula.entity.SysNotification;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -11,5 +11,5 @@ import org.apache.ibatis.annotations.Mapper;
  * @date 2026/1/22
  */
 @Mapper
-public interface BlogMessageMapper extends BaseMapper<BlogMessage> {
+public interface BlogMessageMapper extends BaseMapper<SysNotification> {
 }

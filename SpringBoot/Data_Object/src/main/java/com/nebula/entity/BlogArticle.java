@@ -70,34 +70,24 @@ public class BlogArticle implements Serializable {
     private Integer isDraft;
 
     /**
-     * 审核状态 0-待审核 1-审核通过 2-审核拒绝
-     */
-    private Integer auditStatus;
-
-    /**
      * 浏览量
      */
-    private Integer viewCount;
+    private Integer viewCount = 0;
 
     /**
      * 点赞数
      */
-    private Integer likeCount;
+    private Integer likeCount = 0;
 
     /**
      * 评论数
      */
-    private Integer commentCount;
+    private Integer commentCount = 0;
 
     /**
      * 收藏数
      */
-    private Integer collectCount;
-
-    /**
-     * 文章版本号
-     */
-    private Integer version;
+    private Integer collectCount = 0;
 
     /**
      * 逻辑删除 0-未删除 1-已删除

@@ -52,7 +52,7 @@ public class BlogComment implements Serializable {
     /**
      * 点赞数
      */
-    private Integer likeCount;
+    private Integer likeCount = 0;
 
     /**
      * 审核状态 0-待审核 1-审核通过 2-审核拒绝

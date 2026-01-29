@@ -11,7 +11,7 @@
  Target Server Version : 80041 (8.0.41)
  File Encoding         : 65001
 
- Date: 29/01/2026 12:04:23
+ Date: 29/01/2026 15:16:43
 */
 
 SET NAMES utf8mb4;
@@ -32,12 +32,10 @@ CREATE TABLE `blog_article`  (
   `html_content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT 'HTML内容',
   `is_top` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否置顶 0-否 1-是',
   `is_draft` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否草稿 0-否 1-是',
-  `audit_status` tinyint(1) NULL DEFAULT 1 COMMENT '审核状态 0-待审核 1-审核通过 2-审核拒绝',
   `view_count` int NULL DEFAULT 0 COMMENT '浏览量',
   `like_count` int NULL DEFAULT 0 COMMENT '点赞数',
   `comment_count` int NULL DEFAULT 0 COMMENT '评论数',
   `collect_count` int NULL DEFAULT 0 COMMENT '收藏数',
-  `version` int NULL DEFAULT 1 COMMENT '文章版本号',
   `deleted` tinyint(1) NULL DEFAULT 0 COMMENT '逻辑删除 0-未删除 1-已删除',
   `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -63,21 +61,6 @@ CREATE TABLE `blog_article_collect`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '文章收藏表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
--- Table structure for blog_article_history
--- ----------------------------
-DROP TABLE IF EXISTS `blog_article_history`;
-CREATE TABLE `blog_article_history`  (
-  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `article_id` bigint NOT NULL COMMENT '文章ID',
-  `title` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '文章标题',
-  `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '文章内容',
-  `version` int NULL DEFAULT 1 COMMENT '版本号',
-  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`id`) USING BTREE,
-  INDEX `idx_article_id`(`article_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '文章历史版本表' ROW_FORMAT = Dynamic;
-
--- ----------------------------
 -- Table structure for blog_article_like
 -- ----------------------------
 DROP TABLE IF EXISTS `blog_article_like`;
@@ -90,20 +73,6 @@ CREATE TABLE `blog_article_like`  (
   UNIQUE INDEX `uk_article_user`(`article_id` ASC, `user_id` ASC) USING BTREE,
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '文章点赞表' ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Table structure for blog_article_tag
--- ----------------------------
-DROP TABLE IF EXISTS `blog_article_tag`;
-CREATE TABLE `blog_article_tag`  (
-  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `article_id` bigint NOT NULL COMMENT '文章ID',
-  `tag_id` bigint NOT NULL COMMENT '标签ID',
-  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`id`) USING BTREE,
-  INDEX `idx_article_id`(`article_id` ASC) USING BTREE,
-  INDEX `idx_tag_id`(`tag_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '文章标签关联表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for blog_banner
@@ -174,25 +143,6 @@ CREATE TABLE `blog_comment_like`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '评论点赞表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
--- Table structure for blog_message
--- ----------------------------
-DROP TABLE IF EXISTS `blog_message`;
-CREATE TABLE `blog_message`  (
-  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '消息ID',
-  `user_id` bigint NOT NULL COMMENT '接收用户ID',
-  `from_user_id` bigint NULL DEFAULT NULL COMMENT '发送用户ID',
-  `type` tinyint(1) NOT NULL COMMENT '消息类型 1-评论 2-点赞 3-收藏 4-系统通知',
-  `content` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '消息内容',
-  `article_id` bigint NULL DEFAULT NULL COMMENT '相关文章ID',
-  `comment_id` bigint NULL DEFAULT NULL COMMENT '相关评论ID',
-  `is_read` tinyint(1) NULL DEFAULT 0 COMMENT '是否已读 0-未读 1-已读',
-  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`id`) USING BTREE,
-  INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
-  INDEX `idx_from_user_id`(`from_user_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '消息通知表' ROW_FORMAT = Dynamic;
-
--- ----------------------------
 -- Table structure for blog_tag
 -- ----------------------------
 DROP TABLE IF EXISTS `blog_tag`;
@@ -219,46 +169,41 @@ CREATE TABLE `blog_view_history`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_article_id`(`article_id` ASC) USING BTREE,
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 28 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '浏览记录表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 40 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '浏览记录表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
--- Table structure for sys_login_log
+-- Table structure for relevancy_article_tag
 -- ----------------------------
-DROP TABLE IF EXISTS `sys_login_log`;
-CREATE TABLE `sys_login_log`  (
-  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '日志ID',
-  `user_id` bigint NULL DEFAULT NULL COMMENT '用户ID',
-  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '用户名',
-  `ip_address` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'IP地址',
-  `login_location` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '登录地点',
-  `browser` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '浏览器',
-  `os` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '操作系统',
-  `status` tinyint(1) NULL DEFAULT 1 COMMENT '登录状态 0-失败 1-成功',
-  `msg` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '提示消息',
-  `login_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '登录时间',
+DROP TABLE IF EXISTS `relevancy_article_tag`;
+CREATE TABLE `relevancy_article_tag`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `article_id` bigint NOT NULL COMMENT '文章ID',
+  `tag_id` bigint NOT NULL COMMENT '标签ID',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`) USING BTREE,
-  INDEX `idx_user_id`(`user_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '登录日志表' ROW_FORMAT = Dynamic;
+  INDEX `idx_article_id`(`article_id` ASC) USING BTREE,
+  INDEX `idx_tag_id`(`tag_id` ASC) USING BTREE,
+  UNIQUE INDEX `uk_article_tag`(`article_id` ASC, `tag_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '文章标签关联表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
--- Table structure for sys_operation_log
+-- Table structure for sys_notification
 -- ----------------------------
-DROP TABLE IF EXISTS `sys_operation_log`;
-CREATE TABLE `sys_operation_log`  (
-  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '日志ID',
-  `user_id` bigint NULL DEFAULT NULL COMMENT '用户ID',
-  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '用户名',
-  `operation` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '操作类型',
-  `method` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '请求方法',
-  `params` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '请求参数',
-  `ip_address` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'IP地址',
-  `location` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '操作地点',
-  `status` tinyint(1) NULL DEFAULT 1 COMMENT '操作状态 0-失败 1-成功',
-  `error_msg` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '错误消息',
-  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+DROP TABLE IF EXISTS `sys_notification`;
+CREATE TABLE `sys_notification`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '消息ID',
+  `user_id` bigint NOT NULL COMMENT '接收用户ID',
+  `from_user_id` bigint NULL DEFAULT NULL COMMENT '发送用户ID',
+  `type` tinyint(1) NOT NULL COMMENT '消息类型 1-评论 2-点赞 3-收藏 4-系统通知',
+  `content` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '消息内容',
+  `article_id` bigint NULL DEFAULT NULL COMMENT '相关文章ID',
+  `comment_id` bigint NULL DEFAULT NULL COMMENT '相关评论ID',
+  `is_read` tinyint(1) NULL DEFAULT 0 COMMENT '是否已读 0-未读 1-已读',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`) USING BTREE,
-  INDEX `idx_user_id`(`user_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '操作日志表' ROW_FORMAT = Dynamic;
+  INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
+  INDEX `idx_from_user_id`(`from_user_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '消息通知表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for sys_role

@@ -3,7 +3,7 @@ package com.nebula.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.nebula.dto.TagDTO;
 import com.nebula.entity.BlogArticle;
-import com.nebula.entity.BlogArticleTag;
+import com.nebula.entity.RelevancyArticleTag;
 import com.nebula.entity.BlogTag;
 import com.nebula.exception.BusinessException;
 import com.nebula.mapper.BlogArticleMapper;
@@ -60,8 +60,8 @@ public class BlogTagServiceImpl implements BlogTagService {
 
     @Override
     public void deleteTag(Long id) {
-        LambdaQueryWrapper<BlogArticleTag> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(BlogArticleTag::getTagId, id);
+        LambdaQueryWrapper<RelevancyArticleTag> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(RelevancyArticleTag::getTagId, id);
         articleTagMapper.delete(wrapper);
         tagMapper.deleteById(id);
     }
@@ -148,11 +148,11 @@ public class BlogTagServiceImpl implements BlogTagService {
                 .collect(Collectors.toSet());
         
         // 查询文章-标签关联，过滤出已发布文章的关联
-        List<BlogArticleTag> articleTags = articleTagMapper.selectList(null);
+        List<RelevancyArticleTag> articleTags = articleTagMapper.selectList(null);
         return articleTags.stream()
                 .filter(at -> publishedArticleIds.contains(at.getArticleId()))
                 .collect(Collectors.groupingBy(
-                        BlogArticleTag::getTagId,
+                        RelevancyArticleTag::getTagId,
                         Collectors.counting()
                 ));
     }

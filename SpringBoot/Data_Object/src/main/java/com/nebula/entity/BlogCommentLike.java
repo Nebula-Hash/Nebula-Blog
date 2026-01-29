@@ -7,14 +7,14 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 文章标签关联实体类
+ * 评论点赞实体类
  *
  * @author Nebula-Hash
  * @date 2026/1/22
  */
 @Data
-@TableName("blog_article_tag")
-public class BlogArticleTag implements Serializable {
+@TableName("blog_comment_like")
+public class BlogCommentLike implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -25,14 +25,14 @@ public class BlogArticleTag implements Serializable {
     private Long id;
 
     /**
-     * 文章ID
+     * 评论ID
      */
-    private Long articleId;
+    private Long commentId;
 
     /**
-     * 标签ID
+     * 用户ID
      */
-    private Long tagId;
+    private Long userId;
 
     /**
      * 创建时间

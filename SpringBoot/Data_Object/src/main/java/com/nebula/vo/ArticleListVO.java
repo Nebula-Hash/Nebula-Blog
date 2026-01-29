@@ -64,6 +64,11 @@ public class ArticleListVO {
     private Integer isTop;
 
     /**
+     * 是否草稿
+     */
+    private Integer isDraft;
+
+    /**
      * 浏览量
      */
     private Integer viewCount;
