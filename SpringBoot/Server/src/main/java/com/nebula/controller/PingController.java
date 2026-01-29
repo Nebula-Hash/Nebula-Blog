@@ -1,9 +1,9 @@
 package com.nebula.controller;
 
 import com.nebula.result.Result;
-import com.nebula.vo.HealthCheckVO;
-import com.nebula.vo.VisitStatsVO;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 系统监控控制器
@@ -130,7 +131,7 @@ public class PingController {
     private HealthCheckVO.ComponentHealth checkRedis() {
         long startTime = System.currentTimeMillis();
         try {
-            String pong = redisTemplate.getConnectionFactory()
+            String pong = Objects.requireNonNull(redisTemplate.getConnectionFactory())
                     .getConnection()
                     .ping();
             long responseTime = System.currentTimeMillis() - startTime;
@@ -150,5 +151,81 @@ public class PingController {
                     .responseTime(responseTime)
                     .build();
         }
+    }
+
+    /**
+     * 健康检查响应对象
+     */
+    @Data
+    @Builder
+    public static class HealthCheckVO {
+        /**
+         * 服务整体状态：UP-正常 DOWN-异常
+         */
+        private String status;
+
+        /**
+         * 服务启动时间
+         */
+        private LocalDateTime startTime;
+
+        /**
+         * 运行时长（秒）
+         */
+        private Long uptime;
+
+        /**
+         * 各组件健康状态
+         */
+        private Map<String, ComponentHealth> components;
+
+        /**
+         * 组件健康信息
+         */
+        @Data
+        @Builder
+        public static class ComponentHealth {
+            /**
+             * 组件状态：UP-正常 DOWN-异常
+             */
+            private String status;
+
+            /**
+             * 状态描述
+             */
+            private String message;
+
+            /**
+             * 响应时间（毫秒）
+             */
+            private Long responseTime;
+        }
+    }
+
+    /**
+     * 访问统计响应对象
+     */
+    @Data
+    @Builder
+    public static class VisitStatsVO {
+        /**
+         * 总访问量
+         */
+        private Long totalVisits;
+
+        /**
+         * 今日访问量
+         */
+        private Long todayVisits;
+
+        /**
+         * 统计日期
+         */
+        private LocalDate date;
+
+        /**
+         * 统计时间
+         */
+        private LocalDateTime timestamp;
     }
 }

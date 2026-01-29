@@ -2,7 +2,9 @@ package com.nebula.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.nebula.dto.UserDTO;
 import com.nebula.entity.SysUser;
+import com.nebula.vo.UserAdminVO;
 
 /**
  * 用户服务接口
@@ -13,14 +15,22 @@ import com.nebula.entity.SysUser;
 public interface SysUserService extends IService<SysUser> {
 
     /**
-     * 分页查询用户
+     * 按角色分页查询用户
      *
      * @param current 当前页
      * @param size    每页大小
-     * @param username 用户名（可选）
+     * @param roleKey 角色标识
      * @return 分页结果
      */
-    Page<SysUser> pageUsers(Long current, Long size, String username);
+    Page<UserAdminVO> pageUsersByRole(Long current, Long size, String roleKey);
+
+    /**
+     * 根据ID查询用户详情
+     *
+     * @param id 用户ID
+     * @return 用户详情
+     */
+    UserAdminVO getUserById(Long id);
 
     /**
      * 根据用户名查询用户
@@ -29,4 +39,29 @@ public interface SysUserService extends IService<SysUser> {
      * @return 用户信息
      */
     SysUser getUserByUsername(String username);
+
+    /**
+     * 新增用户
+     *
+     * @param userDTO 用户信息
+     * @param roleKey 角色标识
+     * @return 是否成功
+     */
+    boolean addUser(UserDTO userDTO, String roleKey);
+
+    /**
+     * 更新用户
+     *
+     * @param userDTO 用户信息
+     * @return 是否成功
+     */
+    boolean updateUser(UserDTO userDTO);
+
+    /**
+     * 删除用户
+     *
+     * @param id 用户ID
+     * @return 是否成功
+     */
+    boolean deleteUser(Long id);
 }

@@ -5,13 +5,13 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 用户信息返回对象
+ * 用户管理视图对象（列表/详情）
  *
  * @author Nebula-Hash
- * @date 2026/1/22
+ * @date 2026/1/29
  */
 @Data
-public class UserInfoVO {
+public class UserAdminVO {
 
     /**
      * 用户ID
@@ -34,11 +34,6 @@ public class UserInfoVO {
     private String email;
 
     /**
-     * 状态 0-禁用 1-启用
-     */
-    private Integer status;
-
-    /**
      * 头像
      */
     private String avatar;
@@ -54,7 +49,17 @@ public class UserInfoVO {
     private String roleKey;
 
     /**
+     * 状态 0-禁用 1-启用
+     */
+    private Integer status;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;
+
+    /**
+     * 更新时间
+     */
+    private LocalDateTime updateTime;
 }
