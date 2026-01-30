@@ -76,13 +76,21 @@
 </template>
 
 <script setup>
-import { ref, h, onMounted } from 'vue'
+import { ref, h, onMounted, computed } from 'vue'
 import { NButton, NTag, NSpace, NIcon, NPopconfirm } from 'naive-ui'
 import { AddOutline, SearchOutline, CreateOutline, TrashOutline } from '@vicons/ionicons5'
 import { getArticleList, publishArticle, updateArticle, deleteArticle } from '@/api/article'
 import { getCategoryList } from '@/api/category'
 import { getTagList } from '@/api/tag'
-import { showSuccess, showError, createPagination, updatePagination } from '@/utils/common'
+import { showSuccess, createPagination, updatePagination } from '@/utils/common'
+import { createErrorHandler } from '@/utils/errorHandler'
+import { createArticleColumns } from '@/utils/tableColumns'
+import { articleTitleRules, articleContentRules } from '@/utils/validators'
+import { escapeHtml } from '@/utils/security'
+import { ARTICLE_STATUS, TOP_STATUS } from '@/config/constants'
+
+// 创建错误处理器
+const errorHandler = createErrorHandler('Articles')
 
 const loading = ref(false)
 const saveLoading = ref(false)
@@ -102,88 +110,22 @@ const formData = ref({
   categoryId: null,
   tagIds: [],
   content: '',
-  isTop: 0,
-  isDraft: 0
+  isTop: TOP_STATUS.NO,
+  isDraft: ARTICLE_STATUS.PUBLISHED
 })
 
 const rules = {
-  title: [{ required: true, message: '请输入文章标题', trigger: 'blur' }],
-  content: [{ required: true, message: '请输入文章内容', trigger: 'blur' }]
+  title: articleTitleRules,
+  content: articleContentRules
 }
 
 const pagination = ref(createPagination())
 
-const columns = [
-  { title: 'ID', key: 'id', width: 80 },
-  { title: '标题', key: 'title', ellipsis: { tooltip: true } },
-  {
-    title: '分类',
-    key: 'categoryName',
-    width: 120,
-    render: (row) => h(NTag, { type: 'success' }, { default: () => row.categoryName || '-' })
-  },
-  {
-    title: '作者',
-    key: 'authorName',
-    width: 120
-  },
-  {
-    title: '浏览量',
-    key: 'viewCount',
-    width: 100
-  },
-  {
-    title: '点赞数',
-    key: 'likeCount',
-    width: 100
-  },
-  {
-    title: '状态',
-    key: 'isDraft',
-    width: 100,
-    render: (row) =>
-      h(NTag, { type: row.isDraft === 0 ? 'success' : 'warning' }, { default: () => (row.isDraft === 0 ? '已发布' : '草稿') })
-  },
-  {
-    title: '创建时间',
-    key: 'createTime',
-    width: 180
-  },
-  {
-    title: '操作',
-    key: 'actions',
-    width: 180,
-    render: (row) =>
-      h(NSpace, null, {
-        default: () => [
-          h(
-            NButton,
-            {
-              size: 'small',
-              type: 'primary',
-              onClick: () => handleEdit(row)
-            },
-            { icon: () => h(NIcon, null, { default: () => h(CreateOutline) }), default: () => '编辑' }
-          ),
-          h(
-            NPopconfirm,
-            {
-              onPositiveClick: () => handleDelete(row.id)
-            },
-            {
-              trigger: () =>
-                h(
-                  NButton,
-                  { size: 'small', type: 'error' },
-                  { icon: () => h(NIcon, null, { default: () => h(TrashOutline) }), default: () => '删除' }
-                ),
-              default: () => '确定要删除这篇文章吗？'
-            }
-          )
-        ]
-      })
-  }
-]
+// 使用 computed 优化表格列配置（避免每次渲染都重新创建）
+const columns = computed(() => createArticleColumns({
+  onEdit: handleEdit,
+  onDelete: (row) => handleDelete(row.id)
+}))
 
 const loadArticles = async () => {
   try {
@@ -196,7 +138,7 @@ const loadArticles = async () => {
     articleList.value = res.data.records
     updatePagination(pagination.value, res.data)
   } catch (error) {
-    console.error('加载文章列表失败:', error)
+    errorHandler.handleLoad(error, '文章列表')
   } finally {
     loading.value = false
   }
@@ -210,7 +152,7 @@ const loadCategories = async () => {
       value: cat.id
     }))
   } catch (error) {
-    console.error('加载分类失败:', error)
+    errorHandler.handleLoad(error, '分类列表', true) // 静默处理
   }
 }
 
@@ -222,7 +164,7 @@ const loadTags = async () => {
       value: tag.id
     }))
   } catch (error) {
-    console.error('加载标签失败:', error)
+    errorHandler.handleLoad(error, '标签列表', true) // 静默处理
   }
 }
 
@@ -231,7 +173,7 @@ const handlePageChange = (page) => {
   loadArticles()
 }
 
-const handleEdit = (row) => {
+function handleEdit(row) {
   formData.value = {
     id: row.id,
     title: row.title,
@@ -241,7 +183,7 @@ const handleEdit = (row) => {
     tagIds: row.tagIds || [],
     content: row.content,
     isTop: row.isTop,
-    isDraft: 0
+    isDraft: ARTICLE_STATUS.PUBLISHED
   }
   if (row.coverImage) {
     coverFileList.value = [
@@ -262,8 +204,7 @@ const handleDelete = async (id) => {
     showSuccess('删除成功')
     loadArticles()
   } catch (error) {
-    console.error('删除失败:', error)
-    showError(error, '删除失败')
+    errorHandler.handleDelete(error, '文章')
   }
 }
 
@@ -284,14 +225,13 @@ const handleCoverUpload = async ({ file, onFinish, onError }) => {
     //   showSuccess('封面上传成功')
     //   onFinish()
     // } else {
-    //   showError(res.msg || '上传失败')
+    //   errorHandler.handle(null, '上传失败')
     //   onError()
     // }
-    showError('图片上传功能待实现')
+    errorHandler.handle(null, '图片上传功能待实现')
     onError()
   } catch (error) {
-    console.error('上传失败:', error)
-    showError(error, '上传失败')
+    errorHandler.handle(error, '上传失败')
     onError()
   }
 }
@@ -307,24 +247,33 @@ const handleSave = async () => {
     await formRef.value?.validate()
     saveLoading.value = true
 
-    if (formData.value.id) {
-      await updateArticle(formData.value)
-      showSuccess('更新成功')
-    } else {
-      await publishArticle(formData.value)
-      showSuccess('发布成功')
+    const action = formData.value.id ? '更新' : '发布'
+
+    // 准备提交数据，对用户输入进行 XSS 防护
+    const submitData = {
+      ...formData.value,
+      title: escapeHtml(formData.value.title),
+      summary: escapeHtml(formData.value.summary)
+      // 注意：content 是 Markdown 内容，在后端渲染时需要进行 XSS 防护
+      // 这里不对 content 进行转义，因为 Markdown 需要保留特殊字符
     }
 
+    if (submitData.id) {
+      await updateArticle(submitData)
+    } else {
+      await publishArticle(submitData)
+    }
+
+    showSuccess(`${action}成功`)
     showModal.value = false
     resetForm()
     loadArticles()
   } catch (error) {
-    console.error('保存失败:', error)
     if (error?.errors) {
-      // 表单验证错误
+      // 表单验证错误，不需要额外处理
       return
     }
-    showError(error, '保存失败')
+    errorHandler.handleSave(error, formData.value.id ? '更新' : '发布')
   } finally {
     saveLoading.value = false
   }
@@ -339,8 +288,8 @@ const resetForm = () => {
     categoryId: null,
     tagIds: [],
     content: '',
-    isTop: 0,
-    isDraft: 0
+    isTop: TOP_STATUS.NO,
+    isDraft: ARTICLE_STATUS.PUBLISHED
   }
   coverFileList.value = []
 }

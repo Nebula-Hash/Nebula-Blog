@@ -2,6 +2,12 @@
  * 公共工具函数
  */
 
+import { createDiscreteApi } from 'naive-ui'
+import { MESSAGE_CONFIG, PAGINATION_CONFIG, DEFAULTS } from '@/config/constants'
+
+// 创建独立的 Naive UI API 实例（不依赖 Vue 上下文）
+const { message } = createDiscreteApi(['message'])
+
 /**
  * 格式化日期时间
  * @param {string|Date} dateTime - 日期时间
@@ -9,11 +15,11 @@
  * @returns {string} 格式化后的日期时间字符串
  */
 export const formatDateTime = (dateTime, format = 'datetime') => {
-    if (!dateTime) return '-'
+    if (!dateTime) return DEFAULTS.EMPTY_TEXT
 
     const date = new Date(dateTime)
 
-    if (isNaN(date.getTime())) return '-'
+    if (isNaN(date.getTime())) return DEFAULTS.EMPTY_TEXT
 
     const options = {
         datetime: {
@@ -43,67 +49,55 @@ export const formatDateTime = (dateTime, format = 'datetime') => {
 
 /**
  * 显示成功消息
- * @param {string} message - 消息内容
+ * @param {string} content - 消息内容
+ * @param {number} duration - 显示时长（毫秒）
  */
-export const showSuccess = (message) => {
-    window.$message?.success(message)
+export const showSuccess = (content, duration = MESSAGE_CONFIG.SUCCESS_DURATION) => {
+    message.success(content, { duration })
 }
 
 /**
  * 显示错误消息
  * @param {string|Error} error - 错误信息或错误对象
  * @param {string} defaultMessage - 默认错误消息
+ * @param {number} duration - 显示时长（毫秒）
  */
-export const showError = (error, defaultMessage = '操作失败，请稍后重试') => {
-    const message = error?.response?.data?.message || error?.message || defaultMessage
-    window.$message?.error(message)
+export const showError = (error, defaultMessage = DEFAULTS.DEFAULT_ERROR_MESSAGE, duration = MESSAGE_CONFIG.ERROR_DURATION) => {
+    const content = error?.response?.data?.message || error?.message || defaultMessage
+    message.error(content, { duration })
 }
 
 /**
  * 显示信息消息
- * @param {string} message - 消息内容
+ * @param {string} content - 消息内容
+ * @param {number} duration - 显示时长（毫秒）
  */
-export const showInfo = (message) => {
-    window.$message?.info(message)
+export const showInfo = (content, duration = MESSAGE_CONFIG.INFO_DURATION) => {
+    message.info(content, { duration })
 }
 
 /**
  * 显示警告消息
- * @param {string} message - 消息内容
+ * @param {string} content - 消息内容
+ * @param {number} duration - 显示时长（毫秒）
  */
-export const showWarning = (message) => {
-    window.$message?.warning(message)
-}
-
-/**
- * 处理异步操作的错误
- * @param {Function} asyncFn - 异步函数
- * @param {string} errorMessage - 错误提示消息
- * @returns {Promise<any>}
- */
-export const handleAsyncError = async (asyncFn, errorMessage) => {
-    try {
-        return await asyncFn()
-    } catch (error) {
-        console.error(errorMessage, error)
-        showError(error, errorMessage)
-        throw error
-    }
+export const showWarning = (content, duration = MESSAGE_CONFIG.WARNING_DURATION) => {
+    message.warning(content, { duration })
 }
 
 /**
  * 创建分页配置对象
- * @param {number} pageSize - 每页大小，默认10
+ * @param {number} pageSize - 每页大小
  * @returns {Object} 分页配置对象
  */
-export const createPagination = (pageSize = 10) => {
+export const createPagination = (pageSize = PAGINATION_CONFIG.DEFAULT_PAGE_SIZE) => {
     return {
         page: 1,
         pageSize,
         pageCount: 1,
         itemCount: 0,
-        showSizePicker: true,
-        pageSizes: [10, 20, 50, 100]
+        showSizePicker: PAGINATION_CONFIG.SHOW_SIZE_PICKER,
+        pageSizes: PAGINATION_CONFIG.PAGE_SIZE_OPTIONS
     }
 }
 
@@ -118,31 +112,54 @@ export const updatePagination = (pagination, responseData) => {
 }
 
 /**
- * 获取用户名首字母（用于头像占位符）
+ * 获取用户名首字符（用于头像占位符）
+ * 中文用户名返回第一个汉字，英文用户名返回首字母大写
  * @param {string} username - 用户名
- * @returns {string} 首字母大写
+ * @returns {string} 首字符
  */
 export const getUserInitial = (username) => {
-    return username?.charAt(0).toUpperCase() || 'U'
+    if (!username) return DEFAULTS.AVATAR_PLACEHOLDER
+
+    const firstChar = username.charAt(0)
+
+    // 判断是否为中文字符（Unicode 范围：\u4e00-\u9fa5）
+    if (/[\u4e00-\u9fa5]/.test(firstChar)) {
+        return firstChar
+    }
+
+    // 英文字符返回大写
+    return firstChar.toUpperCase()
 }
 
 /**
  * 验证邮箱格式
  * @param {string} email - 邮箱地址
+ * @param {boolean} required - 是否必填，默认 false（选填时空值返回 true）
  * @returns {boolean} 是否有效
  */
-export const isValidEmail = (email) => {
-    if (!email) return true // 空值视为有效（选填字段）
+export const isValidEmail = (email, required = false) => {
+    // 空值处理
+    if (!email) {
+        return !required // 必填时空值无效，选填时空值有效
+    }
+
+    // 邮箱格式验证
     return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)
 }
 
 /**
  * 验证URL格式
  * @param {string} url - URL地址
+ * @param {boolean} required - 是否必填，默认 false（选填时空值返回 true）
  * @returns {boolean} 是否有效
  */
-export const isValidUrl = (url) => {
-    if (!url) return true // 空值视为有效（选填字段）
+export const isValidUrl = (url, required = false) => {
+    // 空值处理
+    if (!url) {
+        return !required // 必填时空值无效，选填时空值有效
+    }
+
+    // URL格式验证
     try {
         new URL(url)
         return true
@@ -151,66 +168,4 @@ export const isValidUrl = (url) => {
     }
 }
 
-/**
- * 截断文本
- * @param {string} text - 文本内容
- * @param {number} maxLength - 最大长度
- * @param {string} suffix - 后缀，默认 '...'
- * @returns {string} 截断后的文本
- */
-export const truncateText = (text, maxLength, suffix = '...') => {
-    if (!text || text.length <= maxLength) return text || ''
-    return text.substring(0, maxLength) + suffix
-}
 
-/**
- * 防抖函数
- * @param {Function} fn - 要防抖的函数
- * @param {number} delay - 延迟时间（毫秒）
- * @returns {Function} 防抖后的函数
- */
-export const debounce = (fn, delay = 300) => {
-    let timer = null
-    return function (...args) {
-        if (timer) clearTimeout(timer)
-        timer = setTimeout(() => {
-            fn.apply(this, args)
-        }, delay)
-    }
-}
-
-/**
- * 节流函数
- * @param {Function} fn - 要节流的函数
- * @param {number} delay - 延迟时间（毫秒）
- * @returns {Function} 节流后的函数
- */
-export const throttle = (fn, delay = 300) => {
-    let lastTime = 0
-    return function (...args) {
-        const now = Date.now()
-        if (now - lastTime >= delay) {
-            lastTime = now
-            fn.apply(this, args)
-        }
-    }
-}
-
-/**
- * 深拷贝对象
- * @param {any} obj - 要拷贝的对象
- * @returns {any} 拷贝后的对象
- */
-export const deepClone = (obj) => {
-    if (obj === null || typeof obj !== 'object') return obj
-    if (obj instanceof Date) return new Date(obj)
-    if (obj instanceof Array) return obj.map(item => deepClone(item))
-
-    const clonedObj = {}
-    for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
-            clonedObj[key] = deepClone(obj[key])
-        }
-    }
-    return clonedObj
-}

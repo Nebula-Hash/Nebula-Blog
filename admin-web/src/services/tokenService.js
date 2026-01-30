@@ -3,25 +3,18 @@
  * 统一管理Token的存储、获取、刷新和清除
  */
 import { getItem, setItem, removeItem } from '@/utils/storage'
+import { TOKEN_CONFIG, API_CONFIG } from '@/config/constants'
 import axios from 'axios'
-
-/**
- * Token服务配置
- */
-const config = {
-    keyPrefix: 'admin_',
-    baseURL: '/api/admin'
-}
 
 /**
  * 获取Token存储键名
  */
-const getTokenKey = () => `${config.keyPrefix}token`
+const getTokenKey = () => `${TOKEN_CONFIG.KEY_PREFIX}token`
 
 /**
  * 获取Token过期时间存储键名
  */
-const getTokenExpireKey = () => `${config.keyPrefix}token_expire`
+const getTokenExpireKey = () => `${TOKEN_CONFIG.KEY_PREFIX}token_expire`
 
 /**
  * 获取Token
@@ -80,8 +73,7 @@ export function isTokenExpiring() {
         return false
     }
 
-    const fiveMinutes = 5 * 60 * 1000
-    return Date.now() + fiveMinutes > expireTime && Date.now() < expireTime
+    return Date.now() + TOKEN_CONFIG.REFRESH_THRESHOLD > expireTime && Date.now() < expireTime
 }
 
 /**
@@ -107,8 +99,8 @@ export async function refreshToken() {
     try {
         // 创建独立的axios实例用于刷新Token
         const refreshRequest = axios.create({
-            baseURL: config.baseURL,
-            timeout: 10000
+            baseURL: API_CONFIG.BASE_URL,
+            timeout: API_CONFIG.TIMEOUT
         })
 
         const response = await refreshRequest.post('/auth/refresh', null, {

@@ -5,12 +5,13 @@
 import * as authApi from '@/api/auth'
 import * as tokenService from './tokenService'
 import { useUserStore } from '@/stores/user'
+import { CACHE_CONFIG, HTTP_STATUS } from '@/config/constants'
 
 // 用户信息缓存
 const userInfoCache = {
     data: null,
     timestamp: 0,
-    ttl: 5 * 60 * 1000 // 5分钟缓存
+    ttl: CACHE_CONFIG.USER_INFO_TTL
 }
 
 /**
@@ -23,7 +24,7 @@ export async function login(username, password) {
     try {
         const response = await authApi.login({ username, password })
 
-        if (response.code === 200) {
+        if (response.code === HTTP_STATUS.SUCCESS) {
             const { token, tokenTimeout, userId, username: uname, nickname, avatar, roleKey } = response.data
 
             // 设置Token
@@ -76,7 +77,7 @@ export async function getCurrentUser(force = false) {
         console.log('[AuthService] 从服务器获取用户信息')
         const response = await authApi.getUserInfo()
 
-        if (response.code === 200) {
+        if (response.code === HTTP_STATUS.SUCCESS) {
             const userStore = useUserStore()
             userStore.setUserInfo(response.data)
 
@@ -139,7 +140,7 @@ export async function checkLoginStatus() {
 
         // 调用后端检查接口
         const response = await authApi.checkLogin()
-        return response.code === 200
+        return response.code === HTTP_STATUS.SUCCESS
     } catch (error) {
         console.error('[AuthService] 检查登录状态失败:', error)
         return false
