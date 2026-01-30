@@ -24,13 +24,8 @@
 
         <!-- 子评论 -->
         <div v-if="comment.children && comment.children.length > 0" class="children-comments">
-          <CommentItem
-            v-for="child in comment.children"
-            :key="child.id"
-            :comment="child"
-            @reply="$emit('reply', child)"
-            @like="$emit('like', child.id)"
-          />
+          <CommentItem v-for="child in comment.children" :key="child.id" :comment="child" @reply="$emit('reply', child)"
+            @like="$emit('like', child.id)" />
         </div>
       </div>
     </n-space>
@@ -40,6 +35,7 @@
 <script setup>
 import { NSpace, NAvatar, NText, NButton, NIcon } from 'naive-ui'
 import { HeartOutline, ChatbubbleOutline } from '@vicons/ionicons5'
+import { formatDateTime } from '@/utils/common'
 
 const props = defineProps({
   comment: {
@@ -59,7 +55,7 @@ const handleLike = () => {
 }
 
 const formatDate = (date) => {
-  return new Date(date).toLocaleString('zh-CN')
+  return formatDateTime(date)
 }
 </script>
 

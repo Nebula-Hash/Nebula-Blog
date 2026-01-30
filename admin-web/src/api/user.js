@@ -91,3 +91,14 @@ export const deleteClient = (id) => {
         method: 'delete'
     })
 }
+
+// ==================== 用户搜索 ====================
+
+// 搜索用户（不区分角色）
+export const searchUsers = (params) => {
+    return request({
+        url: '/user/search',
+        method: 'get',
+        params
+    })
+}

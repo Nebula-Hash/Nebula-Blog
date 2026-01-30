@@ -6,6 +6,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import * as authService from '@/services/authService'
 import { useUserStore } from '@/stores/user'
+import { showSuccess, showError } from '@/utils/common'
 
 export function useAuth() {
     const router = useRouter()
@@ -27,16 +28,16 @@ export function useAuth() {
         try {
             const result = await authService.login(username, password)
             if (result.success) {
-                window.$message?.success('登录成功')
+                showSuccess('登录成功')
                 return true
             } else {
                 error.value = result.error || '登录失败'
-                window.$message?.error(error.value)
+                showError(error.value)
                 return false
             }
         } catch (err) {
             error.value = err.message || '登录失败'
-            window.$message?.error(error.value)
+            showError(error.value)
             return false
         } finally {
             loading.value = false
@@ -52,7 +53,7 @@ export function useAuth() {
 
         try {
             await authService.logout()
-            window.$message?.success('已退出登录')
+            showSuccess('已退出登录')
             router.push('/login')
         } catch (err) {
             console.error('登出失败:', err)

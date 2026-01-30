@@ -3,6 +3,7 @@
 import axios from 'axios'
 import * as tokenService from '@/services/tokenService'
 import { useUserStore } from '@/stores/user'
+import { showError, showWarning } from '@/utils/common'
 
 const request = axios.create({
   baseURL: '/api/client',
@@ -38,7 +39,13 @@ function showErrorMessage(message, type = 'error') {
   }
 
   errorMessageCache.set(message, now)
-  window.$message?.[type](message)
+
+  // 使用 common.js 的封装函数
+  if (type === 'warning') {
+    showWarning(message)
+  } else {
+    showError(message)
+  }
 
   // 清理过期缓存
   setTimeout(() => {

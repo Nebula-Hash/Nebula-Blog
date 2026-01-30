@@ -5,13 +5,13 @@
       <div class="article-info">
         <h3 class="article-title">{{ article.title }}</h3>
         <p class="article-summary">{{ article.summary }}</p>
-        
+
         <div class="article-meta">
           <n-space :size="10">
             <n-avatar round :size="24" :src="article.authorAvatar" />
             <n-text depth="3">{{ article.authorNickname }}</n-text>
           </n-space>
-          
+
           <n-space :size="15">
             <n-text depth="3" v-if="article.categoryName">
               <n-tag size="small" :bordered="false">{{ article.categoryName }}</n-tag>
@@ -36,6 +36,7 @@
 <script setup>
 import { NCard, NSpace, NAvatar, NText, NTag, NIcon } from 'naive-ui'
 import { EyeOutline, HeartOutline, ChatbubbleOutline } from '@vicons/ionicons5'
+import { formatDateTime } from '@/utils/common'
 
 const props = defineProps({
   article: {
@@ -51,7 +52,7 @@ const handleClick = () => {
 }
 
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('zh-CN')
+  return formatDateTime(date, 'date')
 }
 </script>
 

@@ -72,4 +72,15 @@ public interface SysUserService extends IService<SysUser> {
      * @return 是否成功
      */
     boolean deleteUser(Long id);
+
+    /**
+     * 搜索用户（多字段模糊匹配）
+     *
+     * @param current 当前页
+     * @param size    每页大小
+     * @param keyword 搜索关键词（匹配用户名、昵称）
+     * @param status  用户状态（可选）
+     * @return 分页结果
+     */
+    Page<UserAdminVO> searchUsers(Long current, Long size, String keyword, Integer status);
 }

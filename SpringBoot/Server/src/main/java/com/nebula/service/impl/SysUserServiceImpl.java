@@ -115,6 +115,36 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         return this.removeById(id);
     }
 
+    @Override
+    public Page<UserAdminVO> searchUsers(Long current, Long size, String keyword, Integer status) {
+        Page<SysUser> page = new Page<>(current, size);
+        LambdaQueryWrapper<SysUser> queryWrapper = new LambdaQueryWrapper<>();
+        
+        // 多字段模糊匹配（用户名或昵称）
+        queryWrapper.and(wrapper -> wrapper
+                .like(SysUser::getUsername, keyword)
+                .or()
+                .like(SysUser::getNickname, keyword)
+        );
+        
+        // 状态筛选（可选）
+        if (status != null) {
+            queryWrapper.eq(SysUser::getStatus, status);
+        }
+        
+        // 按创建时间倒序排列
+        queryWrapper.orderByDesc(SysUser::getCreateTime);
+        
+        Page<SysUser> userPage = this.page(page, queryWrapper);
+        
+        // 转换为VO
+        Page<UserAdminVO> voPage = new Page<>(userPage.getCurrent(), userPage.getSize(), userPage.getTotal());
+        List<UserAdminVO> voList = userPage.getRecords().stream().map(this::convertToVO).toList();
+        voPage.setRecords(voList);
+        
+        return voPage;
+    }
+
     /**
      * 实体转换为VO
      *

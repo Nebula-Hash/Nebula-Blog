@@ -15,19 +15,13 @@
               </div>
             </n-space>
             <n-space :size="15">
-              <n-button
-                :type="article.isLiked ? 'primary' : 'default'"
-                @click="handleLike"
-              >
+              <n-button :type="article.isLiked ? 'primary' : 'default'" @click="handleLike">
                 <template #icon>
                   <n-icon :component="article.isLiked ? Heart : HeartOutline" />
                 </template>
                 {{ article.likeCount }}
               </n-button>
-              <n-button
-                :type="article.isCollected ? 'primary' : 'default'"
-                @click="handleCollect"
-              >
+              <n-button :type="article.isCollected ? 'primary' : 'default'" @click="handleCollect">
                 <template #icon>
                   <n-icon :component="article.isCollected ? Star : StarOutline" />
                 </template>
@@ -61,13 +55,8 @@
           </n-space>
         </template>
         <!-- 发表评论 -->
-        <n-input
-          v-model:value="commentContent"
-          type="textarea"
-          placeholder="写下你的评论..."
-          :rows="3"
-          style="margin-bottom: 10px"
-        />
+        <n-input v-model:value="commentContent" type="textarea" placeholder="写下你的评论..." :rows="3"
+          style="margin-bottom: 10px" />
         <n-button type="primary" @click="handlePublishComment" :loading="commentLoading">
           发表评论
         </n-button>
@@ -84,12 +73,7 @@
 
     <!-- 回复对话框 -->
     <n-modal v-model:show="showReplyDialog" preset="card" title="回复评论" style="width: 500px">
-      <n-input
-        v-model:value="replyContent"
-        type="textarea"
-        placeholder="写下你的回复..."
-        :rows="3"
-      />
+      <n-input v-model:value="replyContent" type="textarea" placeholder="写下你的回复..." :rows="3" />
       <template #footer>
         <n-space justify="end">
           <n-button @click="showReplyDialog = false">取消</n-button>
@@ -109,6 +93,7 @@ import { useUserStore } from '@/stores/user'
 import { getArticleDetail, likeArticle, collectArticle } from '@/api/article'
 import { getCommentList, publishComment, likeComment } from '@/api/comment'
 import CommentItem from '@/components/CommentItem.vue'
+import { formatDateTime, showSuccess, showWarning, checkLogin, validateNotEmpty } from '@/utils/common'
 import {
   NCard,
   NSpace,
@@ -163,43 +148,34 @@ const loadComments = async () => {
 }
 
 const handleLike = async () => {
-  if (!userStore.token) {
-    window.$message.warning('请先登录')
-    return
-  }
+  if (!checkLogin(userStore)) return
+
   await likeArticle(route.params.id)
   article.value.isLiked = !article.value.isLiked
   article.value.likeCount += article.value.isLiked ? 1 : -1
-  window.$message.success(article.value.isLiked ? '点赞成功' : '取消点赞')
+  showSuccess(article.value.isLiked ? '点赞成功' : '取消点赞')
 }
 
 const handleCollect = async () => {
-  if (!userStore.token) {
-    window.$message.warning('请先登录')
-    return
-  }
+  if (!checkLogin(userStore)) return
+
   await collectArticle(route.params.id)
   article.value.isCollected = !article.value.isCollected
   article.value.collectCount += article.value.isCollected ? 1 : -1
-  window.$message.success(article.value.isCollected ? '收藏成功' : '取消收藏')
+  showSuccess(article.value.isCollected ? '收藏成功' : '取消收藏')
 }
 
 const handlePublishComment = async () => {
-  if (!userStore.token) {
-    window.$message.warning('请先登录')
-    return
-  }
-  if (!commentContent.value.trim()) {
-    window.$message.warning('请输入评论内容')
-    return
-  }
+  if (!checkLogin(userStore)) return
+  if (!validateNotEmpty(commentContent.value, '请输入评论内容')) return
+
   commentLoading.value = true
   try {
     await publishComment({
       articleId: route.params.id,
       content: commentContent.value
     })
-    window.$message.success('评论成功')
+    showSuccess('评论成功')
     commentContent.value = ''
     loadComments()
   } finally {
@@ -208,19 +184,15 @@ const handlePublishComment = async () => {
 }
 
 const handleReply = (comment) => {
-  if (!userStore.token) {
-    window.$message.warning('请先登录')
-    return
-  }
+  if (!checkLogin(userStore)) return
+
   replyTarget.value = comment
   showReplyDialog.value = true
 }
 
 const handlePublishReply = async () => {
-  if (!replyContent.value.trim()) {
-    window.$message.warning('请输入回复内容')
-    return
-  }
+  if (!validateNotEmpty(replyContent.value, '请输入回复内容')) return
+
   replyLoading.value = true
   try {
     await publishComment({
@@ -229,7 +201,7 @@ const handlePublishReply = async () => {
       replyUserId: replyTarget.value.userId,
       content: replyContent.value
     })
-    window.$message.success('回复成功')
+    showSuccess('回复成功')
     replyContent.value = ''
     showReplyDialog.value = false
     loadComments()
@@ -239,17 +211,15 @@ const handlePublishReply = async () => {
 }
 
 const handleCommentLike = async (commentId) => {
-  if (!userStore.token) {
-    window.$message.warning('请先登录')
-    return
-  }
+  if (!checkLogin(userStore)) return
+
   await likeComment(commentId)
-  window.$message.success('点赞成功')
+  showSuccess('点赞成功')
   loadComments()
 }
 
 const formatDate = (date) => {
-  return new Date(date).toLocaleString('zh-CN')
+  return formatDateTime(date)
 }
 
 onMounted(() => {

@@ -24,6 +24,31 @@ public class SysUserController {
 
     private final SysUserService sysUserService;
 
+    // ==================== 用户搜索 ====================
+
+    /**
+     * 搜索用户（多字段模糊匹配，不区分角色）
+     *
+     * @param current 当前页，默认1
+     * @param size    每页大小，默认10
+     * @param keyword 搜索关键词（匹配用户名、昵称，必填，最少…2字符）
+     * @param status  用户状态（可选，0-禁用 1-启用）
+     * @return 用户分页数据
+     */
+    @GetMapping("/search")
+    public Result<Page<UserAdminVO>> searchUsers(
+            @RequestParam(defaultValue = "1") Long current,
+            @RequestParam(defaultValue = "10") Long size,
+            @RequestParam String keyword,
+            @RequestParam(required = false) Integer status) {
+        // 关键词校验：必填且最少2个字符
+        if (keyword == null || keyword.trim().length() < 2) {
+            return Result.error("搜索关键词至少需要2个字符");
+        }
+        Page<UserAdminVO> page = sysUserService.searchUsers(current, size, keyword.trim(), status);
+        return Result.success(page);
+    }
+
     // ==================== 管理员账号管理 ====================
 
     /**

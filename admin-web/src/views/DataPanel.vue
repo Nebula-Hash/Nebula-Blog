@@ -218,6 +218,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
+import { formatDateTime } from '@/utils/common'
 import {
   DocumentTextOutline,
   PeopleOutline,
@@ -248,7 +249,7 @@ const stats = ref({
   viewCount: 12345
 })
 
-const currentTime = ref(new Date().toLocaleString('zh-CN'))
+const currentTime = ref(formatDateTime(new Date()))
 
 // 初始化访问趋势图表
 const initVisitChart = () => {

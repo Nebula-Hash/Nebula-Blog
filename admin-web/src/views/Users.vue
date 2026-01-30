@@ -1,6 +1,21 @@
 <template>
   <div class="users-page">
-    <!-- Tab切换：管理员 / 普通用户 -->
+    <!-- 搜索区域 -->
+    <n-card style="margin-bottom: 16px">
+      <n-space>
+        <n-input v-model:value="searchKeyword" placeholder="搜索用户名或昵称" clearable style="width: 300px"
+          @keyup.enter="handleSearch">
+          <template #prefix>
+            <n-icon :component="SearchOutline" />
+          </template>
+        </n-input>
+        <n-select v-model:value="searchStatus" placeholder="用户状态" clearable style="width: 150px"
+          :options="statusOptions" />
+        <n-button type="primary" @click="handleSearch">搜索</n-button>
+      </n-space>
+    </n-card>
+
+    <!-- Tab切换：管理员 / 普通用户 / 搜索结果 -->
     <n-tabs v-model:value="activeTab" type="line" animated @update:value="handleTabChange">
       <n-tab-pane name="admin" tab="管理员管理">
         <n-card>
@@ -37,6 +52,14 @@
           </template>
 
           <n-data-table :columns="clientColumns" :data="userList" :loading="loading" :pagination="pagination"
+            :bordered="false" :single-line="false" @update:page="handlePageChange"
+            @update:page-size="handlePageSizeChange" />
+        </n-card>
+      </n-tab-pane>
+
+      <n-tab-pane name="search" tab="搜索结果列表" :disabled="!isSearchMode">
+        <n-card title="搜索结果">
+          <n-data-table :columns="searchColumns" :data="userList" :loading="loading" :pagination="pagination"
             :bordered="false" :single-line="false" @update:page="handlePageChange"
             @update:page-size="handlePageSizeChange" />
         </n-card>
@@ -94,7 +117,7 @@
 <script setup>
 import { ref, h, onMounted, computed } from 'vue'
 import { NButton, NSpace, NIcon, NPopconfirm, NTag, NAvatar } from 'naive-ui'
-import { AddOutline, CreateOutline, TrashOutline } from '@vicons/ionicons5'
+import { AddOutline, CreateOutline, TrashOutline, SearchOutline } from '@vicons/ionicons5'
 import {
   getAdminList,
   createAdmin,
@@ -103,9 +126,10 @@ import {
   getClientList,
   createClient,
   updateClient,
-  deleteClient
+  deleteClient,
+  searchUsers
 } from '@/api/user'
-import { formatDateTime, showSuccess, showError, createPagination, updatePagination, getUserInitial } from '@/utils/common'
+import { formatDateTime, showSuccess, showError, createPagination, updatePagination, getUserInitial, isValidEmail } from '@/utils/common'
 
 const activeTab = ref('admin')
 const loading = ref(false)
@@ -113,6 +137,17 @@ const saveLoading = ref(false)
 const showModal = ref(false)
 const userList = ref([])
 const currentUserType = ref('admin') // 当前操作的用户类型
+
+// 搜索相关
+const searchKeyword = ref('')
+const searchStatus = ref(null)
+const isSearchMode = ref(false) // 标记是否处于搜索模式
+
+// 状态选项
+const statusOptions = [
+  { label: '启用', value: 1 },
+  { label: '禁用', value: 0 }
+]
 
 const formRef = ref(null)
 const formData = ref({
@@ -157,7 +192,7 @@ const rules = {
     {
       validator: (rule, value) => {
         // 邮箱为选填，但如果填写了则需要验证格式
-        if (value && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value)) {
+        if (value && !isValidEmail(value)) {
           return new Error('邮箱格式不正确')
         }
         return true
@@ -273,6 +308,100 @@ const adminColumns = createColumns('admin')
 // 普通用户列表列配置
 const clientColumns = createColumns('client')
 
+// 搜索结果列表列配置（移除ID，添加角色字段）
+const searchColumns = (() => {
+  const baseColumns = [
+    {
+      title: '角色',
+      key: 'roleKey',
+      width: 100,
+      render: (row) =>
+        h(
+          NTag,
+          { type: row.roleKey === 'admin' ? 'error' : 'info' },
+          { default: () => (row.roleKey === 'admin' ? '管理员' : '普通用户') }
+        )
+    },
+    {
+      title: '头像',
+      key: 'avatar',
+      width: 80,
+      render: (row) => {
+        if (row.avatar) {
+          return h(NAvatar, { src: row.avatar, round: true })
+        }
+        return h(NAvatar, { round: true }, { default: () => getUserInitial(row.username) })
+      }
+    },
+    { title: '用户名', key: 'username', width: 150 },
+    { title: '昵称', key: 'nickname', width: 150 },
+    { title: '邮箱', key: 'email', ellipsis: { tooltip: true } },
+    {
+      title: '个人简介',
+      key: 'intro',
+      ellipsis: { tooltip: true },
+      render: (row) => row.intro || '-'
+    },
+    {
+      title: '状态',
+      key: 'status',
+      width: 100,
+      render: (row) =>
+        h(
+          NTag,
+          { type: row.status === 1 ? 'success' : 'default' },
+          { default: () => (row.status === 1 ? '启用' : '禁用') }
+        )
+    },
+    {
+      title: '创建时间',
+      key: 'createTime',
+      width: 180,
+      render: (row) => formatDateTime(row.createTime)
+    },
+    {
+      title: '操作',
+      key: 'actions',
+      width: 180,
+      fixed: 'right',
+      render: (row) => {
+        const userType = row.roleKey === 'admin' ? 'admin' : 'client'
+        const userTypeText = row.roleKey === 'admin' ? '管理员' : '用户'
+        return h(NSpace, null, {
+          default: () => [
+            h(
+              NButton,
+              {
+                size: 'small',
+                type: 'primary',
+                onClick: () => handleEdit(row, userType)
+              },
+              { icon: () => h(NIcon, null, { default: () => h(CreateOutline) }), default: () => '编辑' }
+            ),
+            h(
+              NPopconfirm,
+              {
+                onPositiveClick: () => handleDelete(row.id, userType)
+              },
+              {
+                trigger: () =>
+                  h(
+                    NButton,
+                    { size: 'small', type: 'error' },
+                    { icon: () => h(NIcon, null, { default: () => h(TrashOutline) }), default: () => '删除' }
+                  ),
+                default: () => `确定要删除这个${userTypeText}吗？`
+              }
+            )
+          ]
+        })
+      }
+    }
+  ]
+
+  return baseColumns
+})()
+
 // 加载用户列表
 const loadUsers = async () => {
   try {
@@ -283,10 +412,20 @@ const loadUsers = async () => {
     }
 
     let res
-    if (activeTab.value === 'admin') {
-      res = await getAdminList(params)
+    // 如果处于搜索模式，使用搜索接口
+    if (activeTab.value === 'search') {
+      params.keyword = searchKeyword.value.trim()
+      if (searchStatus.value !== null) {
+        params.status = searchStatus.value
+      }
+      res = await searchUsers(params)
     } else {
-      res = await getClientList(params)
+      // 否则使用原有的分页接口
+      if (activeTab.value === 'admin') {
+        res = await getAdminList(params)
+      } else {
+        res = await getClientList(params)
+      }
     }
 
     userList.value = res.data.records
@@ -299,9 +438,40 @@ const loadUsers = async () => {
   }
 }
 
+// 搜索用户
+const handleSearch = () => {
+  const keyword = searchKeyword.value.trim()
+
+  // 如果关键词为空，提示用户
+  if (!keyword) {
+    showError('请输入搜索关键词（至少2个字符）')
+    return
+  }
+
+  // 验证关键词长度
+  if (keyword.length < 2) {
+    showError('搜索关键词至少需要2个字符')
+    return
+  }
+
+  // 切换到搜索结果Tab
+  isSearchMode.value = true
+  activeTab.value = 'search'
+  pagination.value.page = 1
+  loadUsers()
+}
+
 // Tab切换
 const handleTabChange = (value) => {
   activeTab.value = value
+
+  // 切换到管理员或普通用户Tab时，清空搜索条件
+  if (value === 'admin' || value === 'client') {
+    searchKeyword.value = ''
+    searchStatus.value = null
+    isSearchMode.value = false
+  }
+
   pagination.value.page = 1
   loadUsers()
 }
