@@ -24,17 +24,20 @@ import { useRoute, useRouter } from 'vue-router'
 import { getArticleList } from '@/api/article'
 import { getTagDetail } from '@/api/tag'
 import ArticleCard from '@/components/ArticleCard.vue'
-import { NCard, NList, NListItem, NEmpty, NSpin, NPagination, useMessage } from 'naive-ui'
+import { NCard, NList, NListItem, NEmpty, NSpin, NPagination } from 'naive-ui'
+import { PAGINATION_CONFIG } from '@/config/constants'
+import { createErrorHandler } from '@/utils/errorHandler'
+import { showError } from '@/utils/common'
 
 const route = useRoute()
 const router = useRouter()
-const message = useMessage()
+const errorHandler = createErrorHandler('Tag')
 
 const loading = ref(false)
 const articles = ref([])
 const tagName = ref('')
 const currentPage = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(PAGINATION_CONFIG.DEFAULT_PAGE_SIZE)
 const total = ref(0)
 const totalPages = ref(0)
 
@@ -50,7 +53,7 @@ const fetchTagName = async (tagId) => {
       tagName.value = '未知标签'
     }
   } catch (error) {
-    console.error('获取标签名称失败:', error)
+    errorHandler.handleLoad(error, '标签名称', true)
     tagName.value = '未知标签'
   }
 }
@@ -61,7 +64,7 @@ const fetchTagName = async (tagId) => {
 const loadArticles = async () => {
   const tagId = route.params.id
   if (!tagId) {
-    message.error('标签ID不能为空')
+    showError('标签ID不能为空')
     return
   }
 
@@ -82,12 +85,11 @@ const loadArticles = async () => {
       total.value = articlesRes.data.total || 0
       totalPages.value = articlesRes.data.pages || 0
     } else {
-      message.error(articlesRes.message || '加载文章列表失败')
+      showError(articlesRes.message || '加载文章列表失败')
       articles.value = []
     }
   } catch (error) {
-    console.error('加载文章列表失败:', error)
-    message.error('加载文章列表失败，请稍后重试')
+    errorHandler.handleLoad(error, '文章列表')
     articles.value = []
   } finally {
     loading.value = false

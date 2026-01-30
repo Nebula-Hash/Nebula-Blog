@@ -34,6 +34,35 @@
           autocomplete="new-password"
         />
       </n-form-item>
+
+      <!-- 密码强度显示 -->
+      <n-form-item v-if="formData.password" label="密码强度">
+        <n-space vertical style="width: 100%">
+          <n-space align="center">
+            <n-tag :type="passwordStrengthColor" size="small">
+              {{ passwordStrengthText }}
+            </n-tag>
+            <n-progress 
+              type="line" 
+              :percentage="passwordStrength.score" 
+              :color="passwordStrengthProgressColor"
+              :show-indicator="false"
+              style="flex: 1"
+            />
+          </n-space>
+          <n-space v-if="passwordStrength.suggestions.length > 0" vertical size="small">
+            <n-text depth="3" style="font-size: 12px">改进建议：</n-text>
+            <n-text 
+              v-for="(suggestion, index) in passwordStrength.suggestions" 
+              :key="index"
+              depth="3" 
+              style="font-size: 12px"
+            >
+              • {{ suggestion }}
+            </n-text>
+          </n-space>
+        </n-space>
+      </n-form-item>
       
       <n-form-item path="confirmPassword" label="确认密码">
         <n-input 
@@ -62,8 +91,16 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useAuth } from '@/composables/useAuth'
+import { checkPasswordStrength } from '@/utils/security'
+import { 
+  usernameRules, 
+  passwordRules, 
+  confirmPasswordRules, 
+  nicknameRules, 
+  emailRules 
+} from '@/utils/validators'
 
 const props = defineProps({
   modelValue: Boolean
@@ -87,30 +124,55 @@ const formData = ref({
   confirmPassword: ''
 })
 
-const validatePasswordSame = (rule, value) => {
-  return value === formData.value.password
-}
+// 密码强度状态
+const passwordStrength = ref({ strength: 'weak', score: 0, suggestions: [] })
 
+// 监听密码变化，实时计算强度
+watch(() => formData.value.password, (newPassword) => {
+  if (newPassword) {
+    passwordStrength.value = checkPasswordStrength(newPassword)
+  } else {
+    passwordStrength.value = { strength: 'weak', score: 0, suggestions: [] }
+  }
+})
+
+// 密码强度文本
+const passwordStrengthText = computed(() => {
+  const textMap = {
+    weak: '弱',
+    medium: '中',
+    strong: '强'
+  }
+  return textMap[passwordStrength.value.strength] || '弱'
+})
+
+// 密码强度标签颜色
+const passwordStrengthColor = computed(() => {
+  const colorMap = {
+    weak: 'error',
+    medium: 'warning',
+    strong: 'success'
+  }
+  return colorMap[passwordStrength.value.strength] || 'default'
+})
+
+// 密码强度进度条颜色
+const passwordStrengthProgressColor = computed(() => {
+  const colorMap = {
+    weak: '#d03050',
+    medium: '#f0a020',
+    strong: '#18a058'
+  }
+  return colorMap[passwordStrength.value.strength] || '#d03050'
+})
+
+// 使用统一的验证规则
 const rules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '用户名长度为3-20个字符', trigger: 'blur' },
-    { pattern: /^[a-zA-Z0-9_]+$/, message: '用户名只能包含字母、数字和下划线', trigger: 'blur' }
-  ],
-  nickname: [
-    { max: 50, message: '昵称长度不能超过50个字符', trigger: 'blur' }
-  ],
-  email: [
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 20, message: '密码长度为6-20个字符', trigger: 'blur' }
-  ],
-  confirmPassword: [
-    { required: true, message: '请再次输入密码', trigger: 'blur' },
-    { validator: validatePasswordSame, message: '两次密码不一致', trigger: 'blur' }
-  ]
+  username: usernameRules,
+  nickname: nicknameRules,
+  email: emailRules,
+  password: passwordRules,
+  confirmPassword: confirmPasswordRules(formData.value)
 }
 
 const handleRegister = async () => {

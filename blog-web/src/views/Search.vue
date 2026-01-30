@@ -10,13 +10,8 @@
         <n-empty v-else description="没有找到相关文章" />
       </n-spin>
 
-      <n-pagination
-        v-if="totalPages > 1"
-        v-model:page="currentPage"
-        :page-count="totalPages"
-        style="margin-top: 20px; justify-content: center"
-        @update:page="loadArticles"
-      />
+      <n-pagination v-if="totalPages > 1" v-model:page="currentPage" :page-count="totalPages"
+        style="margin-top: 20px; justify-content: center" @update:page="loadArticles" />
     </n-card>
   </div>
 </template>
@@ -27,15 +22,18 @@ import { useRoute, useRouter } from 'vue-router'
 import { getArticleList } from '@/api/article'
 import ArticleCard from '@/components/ArticleCard.vue'
 import { NCard, NList, NListItem, NEmpty, NSpin, NPagination } from 'naive-ui'
+import { PAGINATION_CONFIG } from '@/config/constants'
+import { createErrorHandler } from '@/utils/errorHandler'
 
 const route = useRoute()
 const router = useRouter()
+const errorHandler = createErrorHandler('Search')
 
 const loading = ref(false)
 const articles = ref([])
 const keyword = ref('')
 const currentPage = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(PAGINATION_CONFIG.DEFAULT_PAGE_SIZE)
 const totalPages = ref(0)
 
 const loadArticles = async () => {
@@ -49,6 +47,9 @@ const loadArticles = async () => {
     })
     articles.value = res.data.records
     totalPages.value = Math.ceil(res.data.total / pageSize.value)
+  } catch (error) {
+    errorHandler.handleLoad(error, '搜索结果')
+    articles.value = []
   } finally {
     loading.value = false
   }

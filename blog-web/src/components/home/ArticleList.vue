@@ -27,13 +27,16 @@ import { getArticleList } from '@/api/article'
 import ArticleCard from '@/components/ArticleCard.vue'
 import { NCard, NList, NListItem, NSpace, NSpin, NPagination, NEmpty, NIcon } from 'naive-ui'
 import { DocumentTextOutline } from '@vicons/ionicons5'
+import { PAGINATION_CONFIG } from '@/config/constants'
+import { createErrorHandler } from '@/utils/errorHandler'
 
 const router = useRouter()
+const errorHandler = createErrorHandler('ArticleList')
 
 const loading = ref(false)
 const articles = ref([])
 const currentPage = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(PAGINATION_CONFIG.DEFAULT_PAGE_SIZE)
 const totalPages = ref(0)
 
 // 加载文章列表
@@ -46,6 +49,8 @@ const loadArticles = async () => {
         })
         articles.value = res.data.records
         totalPages.value = Math.ceil(res.data.total / pageSize.value)
+    } catch (error) {
+        errorHandler.handleLoad(error, '文章列表')
     } finally {
         loading.value = false
     }

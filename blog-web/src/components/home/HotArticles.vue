@@ -32,13 +32,14 @@ import { useRouter } from 'vue-router'
 import { getHotArticles } from '@/api/article'
 import { NCard, NList, NListItem, NTag, NSpace, NText, NEllipsis, NIcon } from 'naive-ui'
 import { FlameOutline } from '@vicons/ionicons5'
+import { PAGINATION_CONFIG } from '@/config/constants'
 
 const router = useRouter()
 const hotArticles = ref([])
 
 // 加载热门文章
 const loadHotArticles = async () => {
-    const res = await getHotArticles(5)
+    const res = await getHotArticles(PAGINATION_CONFIG.HOT_ARTICLES_SIZE)
     hotArticles.value = res.data
 }
 

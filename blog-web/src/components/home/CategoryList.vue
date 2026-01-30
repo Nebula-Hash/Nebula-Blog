@@ -22,11 +22,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getCategoryList } from '@/api/category'
-import { NCard, NTag, NSpace, NIcon, NSpin, NEmpty, useMessage } from 'naive-ui'
+import { NCard, NTag, NSpace, NIcon, NSpin, NEmpty } from 'naive-ui'
 import { FolderOutline } from '@vicons/ionicons5'
+import { createErrorHandler } from '@/utils/errorHandler'
 
 const router = useRouter()
-const message = useMessage()
+const errorHandler = createErrorHandler('CategoryList')
 
 const loading = ref(false)
 const categories = ref([])
@@ -43,12 +44,9 @@ const loadCategories = async () => {
         const res = await getCategoryList()
         if (res.code === 200 && res.data) {
             categories.value = res.data
-        } else {
-            console.error('加载分类列表失败:', res.message)
         }
     } catch (error) {
-        console.error('加载分类列表失败:', error)
-        message.error('加载分类列表失败')
+        errorHandler.handleLoad(error, '分类列表', true) // 静默失败
     } finally {
         loading.value = false
     }

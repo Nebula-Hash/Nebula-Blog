@@ -51,12 +51,13 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { NIcon, NSpin, NEmpty, useMessage } from 'naive-ui'
+import { NIcon, NSpin, NEmpty } from 'naive-ui'
 import { ChevronBackOutline, ChevronForwardOutline } from '@vicons/ionicons5'
 import { getBannerList } from '@/api/banner'
+import { createErrorHandler } from '@/utils/errorHandler'
 
 const router = useRouter()
-const message = useMessage()
+const errorHandler = createErrorHandler('BannerCarousel')
 
 // 状态管理
 const banners = ref([])
@@ -82,8 +83,7 @@ const fetchBanners = async () => {
             }
         }
     } catch (error) {
-        console.error('获取轮播图失败:', error)
-        message.error('加载轮播图失败')
+        errorHandler.handleLoad(error, '轮播图', true) // 静默失败，不影响页面其他内容
     } finally {
         loading.value = false
     }

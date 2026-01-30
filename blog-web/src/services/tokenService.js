@@ -4,13 +4,14 @@
  */
 import { getItem, setItem, removeItem } from '@/utils/storage'
 import axios from 'axios'
+import { TOKEN_CONFIG, HTTP_CONFIG } from '@/config/constants'
 
 /**
  * Token服务配置
  */
 const config = {
     keyPrefix: '',
-    baseURL: '/api/client'
+    baseURL: HTTP_CONFIG.CLIENT_BASE_URL
 }
 
 /**
@@ -80,8 +81,7 @@ export function isTokenExpiring() {
         return false
     }
 
-    const fiveMinutes = 5 * 60 * 1000
-    return Date.now() + fiveMinutes > expireTime && Date.now() < expireTime
+    return Date.now() + TOKEN_CONFIG.REFRESH_THRESHOLD > expireTime && Date.now() < expireTime
 }
 
 /**
@@ -108,7 +108,7 @@ export async function refreshToken() {
         // 创建独立的axios实例用于刷新Token
         const refreshRequest = axios.create({
             baseURL: config.baseURL,
-            timeout: 10000
+            timeout: HTTP_CONFIG.TIMEOUT
         })
 
         const response = await refreshRequest.post('/auth/refresh', null, {

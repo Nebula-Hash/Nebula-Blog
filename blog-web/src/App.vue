@@ -3,7 +3,7 @@
     <n-message-provider>
       <n-dialog-provider>
         <n-notification-provider>
-          <AppContent />
+          <router-view />
         </n-notification-provider>
       </n-dialog-provider>
     </n-message-provider>
@@ -13,7 +13,6 @@
 <script setup>
 import { NConfigProvider, NMessageProvider, NDialogProvider, NNotificationProvider } from 'naive-ui'
 import { useThemeStore } from '@/stores/theme'
-import AppContent from './layout/AppContent.vue'
 
 const themeStore = useThemeStore()
 

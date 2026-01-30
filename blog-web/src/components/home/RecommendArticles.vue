@@ -29,14 +29,20 @@ import { useRouter } from 'vue-router'
 import { getRecommendArticles } from '@/api/article'
 import { NCard, NList, NListItem, NTag, NSpace, NIcon } from 'naive-ui'
 import { EyeOutline, BookmarkOutline } from '@vicons/ionicons5'
+import { createErrorHandler } from '@/utils/errorHandler'
 
 const router = useRouter()
+const errorHandler = createErrorHandler('RecommendArticles')
 const recommendArticles = ref([])
 
 // 加载推荐文章
 const loadRecommendArticles = async () => {
-    const res = await getRecommendArticles(3)
-    recommendArticles.value = res.data
+    try {
+        const res = await getRecommendArticles(3)
+        recommendArticles.value = res.data
+    } catch (error) {
+        errorHandler.handleLoad(error, '推荐文章', true) // 静默失败，不影响用户体验
+    }
 }
 
 // 跳转到文章详情

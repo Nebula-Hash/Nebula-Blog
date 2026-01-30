@@ -33,7 +33,7 @@
 
         <n-divider />
 
-        <div class="article-content" v-html="article.htmlContent || article.content"></div>
+        <div class="article-content" v-html="safeArticleContent"></div>
 
         <n-divider />
 
@@ -87,13 +87,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getArticleDetail, likeArticle, collectArticle } from '@/api/article'
 import { getCommentList, publishComment, likeComment } from '@/api/comment'
 import CommentItem from '@/components/CommentItem.vue'
 import { formatDateTime, showSuccess, showWarning, checkLogin, validateNotEmpty } from '@/utils/common'
+import { escapeHtml } from '@/utils/security'
+import { PAGINATION_CONFIG } from '@/config/constants'
 import {
   NCard,
   NSpace,
@@ -132,19 +134,48 @@ const replyContent = ref('')
 const replyLoading = ref(false)
 const replyTarget = ref(null)
 
+// 创建 AbortController 用于取消请求
+const abortController = new AbortController()
+
 const loadArticle = async () => {
   loading.value = true
   try {
-    const res = await getArticleDetail(route.params.id)
+    const res = await getArticleDetail(route.params.id, { signal: abortController.signal })
     article.value = res.data
+  } catch (error) {
+    // 如果是取消请求，不处理错误
+    if (error.name === 'AbortError' || error.name === 'CanceledError') {
+      return
+    }
+    throw error
   } finally {
     loading.value = false
   }
 }
 
+// 安全的文章内容（XSS 防护）
+const safeArticleContent = computed(() => {
+  if (!article.value) return ''
+  // 如果后端已经返回了 htmlContent，说明已经过处理，直接使用
+  // 否则对 content 进行转义
+  return article.value.htmlContent || escapeHtml(article.value.content || '')
+})
+
 const loadComments = async () => {
-  const res = await getCommentList(route.params.id, { current: 1, size: 100 })
-  comments.value = res.data.records
+  try {
+    const res = await getCommentList(route.params.id, {
+      current: 1,
+      size: PAGINATION_CONFIG.COMMENT_PAGE_SIZE,
+      signal: abortController.signal
+    })
+    comments.value = res.data.records
+  } catch (error) {
+    // 如果是取消请求，不处理错误
+    if (error.name === 'AbortError' || error.name === 'CanceledError') {
+      return
+    }
+    throw error
+  }
 }
 
 const handleLike = async () => {
@@ -173,7 +204,7 @@ const handlePublishComment = async () => {
   try {
     await publishComment({
       articleId: route.params.id,
-      content: commentContent.value
+      content: escapeHtml(commentContent.value)
     })
     showSuccess('评论成功')
     commentContent.value = ''
@@ -199,7 +230,7 @@ const handlePublishReply = async () => {
       articleId: route.params.id,
       parentId: replyTarget.value.id,
       replyUserId: replyTarget.value.userId,
-      content: replyContent.value
+      content: escapeHtml(replyContent.value)
     })
     showSuccess('回复成功')
     replyContent.value = ''
@@ -225,6 +256,11 @@ const formatDate = (date) => {
 onMounted(() => {
   loadArticle()
   loadComments()
+})
+
+// 组件卸载时取消所有进行中的请求
+onUnmounted(() => {
+  abortController.abort()
 })
 </script>
 

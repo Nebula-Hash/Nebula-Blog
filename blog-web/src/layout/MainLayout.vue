@@ -28,22 +28,12 @@
             </template>
             标签
           </n-button>
-          <n-input
-            v-model:value="searchKeyword"
-            placeholder="搜索文章..."
-            style="width: 200px"
-            @keyup.enter="handleSearch"
-          >
+          <n-input v-model:value="searchKeyword" placeholder="搜索文章..." style="width: 200px" @keyup.enter="handleSearch">
             <template #suffix>
               <n-icon :component="SearchOutline" @click="handleSearch" style="cursor: pointer" />
             </template>
           </n-input>
-          <n-button
-            text
-            @click="themeStore.toggleTheme"
-            class="nav-button"
-            title="切换主题"
-          >
+          <n-button text @click="themeStore.toggleTheme" class="nav-button" title="切换主题">
             <template #icon>
               <n-icon :component="themeStore.isDark ? SunnyOutline : MoonOutline" size="20" />
             </template>
@@ -89,14 +79,8 @@
   <n-drawer v-model:show="showTagDrawer" width="400" placement="right">
     <n-drawer-content title="文章标签">
       <n-space>
-        <n-tag
-          v-for="tag in tags"
-          :key="tag.id"
-          :bordered="false"
-          round
-          style="cursor: pointer"
-          @click="goToTag(tag.id)"
-        >
+        <n-tag v-for="tag in tags" :key="tag.id" :bordered="false" round style="cursor: pointer"
+          @click="goToTag(tag.id)">
           {{ tag.tagName }} ({{ tag.articleCount }})
         </n-tag>
       </n-space>
@@ -104,20 +88,14 @@
   </n-drawer>
 
   <!-- 登录模态框 -->
-  <LoginModal 
-    v-model="showLoginModal" 
-    @switch-to-register="switchToRegister"
-  />
-  
+  <LoginModal v-model="showLoginModal" @switch-to-register="switchToRegister" />
+
   <!-- 注册模态框 -->
-  <RegisterModal 
-    v-model="showRegisterModal" 
-    @switch-to-login="switchToLogin"
-  />
+  <RegisterModal v-model="showRegisterModal" @switch-to-login="switchToLogin" />
 </template>
 
 <script setup>
-import { ref, onMounted, h } from 'vue'
+import { ref, onMounted, h, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { useTokenRefresh } from '@/composables/useTokenRefresh'
@@ -171,6 +149,9 @@ const showRegisterModal = ref(false)
 const categories = ref([])
 const tags = ref([])
 
+// 创建 AbortController 用于取消请求
+const abortController = new AbortController()
+
 const userOptions = [
   {
     label: '个人中心',
@@ -223,18 +204,26 @@ const switchToLogin = () => {
 
 const loadCategories = async () => {
   try {
-    const res = await getCategoryList()
+    const res = await getCategoryList({ signal: abortController.signal })
     categories.value = res.data
   } catch (error) {
+    // 如果是取消请求，不处理错误
+    if (error.name === 'AbortError' || error.name === 'CanceledError') {
+      return
+    }
     console.error('加载分类失败:', error)
   }
 }
 
 const loadTags = async () => {
   try {
-    const res = await getTagList()
+    const res = await getTagList({ signal: abortController.signal })
     tags.value = res.data
   } catch (error) {
+    // 如果是取消请求，不处理错误
+    if (error.name === 'AbortError' || error.name === 'CanceledError') {
+      return
+    }
     console.error('加载标签失败:', error)
   }
 }
@@ -242,6 +231,11 @@ const loadTags = async () => {
 onMounted(() => {
   loadCategories()
   loadTags()
+})
+
+// 组件卸载时取消所有进行中的请求
+onUnmounted(() => {
+  abortController.abort()
 })
 </script>
 

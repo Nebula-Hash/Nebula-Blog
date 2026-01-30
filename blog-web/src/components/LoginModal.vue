@@ -39,6 +39,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useAuth } from '@/composables/useAuth'
+import { required } from '@/utils/validators'
 
 const props = defineProps({
   modelValue: Boolean
@@ -60,8 +61,8 @@ const formData = ref({
 })
 
 const rules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
+  username: [required('请输入用户名')],
+  password: [required('请输入密码')]
 }
 
 const handleLogin = async () => {

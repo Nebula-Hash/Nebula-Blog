@@ -4,27 +4,31 @@ import axios from 'axios'
 import * as tokenService from '@/services/tokenService'
 import { useUserStore } from '@/stores/user'
 import { showError, showWarning } from '@/utils/common'
+import {
+  HTTP_CONFIG,
+  TOKEN_CONFIG,
+  CACHE_CONFIG,
+  BUSINESS_CODE,
+  HTTP_STATUS
+} from '@/config/constants'
 
 const request = axios.create({
-  baseURL: '/api/client',
-  timeout: 10000
+  baseURL: HTTP_CONFIG.CLIENT_BASE_URL,
+  timeout: HTTP_CONFIG.TIMEOUT
 })
 
 // 创建独立的axios实例用于刷新Token，避免被拦截器处理
 const refreshRequest = axios.create({
-  baseURL: '/api/client',
-  timeout: 10000
+  baseURL: HTTP_CONFIG.CLIENT_BASE_URL,
+  timeout: HTTP_CONFIG.TIMEOUT
 })
 
 // 无感刷新相关状态
 let isRefreshing = false
 let refreshSubscribers = []
-const MAX_QUEUE_SIZE = 50
-const REFRESH_TIMEOUT = 10000
 
 // 错误去重机制：防止短时间内相同错误重复弹窗
 const errorMessageCache = new Map()
-const ERROR_CACHE_DURATION = 1000 // 1秒内相同错误只显示一次
 
 /**
  * 显示错误消息（带去重）
@@ -33,8 +37,8 @@ function showErrorMessage(message, type = 'error') {
   const now = Date.now()
   const cached = errorMessageCache.get(message)
 
-  // 如果1秒内已经显示过相同消息，则跳过
-  if (cached && now - cached < ERROR_CACHE_DURATION) {
+  // 如果缓存时长内已经显示过相同消息，则跳过
+  if (cached && now - cached < CACHE_CONFIG.ERROR_MESSAGE_TTL) {
     return
   }
 
@@ -50,14 +54,33 @@ function showErrorMessage(message, type = 'error') {
   // 清理过期缓存
   setTimeout(() => {
     errorMessageCache.delete(message)
-  }, ERROR_CACHE_DURATION)
+  }, CACHE_CONFIG.ERROR_MESSAGE_TTL)
 }
 
 /**
  * 订阅Token刷新完成事件
+ * @returns {Function} 清理函数
  */
 const subscribeTokenRefresh = (cb) => {
   refreshSubscribers.push(cb)
+
+  // 添加超时清理机制，防止内存泄漏
+  const timeoutId = setTimeout(() => {
+    const index = refreshSubscribers.indexOf(cb)
+    if (index > -1) {
+      refreshSubscribers.splice(index, 1)
+      console.warn('[Request] Token刷新订阅超时，已清理')
+    }
+  }, TOKEN_CONFIG.REFRESH_TIMEOUT)
+
+  // 返回清理函数
+  return () => {
+    clearTimeout(timeoutId)
+    const index = refreshSubscribers.indexOf(cb)
+    if (index > -1) {
+      refreshSubscribers.splice(index, 1)
+    }
+  }
 }
 
 /**
@@ -72,6 +95,7 @@ const onTokenRefreshed = (newToken) => {
  * Token刷新失败，清空等待队列
  */
 const onRefreshFailed = () => {
+  refreshSubscribers.forEach(cb => cb(null))
   refreshSubscribers = []
 }
 
@@ -82,6 +106,16 @@ request.interceptors.request.use(
     if (token) {
       config.headers['Authorization'] = token
     }
+
+    // 支持 AbortController signal
+    if (config.signal) {
+      config.cancelToken = new axios.CancelToken((cancel) => {
+        config.signal.addEventListener('abort', () => {
+          cancel('Request canceled by user')
+        })
+      })
+    }
+
     return config
   },
   error => {
@@ -93,11 +127,11 @@ request.interceptors.request.use(
 request.interceptors.response.use(
   response => {
     const res = response.data
-    if (res.code === 200) {
+    if (res.code === BUSINESS_CODE.SUCCESS) {
       return res
     } else {
       // Token无效或过期
-      if (res.code === 401) {
+      if (res.code === BUSINESS_CODE.UNAUTHORIZED) {
         return handleTokenExpired(response.config)
       } else {
         // 业务错误处理（只在非静默模式下弹窗）
@@ -109,8 +143,14 @@ request.interceptors.response.use(
     }
   },
   error => {
+    // 请求被取消，直接返回
+    if (axios.isCancel(error)) {
+      console.log('[Request] 请求已取消:', error.message)
+      return Promise.reject(error)
+    }
+
     // HTTP状态码401 - Token验证失败
-    if (error.response?.status === 401) {
+    if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
       return handleTokenExpired(error.config)
     } else {
       // 网络错误处理（只在非静默模式下弹窗）
@@ -149,12 +189,12 @@ async function handleTokenExpired(originalConfig) {
       })
 
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('刷新超时')), REFRESH_TIMEOUT)
+        setTimeout(() => reject(new Error('刷新超时')), TOKEN_CONFIG.REFRESH_TIMEOUT)
       )
 
       const res = await Promise.race([refreshPromise, timeoutPromise])
 
-      if (res.data.code === 200) {
+      if (res.data.code === BUSINESS_CODE.SUCCESS) {
         const newToken = res.data.data.token
         const timeout = res.data.data.tokenTimeout
 
@@ -178,21 +218,26 @@ async function handleTokenExpired(originalConfig) {
     }
   } else {
     // 队列已满，拒绝请求
-    if (refreshSubscribers.length >= MAX_QUEUE_SIZE) {
+    if (refreshSubscribers.length >= TOKEN_CONFIG.MAX_QUEUE_SIZE) {
       return Promise.reject(new Error('请求队列已满，请稍后重试'))
     }
 
     // 等待刷新完成
     return new Promise((resolve, reject) => {
-      subscribeTokenRefresh((newToken) => {
-        originalConfig.headers['Authorization'] = newToken
-        resolve(request(originalConfig))
+      const cleanup = subscribeTokenRefresh((newToken) => {
+        if (newToken) {
+          originalConfig.headers['Authorization'] = newToken
+          resolve(request(originalConfig))
+        } else {
+          reject(new Error('Token刷新失败'))
+        }
       })
 
-      // 设置超时
+      // 设置超时，超时后自动清理
       setTimeout(() => {
+        cleanup()
         reject(new Error('等待刷新超时'))
-      }, REFRESH_TIMEOUT)
+      }, TOKEN_CONFIG.REFRESH_TIMEOUT)
     })
   }
 }
@@ -206,29 +251,29 @@ function handleBusinessError(res) {
 
   // 特殊错误码处理
   switch (code) {
-    case 40001:
+    case BUSINESS_CODE.WRONG_CREDENTIALS:
       showErrorMessage('用户名或密码错误')
       break
-    case 40002:
+    case BUSINESS_CODE.ACCOUNT_LOCKED:
       // 账号锁定 - 尝试从消息中提取剩余时间
       const lockMessage = message.includes('分钟')
         ? message
         : '账号已被锁定，请稍后再试'
       showErrorMessage(lockMessage)
       break
-    case 40003:
+    case BUSINESS_CODE.USERNAME_EXISTS:
       showErrorMessage('用户名已存在')
       break
-    case 40004:
+    case BUSINESS_CODE.REGISTER_TOO_FREQUENT:
       showErrorMessage('注册过于频繁，请稍后再试')
       break
-    case 403:
+    case HTTP_STATUS.FORBIDDEN:
       showErrorMessage('权限不足，无法访问')
       break
-    case 404:
+    case HTTP_STATUS.NOT_FOUND:
       showErrorMessage('请求的资源不存在')
       break
-    case 500:
+    case HTTP_STATUS.INTERNAL_SERVER_ERROR:
       showErrorMessage('服务器错误，请稍后重试')
       break
     default:
@@ -246,16 +291,16 @@ function handleNetworkError(error) {
     // 服务器返回了错误状态码
     const status = error.response.status
     switch (status) {
-      case 403:
+      case HTTP_STATUS.FORBIDDEN:
         showErrorMessage('权限不足，无法访问')
         break
-      case 404:
+      case HTTP_STATUS.NOT_FOUND:
         showErrorMessage('请求的资源不存在')
         break
-      case 500:
-      case 502:
-      case 503:
-      case 504:
+      case HTTP_STATUS.INTERNAL_SERVER_ERROR:
+      case HTTP_STATUS.BAD_GATEWAY:
+      case HTTP_STATUS.SERVICE_UNAVAILABLE:
+      case HTTP_STATUS.GATEWAY_TIMEOUT:
         showErrorMessage('服务器错误，请稍后重试')
         break
       default:
