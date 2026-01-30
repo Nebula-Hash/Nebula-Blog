@@ -1,4 +1,4 @@
-package com.nebula.service.impl;
+package com.nebula.service.authority.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -7,7 +7,7 @@ import com.nebula.dto.UserDTO;
 import com.nebula.entity.SysUser;
 import com.nebula.enumeration.StatusEnum;
 import com.nebula.mapper.SysUserMapper;
-import com.nebula.service.SysUserService;
+import com.nebula.service.authority.SysUserService;
 import com.nebula.utils.PasswordUtils;
 import com.nebula.vo.UserAdminVO;
 import org.springframework.beans.BeanUtils;

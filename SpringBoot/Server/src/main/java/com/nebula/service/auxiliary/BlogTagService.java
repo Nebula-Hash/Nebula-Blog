@@ -1,4 +1,4 @@
-package com.nebula.service;
+package com.nebula.service.auxiliary;
 
 import com.nebula.dto.TagDTO;
 import com.nebula.vo.TagAdminVO;

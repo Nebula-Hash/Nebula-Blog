@@ -1,4 +1,4 @@
-package com.nebula.service;
+package com.nebula.service.authority;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;

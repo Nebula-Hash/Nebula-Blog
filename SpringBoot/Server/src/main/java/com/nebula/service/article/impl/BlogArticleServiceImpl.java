@@ -1,4 +1,4 @@
-package com.nebula.service.impl;
+package com.nebula.service.article.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -7,7 +7,7 @@ import com.nebula.dto.ArticleDTO;
 import com.nebula.entity.*;
 import com.nebula.exception.BusinessException;
 import com.nebula.mapper.*;
-import com.nebula.service.BlogArticleService;
+import com.nebula.service.article.BlogArticleService;
 import com.nebula.vo.ArticleListVO;
 import com.nebula.vo.ArticleVO;
 import com.nebula.vo.TagClientVO;

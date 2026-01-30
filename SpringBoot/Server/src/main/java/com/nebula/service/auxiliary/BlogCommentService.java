@@ -1,4 +1,4 @@
-package com.nebula.service;
+package com.nebula.service.auxiliary;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nebula.dto.CommentDTO;

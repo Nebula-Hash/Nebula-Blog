@@ -1,4 +1,4 @@
-package com.nebula.service.impl;
+package com.nebula.service.auxiliary.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -11,7 +11,7 @@ import com.nebula.exception.BusinessException;
 import com.nebula.mapper.BlogArticleMapper;
 import com.nebula.mapper.BlogCommentMapper;
 import com.nebula.mapper.SysUserMapper;
-import com.nebula.service.BlogCommentService;
+import com.nebula.service.auxiliary.BlogCommentService;
 import com.nebula.vo.CommentVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;

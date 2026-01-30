@@ -5,7 +5,7 @@ import com.nebula.controller.config.AdminController;
 import com.nebula.dto.UserDTO;
 import com.nebula.entity.SysUser;
 import com.nebula.result.Result;
-import com.nebula.service.SysUserService;
+import com.nebula.service.authority.SysUserService;
 import com.nebula.vo.UserAdminVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

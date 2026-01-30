@@ -3,7 +3,7 @@ package com.nebula.controller.client;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nebula.controller.config.ClientController;
 import com.nebula.result.Result;
-import com.nebula.service.BlogArticleService;
+import com.nebula.service.article.BlogArticleService;
 import com.nebula.vo.ArticleListVO;
 import com.nebula.vo.ArticleVO;
 import lombok.RequiredArgsConstructor;

@@ -3,7 +3,7 @@ package com.nebula.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nebula.result.Result;
 import com.nebula.dto.CommentDTO;
-import com.nebula.service.BlogCommentService;
+import com.nebula.service.auxiliary.BlogCommentService;
 import com.nebula.vo.CommentVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

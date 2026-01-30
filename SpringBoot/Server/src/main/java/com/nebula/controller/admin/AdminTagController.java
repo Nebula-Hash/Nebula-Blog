@@ -3,7 +3,7 @@ package com.nebula.controller.admin;
 import com.nebula.controller.config.AdminController;
 import com.nebula.dto.TagDTO;
 import com.nebula.result.Result;
-import com.nebula.service.BlogTagService;
+import com.nebula.service.auxiliary.BlogTagService;
 import com.nebula.vo.TagAdminVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
