@@ -37,7 +37,6 @@ public class BlogArticleServiceImpl implements BlogArticleService {
     private final RelevancyArticleTagMapper articleTagMapper;
     private final BlogArticleLikeMapper articleLikeMapper;
     private final BlogArticleCollectMapper articleCollectMapper;
-    private final BlogViewHistoryMapper viewHistoryMapper;
     private final BlogCategoryMapper categoryMapper;
     private final BlogTagMapper tagMapper;
     private final SysUserMapper userMapper;
@@ -50,7 +49,7 @@ public class BlogArticleServiceImpl implements BlogArticleService {
         // 创建文章
         BlogArticle article = new BlogArticle();
         BeanUtils.copyProperties(articleDTO, article);
-        article.setUserId(userId);
+        article.setAuthorId(userId);
         article.setViewCount(0);
         article.setLikeCount(0);
         article.setCommentCount(0);
@@ -124,7 +123,7 @@ public class BlogArticleServiceImpl implements BlogArticleService {
         BeanUtils.copyProperties(article, articleVO);
 
         // 查询作者信息
-        SysUser author = userMapper.selectById(article.getUserId());
+        SysUser author = userMapper.selectById(article.getAuthorId());
         if (author != null) {
             articleVO.setAuthorNickname(author.getNickname());
             articleVO.setAuthorAvatar(author.getAvatar());
@@ -394,22 +393,7 @@ public class BlogArticleServiceImpl implements BlogArticleService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void recordView(Long articleId) {
-        // 记录浏览历史
-        BlogViewHistory viewHistory = new BlogViewHistory();
-        viewHistory.setArticleId(articleId);
-        
-        try {
-            Long userId = StpUtil.getLoginIdAsLong();
-            viewHistory.setUserId(userId);
-        } catch (Exception e) {
-            // 未登录用户
-            viewHistory.setUserId(null);
-        }
-        
-        viewHistoryMapper.insert(viewHistory);
-
         // 更新文章浏览量
         BlogArticle article = articleMapper.selectById(articleId);
         if (article != null) {
@@ -426,7 +410,7 @@ public class BlogArticleServiceImpl implements BlogArticleService {
         BeanUtils.copyProperties(article, vo);
 
         // 查询作者信息
-        SysUser author = userMapper.selectById(article.getUserId());
+        SysUser author = userMapper.selectById(article.getAuthorId());
         if (author != null) {
             vo.setAuthorNickname(author.getNickname());
             vo.setAuthorAvatar(author.getAvatar());
@@ -453,7 +437,7 @@ public class BlogArticleServiceImpl implements BlogArticleService {
 
         // 批量查询用户信息
         Set<Long> userIds = articles.stream()
-                .map(BlogArticle::getUserId)
+                .map(BlogArticle::getAuthorId)
                 .filter(id -> id != null)
                 .collect(Collectors.toSet());
         Map<Long, SysUser> userMap = userIds.isEmpty() ? Map.of() :
@@ -475,7 +459,7 @@ public class BlogArticleServiceImpl implements BlogArticleService {
             BeanUtils.copyProperties(article, vo);
 
             // 设置作者信息
-            SysUser author = userMap.get(article.getUserId());
+            SysUser author = userMap.get(article.getAuthorId());
             if (author != null) {
                 vo.setAuthorNickname(author.getNickname());
                 vo.setAuthorAvatar(author.getAvatar());
@@ -509,7 +493,7 @@ public class BlogArticleServiceImpl implements BlogArticleService {
         BeanUtils.copyProperties(article, articleVO);
 
         // 查询作者信息
-        SysUser author = userMapper.selectById(article.getUserId());
+        SysUser author = userMapper.selectById(article.getAuthorId());
         if (author != null) {
             articleVO.setAuthorNickname(author.getNickname());
             articleVO.setAuthorAvatar(author.getAvatar());

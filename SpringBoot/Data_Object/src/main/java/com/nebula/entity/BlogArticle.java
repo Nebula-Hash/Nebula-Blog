@@ -29,7 +29,8 @@ public class BlogArticle implements Serializable {
     /**
      * 作者ID
      */
-    private Long userId;
+    @TableField("author_id")
+    private Long authorId;
 
     /**
      * 分类ID
@@ -62,14 +63,14 @@ public class BlogArticle implements Serializable {
     private String htmlContent;
 
     /**
-     * 是否置顶 0-否 1-是
-     */
-    private Integer isTop;
-
-    /**
      * 是否草稿 0-否 1-是
      */
     private Integer isDraft;
+
+    /**
+     * 是否置顶 0-否 1-是
+     */
+    private Integer isTop;
 
     /**
      * 浏览量
@@ -82,14 +83,14 @@ public class BlogArticle implements Serializable {
     private Integer likeCount = 0;
 
     /**
-     * 评论数
-     */
-    private Integer commentCount = 0;
-
-    /**
      * 收藏数
      */
     private Integer collectCount = 0;
+
+    /**
+     * 评论数
+     */
+    private Integer commentCount = 0;
 
     /**
      * 逻辑删除 0-未删除 1-已删除

@@ -33,9 +33,9 @@
               <n-icon :component="SearchOutline" @click="handleSearch" style="cursor: pointer" />
             </template>
           </n-input>
-          <n-button text @click="themeStore.toggleTheme" class="nav-button" title="切换主题">
+          <n-button text @click="themeStore.toggleTheme" class="nav-button theme-toggle" :title="themeStore.isDark ? '切换到浅色模式' : '切换到深色模式'">
             <template #icon>
-              <n-icon :component="themeStore.isDark ? SunnyOutline : MoonOutline" size="20" />
+              <n-icon :component="themeStore.isDark ? SunnyOutline : MoonOutline" size="20" class="theme-icon" />
             </template>
           </n-button>
         </n-space>
@@ -246,12 +246,13 @@ onUnmounted(() => {
 
 .header {
   padding: 0 20px;
-  background: #001529;
-  background-color: transparent;
+  background-color: var(--bg-secondary);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 12px var(--shadow-color);
   border-bottom: 1px solid rgba(42, 219, 92, 0.1);
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .header-content {
@@ -269,16 +270,32 @@ onUnmounted(() => {
 }
 
 .nav-button {
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--text-secondary);
   font-size: 16px;
   font-weight: 500;
   padding: 8px 16px;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-button:hover {
   color: #2ADB5C;
   background-color: rgba(42, 219, 92, 0.1);
+}
+
+.theme-toggle {
+  position: relative;
+}
+
+.theme-icon {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-toggle:hover .theme-icon {
+  transform: rotate(20deg) scale(1.1);
+}
+
+.theme-toggle:active .theme-icon {
+  transform: rotate(20deg) scale(0.95);
 }
 
 .nav-menu {
@@ -299,11 +316,12 @@ onUnmounted(() => {
 .footer {
   text-align: center;
   padding: 20px;
-  background-color: transparent;
-  background: #001529;
+  background-color: var(--bg-secondary);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-tertiary);
   border-top: 1px solid rgba(42, 219, 92, 0.1);
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

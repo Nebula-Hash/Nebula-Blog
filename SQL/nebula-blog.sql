@@ -11,7 +11,7 @@
  Target Server Version : 80041 (8.0.41)
  File Encoding         : 65001
 
- Date: 29/01/2026 15:16:43
+ Date: 30/01/2026 22:03:57
 */
 
 SET NAMES utf8mb4;
@@ -23,28 +23,28 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS `blog_article`;
 CREATE TABLE `blog_article`  (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '文章ID',
-  `user_id` bigint NOT NULL COMMENT '作者ID',
+  `author_id` bigint NOT NULL COMMENT '作者ID',
   `category_id` bigint NULL DEFAULT NULL COMMENT '分类ID',
   `title` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '文章标题',
   `summary` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '文章摘要',
   `cover_image` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '封面图',
   `content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '文章内容(Markdown)',
   `html_content` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT 'HTML内容',
-  `is_top` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否置顶 0-否 1-是',
   `is_draft` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否草稿 0-否 1-是',
+  `is_top` tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否置顶 0-否 1-是',
   `view_count` int NULL DEFAULT 0 COMMENT '浏览量',
   `like_count` int NULL DEFAULT 0 COMMENT '点赞数',
-  `comment_count` int NULL DEFAULT 0 COMMENT '评论数',
   `collect_count` int NULL DEFAULT 0 COMMENT '收藏数',
+  `comment_count` int NULL DEFAULT 0 COMMENT '评论数',
   `deleted` tinyint(1) NULL DEFAULT 0 COMMENT '逻辑删除 0-未删除 1-已删除',
   `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`) USING BTREE,
-  INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   INDEX `idx_category_id`(`category_id` ASC) USING BTREE,
   INDEX `idx_is_top`(`is_top` ASC) USING BTREE,
-  INDEX `idx_create_time`(`create_time` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '文章表' ROW_FORMAT = Dynamic;
+  INDEX `idx_create_time`(`create_time` ASC) USING BTREE,
+  INDEX `idx_author_id`(`author_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '文章表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Table structure for blog_article_collect
@@ -157,21 +157,6 @@ CREATE TABLE `blog_tag`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '标签表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
--- Table structure for blog_view_history
--- ----------------------------
-DROP TABLE IF EXISTS `blog_view_history`;
-CREATE TABLE `blog_view_history`  (
-  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `article_id` bigint NOT NULL COMMENT '文章ID',
-  `user_id` bigint NULL DEFAULT NULL COMMENT '用户ID(未登录则为NULL)',
-  `ip_address` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'IP地址',
-  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '浏览时间',
-  PRIMARY KEY (`id`) USING BTREE,
-  INDEX `idx_article_id`(`article_id` ASC) USING BTREE,
-  INDEX `idx_user_id`(`user_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 40 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '浏览记录表' ROW_FORMAT = Dynamic;
-
--- ----------------------------
 -- Table structure for relevancy_article_tag
 -- ----------------------------
 DROP TABLE IF EXISTS `relevancy_article_tag`;
@@ -181,9 +166,9 @@ CREATE TABLE `relevancy_article_tag`  (
   `tag_id` bigint NOT NULL COMMENT '标签ID',
   `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_article_tag`(`article_id` ASC, `tag_id` ASC) USING BTREE,
   INDEX `idx_article_id`(`article_id` ASC) USING BTREE,
-  INDEX `idx_tag_id`(`tag_id` ASC) USING BTREE,
-  UNIQUE INDEX `uk_article_tag`(`article_id` ASC, `tag_id` ASC) USING BTREE
+  INDEX `idx_tag_id`(`tag_id` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '文章标签关联表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
@@ -242,6 +227,6 @@ CREATE TABLE `sys_user`  (
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `uk_username`(`username` ASC) USING BTREE,
   UNIQUE INDEX `uk_email`(`email` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 14 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户表' ROW_FORMAT = Dynamic;
 
 SET FOREIGN_KEY_CHECKS = 1;

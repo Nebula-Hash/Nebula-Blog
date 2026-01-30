@@ -22,7 +22,7 @@ public class ArticleListVO {
     /**
      * 作者ID
      */
-    private Long userId;
+    private Long authorId;
 
     /**
      * 作者昵称
