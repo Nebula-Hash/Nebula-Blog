@@ -21,13 +21,6 @@ public interface BlogCommentService {
     Long publishComment(CommentDTO commentDTO);
 
     /**
-     * 删除评论
-     *
-     * @param id 评论ID
-     */
-    void deleteComment(Long id);
-
-    /**
      * 评论点赞/取消点赞
      *
      * @param commentId 评论ID

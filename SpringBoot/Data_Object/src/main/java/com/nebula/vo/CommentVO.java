@@ -25,6 +25,16 @@ public class CommentVO {
     private Long articleId;
 
     /**
+     * 根评论ID(楼主评论ID，根评论时为NULL)
+     */
+    private Long rootId;
+
+    /**
+     * 父评论ID(直接回复对象)
+     */
+    private Long parentId;
+
+    /**
      * 用户ID
      */
     private Long userId;
@@ -38,11 +48,6 @@ public class CommentVO {
      * 用户头像
      */
     private String avatar;
-
-    /**
-     * 父评论ID
-     */
-    private Long parentId;
 
     /**
      * 回复用户ID

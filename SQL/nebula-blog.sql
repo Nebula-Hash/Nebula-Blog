@@ -11,7 +11,7 @@
  Target Server Version : 80041 (8.0.41)
  File Encoding         : 65001
 
- Date: 30/01/2026 22:03:57
+ Date: 31/01/2026 23:13:36
 */
 
 SET NAMES utf8mb4;
@@ -40,10 +40,10 @@ CREATE TABLE `blog_article`  (
   `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_author_id`(`author_id` ASC) USING BTREE,
   INDEX `idx_category_id`(`category_id` ASC) USING BTREE,
   INDEX `idx_is_top`(`is_top` ASC) USING BTREE,
-  INDEX `idx_create_time`(`create_time` ASC) USING BTREE,
-  INDEX `idx_author_id`(`author_id` ASC) USING BTREE
+  INDEX `idx_create_time`(`create_time` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '文章表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
@@ -113,17 +113,19 @@ DROP TABLE IF EXISTS `blog_comment`;
 CREATE TABLE `blog_comment`  (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '评论ID',
   `article_id` bigint NOT NULL COMMENT '文章ID',
+  `root_id` bigint NULL DEFAULT NULL COMMENT '根评论ID(楼主评论ID，根评论时为NULL)',
+  `parent_id` bigint NULL DEFAULT NULL COMMENT '父评论ID(直接回复对象，根评论时为NULL)',
   `user_id` bigint NOT NULL COMMENT '评论用户ID',
-  `parent_id` bigint NULL DEFAULT NULL COMMENT '父评论ID(二级回复)',
-  `reply_user_id` bigint NULL DEFAULT NULL COMMENT '回复用户ID',
+  `reply_user_id` bigint NULL DEFAULT NULL COMMENT '被回复用户ID',
   `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '评论内容',
   `like_count` int NULL DEFAULT 0 COMMENT '点赞数',
-  `audit_status` tinyint(1) NULL DEFAULT 1 COMMENT '审核状态 0-待审核 1-审核通过 2-审核拒绝',
+  `audit_status` tinyint(1) NULL DEFAULT 0 COMMENT '审核状态 0-待审核 1-审核通过 2-审核拒绝',
   `deleted` tinyint(1) NULL DEFAULT 0 COMMENT '逻辑删除 0-未删除 1-已删除',
   `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_article_id`(`article_id` ASC) USING BTREE,
+  INDEX `idx_root_id`(`root_id` ASC) USING BTREE,
   INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
   INDEX `idx_parent_id`(`parent_id` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '评论表' ROW_FORMAT = Dynamic;

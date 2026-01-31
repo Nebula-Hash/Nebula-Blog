@@ -56,6 +56,9 @@ public class SaTokenConfig implements WebMvcConfigurer {
             // 标签模块
             "/tag/list",
             "/tag/detail/*",
+
+            // 评论模块
+            "/comment/list/*",
     };
 
     /**

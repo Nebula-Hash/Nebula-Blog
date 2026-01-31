@@ -32,17 +32,22 @@ public class BlogComment implements Serializable {
     private Long articleId;
 
     /**
+     * 根评论ID(楼主评论ID，根评论时为NULL)
+     */
+    private Long rootId;
+
+    /**
+     * 父评论ID(直接回复对象，根评论时为NULL)
+     */
+    private Long parentId;
+
+    /**
      * 评论用户ID
      */
     private Long userId;
 
     /**
-     * 父评论ID(二级回复)
-     */
-    private Long parentId;
-
-    /**
-     * 回复用户ID
+     * 被回复用户ID
      */
     private Long replyUserId;
 
