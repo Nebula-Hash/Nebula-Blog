@@ -6,7 +6,7 @@ import com.nebula.controller.config.ClientController;
 import com.nebula.dto.CommentDTO;
 import com.nebula.result.Result;
 import com.nebula.service.auxiliary.BlogCommentService;
-import com.nebula.vo.CommentVO;
+import com.nebula.vo.CommentClientVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -33,11 +33,11 @@ public class ClientCommentController {
      * @return 评论分页列表
      */
     @GetMapping("/list/{articleId}")
-    public Result<Page<CommentVO>> getArticleComments(
+    public Result<Page<CommentClientVO>> getArticleComments(
             @PathVariable Long articleId,
             @RequestParam(defaultValue = CommonConstants.DEFAULT_PAGE_CURRENT) Long current,
             @RequestParam(defaultValue = CommonConstants.DEFAULT_PAGE_SIZE) Long size) {
-        Page<CommentVO> page = commentService.getArticleComments(articleId, current, size);
+        Page<CommentClientVO> page = commentService.getArticleComments(articleId, current, size);
         return Result.success(page);
     }
 

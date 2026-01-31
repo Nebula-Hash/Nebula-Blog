@@ -12,7 +12,7 @@ import java.util.List;
  * @date 2026/1/22
  */
 @Data
-public class CommentVO {
+public class CommentClientVO {
 
     /**
      * 评论ID
@@ -77,7 +77,7 @@ public class CommentVO {
     /**
      * 子评论列表
      */
-    private List<CommentVO> children;
+    private List<CommentClientVO> children;
 
     /**
      * 创建时间

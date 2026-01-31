@@ -1,7 +1,6 @@
 package com.nebula.controller;
 
 import com.nebula.constant.CountConstants;
-import com.nebula.constant.HealthConstants;
 import com.nebula.constant.RedisConstants;
 import com.nebula.result.Result;
 import lombok.AllArgsConstructor;
@@ -40,10 +39,17 @@ public class PingController {
     private static final LocalDateTime START_TIME = LocalDateTime.now();
 
     /**
-     * Redis Key 前缀（委托给 RedisKeyConstants）
+     * Redis Key 前缀
      */
     private static final String VISIT_TOTAL_KEY = RedisConstants.VISIT_TOTAL;
     private static final String VISIT_DAILY_KEY_PREFIX = RedisConstants.VISIT_DAILY;
+
+    /**
+     * 健康状态常量
+     */
+    private static final String STATUS_UP = "UP";
+    private static final String STATUS_DOWN = "DOWN";
+    private static final String REDIS_PONG = "PONG";
 
     /**
      * 欢迎页
@@ -68,13 +74,13 @@ public class PingController {
 
         // 判断整体状态
         boolean allHealthy = components.values().stream()
-                .allMatch(c -> HealthConstants.STATUS_UP.equals(c.getStatus()));
+                .allMatch(c -> STATUS_UP.equals(c.getStatus()));
 
         // 计算运行时长
         long uptimeSeconds = Duration.between(START_TIME, LocalDateTime.now()).getSeconds();
 
         HealthCheckVO healthCheck = HealthCheckVO.builder()
-                .status(allHealthy ? HealthConstants.STATUS_UP : HealthConstants.STATUS_DOWN)
+                .status(allHealthy ? STATUS_UP : STATUS_DOWN)
                 .startTime(START_TIME)
                 .uptime(uptimeSeconds)
                 .components(components)
@@ -140,8 +146,8 @@ public class PingController {
             long responseTime = System.currentTimeMillis() - startTime;
 
             return HealthCheckVO.ComponentHealth.builder()
-                    .status(HealthConstants.STATUS_UP)
-                    .message(HealthConstants.REDIS_PONG.equals(pong) ? "连接正常" : pong)
+                    .status(STATUS_UP)
+                    .message(REDIS_PONG.equals(pong) ? "连接正常" : pong)
                     .responseTime(responseTime)
                     .build();
         } catch (Exception e) {
@@ -149,7 +155,7 @@ public class PingController {
             log.error("Redis 健康检查失败", e);
 
             return HealthCheckVO.ComponentHealth.builder()
-                    .status(HealthConstants.STATUS_DOWN)
+                    .status(STATUS_DOWN)
                     .message("连接失败: " + e.getMessage())
                     .responseTime(responseTime)
                     .build();
