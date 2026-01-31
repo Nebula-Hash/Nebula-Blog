@@ -16,6 +16,32 @@ import java.util.List;
 public interface BlogArticleService {
 
     /**
+     * 管理端分页查询/搜索文章列表（包含草稿）
+     * <p>
+     * 不传搜索参数时返回所有文章；传入搜索参数时按条件筛选
+     *
+     * @param current      当前页
+     * @param size         每页大小
+     * @param authorName   作者名称（可选，模糊搜索）
+     * @param title        文章标题（可选，模糊搜索）
+     * @param categoryName 分类名称（可选，模糊搜索）
+     * @param tagName      标签名称（可选，模糊搜索）
+     * @param isDraft      草稿状态（null-全部，0-已发布，1-草稿）
+     * @param isTop        置顶状态（null-全部，0-未置顶，1-置顶）
+     * @return 文章列表
+     */
+    Page<ArticleListVO> getAdminArticleList(Long current, Long size, String authorName, String title,
+                                            String categoryName, String tagName, Integer isDraft, Integer isTop);
+
+    /**
+     * 管理端获取文章详情（可查看草稿）
+     *
+     * @param id 文章ID
+     * @return 文章详情
+     */
+    ArticleVO getAdminArticleDetail(Long id);
+
+    /**
      * 发布文章
      *
      * @param articleDTO 文章信息
@@ -37,46 +63,32 @@ public interface BlogArticleService {
      */
     void deleteArticle(Long id);
 
+
+
+
     /**
-     * 获取文章详情
+     * 客户端分页查询/搜索文章列表（仅已发布文章，过滤草稿）
+     * <p>
+     * 不传搜索参数时返回所有非草稿文章；传入搜索参数时按条件筛选
+     *
+     * @param current      当前页
+     * @param size         每页大小
+     * @param authorName   作者名称（可选，模糊搜索）
+     * @param title        文章标题（可选，模糊搜索）
+     * @param categoryName 分类名称（可选，模糊搜索）
+     * @param tagName      标签名称（可选，模糊搜索）
+     * @return 文章列表
+     */
+    Page<ArticleListVO> getClientArticleList(Long current, Long size, String authorName, String title,
+                                             String categoryName, String tagName);
+
+    /**
+     * 客户端获取文章详情
      *
      * @param id 文章ID
      * @return 文章详情
      */
-    ArticleVO getArticleDetail(Long id);
-
-    /**
-     * 客户端分页查询文章列表（仅已发布文章）
-     *
-     * @param current    当前页
-     * @param size       每页大小
-     * @param categoryId 分类ID
-     * @param tagId      标签ID
-     * @param keyword    关键词
-     * @return 文章列表
-     */
-    Page<ArticleListVO> getArticleList(Long current, Long size, Long categoryId, Long tagId, String keyword);
-
-    /**
-     * 管理端分页查询文章列表（包含草稿）
-     *
-     * @param current    当前页
-     * @param size       每页大小
-     * @param categoryId 分类ID
-     * @param tagId      标签ID
-     * @param keyword    关键词
-     * @param isDraft    草稿状态（null-全部，0-已发布，1-草稿）
-     * @return 文章列表
-     */
-    Page<ArticleListVO> getAdminArticleList(Long current, Long size, Long categoryId, Long tagId, String keyword, Integer isDraft);
-
-    /**
-     * 管理端获取文章详情（可查看草稿）
-     *
-     * @param id 文章ID
-     * @return 文章详情
-     */
-    ArticleVO getAdminArticleDetail(Long id);
+    ArticleVO getClientArticleDetail(Long id);
 
     /**
      * 获取热门文章
@@ -109,9 +121,9 @@ public interface BlogArticleService {
     void collectArticle(Long articleId);
 
     /**
-     * 记录浏览历史
+     * 增加文章浏览量
      *
      * @param articleId 文章ID
      */
-    void recordView(Long articleId);
+    void incrementViewCount(Long articleId);
 }

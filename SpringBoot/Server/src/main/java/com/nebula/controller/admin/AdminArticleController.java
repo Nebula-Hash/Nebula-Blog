@@ -1,6 +1,8 @@
 package com.nebula.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.nebula.constant.ArticleConstants;
+import com.nebula.constant.CommonConstants;
 import com.nebula.controller.config.AdminController;
 import com.nebula.dto.ArticleDTO;
 import com.nebula.result.Result;
@@ -25,30 +27,33 @@ public class AdminArticleController {
     private final BlogArticleService articleService;
 
     /**
-     * 发布文章
+     * 分页查询/搜索文章列表（包含草稿）
+     * <p>
+     * 不传搜索参数时返回所有文章；传入搜索参数时按条件筛选
+     *
+     * @param current      当前页
+     * @param size         每页大小
+     * @param authorName   作者名称（可选，模糊搜索）
+     * @param title        文章标题（可选，模糊搜索）
+     * @param categoryName 分类名称（可选，模糊搜索）
+     * @param tagName      标签名称（可选，模糊搜索）
+     * @param isDraft      草稿状态（可选，0-已发布，1-草稿）
+     * @param isTop        置顶状态（可选，0-未置顶，1-置顶）
+     * @return 文章分页列表
      */
-    @PostMapping("/publish")
-    public Result<Long> publishArticle(@Valid @RequestBody ArticleDTO articleDTO) {
-        Long articleId = articleService.publishArticle(articleDTO);
-        return Result.success("发布成功", articleId);
-    }
-
-    /**
-     * 编辑文章
-     */
-    @PutMapping("/update")
-    public Result<String> updateArticle(@Valid @RequestBody ArticleDTO articleDTO) {
-        articleService.updateArticle(articleDTO);
-        return Result.success("更新成功");
-    }
-
-    /**
-     * 删除文章
-     */
-    @DeleteMapping("/{id}")
-    public Result<String> deleteArticle(@PathVariable Long id) {
-        articleService.deleteArticle(id);
-        return Result.success("删除成功");
+    @GetMapping("/list")
+    public Result<Page<ArticleListVO>> getAdminArticleList(
+            @RequestParam(defaultValue = CommonConstants.DEFAULT_PAGE_CURRENT) Long current,
+            @RequestParam(defaultValue = CommonConstants.DEFAULT_PAGE_SIZE) Long size,
+            @RequestParam(required = false) String authorName,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String categoryName,
+            @RequestParam(required = false) String tagName,
+            @RequestParam(required = false) Integer isDraft,
+            @RequestParam(required = false) Integer isTop) {
+        Page<ArticleListVO> page = articleService.getAdminArticleList(
+                current, size, authorName, title, categoryName, tagName, isDraft, isTop);
+        return Result.success(page);
     }
 
     /**
@@ -61,17 +66,30 @@ public class AdminArticleController {
     }
 
     /**
-     * 分页查询文章列表（包含草稿）
+     * 发布文章
      */
-    @GetMapping("/list")
-    public Result<Page<ArticleListVO>> getArticleList(
-            @RequestParam(defaultValue = "1") Long current,
-            @RequestParam(defaultValue = "10") Long size,
-            @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) Long tagId,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Integer isDraft) {
-        Page<ArticleListVO> page = articleService.getAdminArticleList(current, size, categoryId, tagId, keyword, isDraft);
-        return Result.success(page);
+    @PostMapping("/publish")
+    public Result<Long> publishArticle(@Valid @RequestBody ArticleDTO articleDTO) {
+        Long articleId = articleService.publishArticle(articleDTO);
+        return Result.success(ArticleConstants.MSG_PUBLISH_SUCCESS, articleId);
     }
+
+    /**
+     * 编辑文章
+     */
+    @PutMapping("/update")
+    public Result<String> updateArticle(@Valid @RequestBody ArticleDTO articleDTO) {
+        articleService.updateArticle(articleDTO);
+        return Result.success(ArticleConstants.MSG_UPDATE_SUCCESS);
+    }
+
+    /**
+     * 删除文章
+     */
+    @DeleteMapping("/{id}")
+    public Result<String> deleteArticle(@PathVariable Long id) {
+        articleService.deleteArticle(id);
+        return Result.success(ArticleConstants.MSG_DELETE_SUCCESS);
+    }
+
 }
