@@ -2,8 +2,12 @@ package com.nebula.service.authority.helper;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.nebula.constant.AuthConstants;
+import com.nebula.constant.CommonConstants;
+import com.nebula.constant.RedisConstants;
 import com.nebula.dto.RegisterDTO;
 import com.nebula.entity.SysUser;
+import com.nebula.enumeration.StatusEnum;
 import com.nebula.exception.BusinessException;
 import com.nebula.mapper.SysUserMapper;
 import com.nebula.vo.LoginVO;
@@ -30,58 +34,58 @@ public class AuthHelper {
 
     private final SysUserMapper sysUserMapper;
 
-    // ======================== 角色常量 ========================
+    // ======================== 角色常量（委托给 AuthConstants） ========================
 
     /**
      * 管理员角色标识
      */
-    public static final String ADMIN_ROLE_KEY = "admin";
+    public static final String ADMIN_ROLE_KEY = AuthConstants.ADMIN_ROLE_KEY;
 
     /**
      * 普通用户角色标识
      */
-    public static final String USER_ROLE_KEY = "user";
+    public static final String USER_ROLE_KEY = AuthConstants.USER_ROLE_KEY;
 
-    // ======================== Token 常量 ========================
+    // ======================== Token 常量（委托给 AuthConstants） ========================
 
     /**
      * Token 过期时间（秒）- 24小时
      */
-    public static final long TOKEN_TIMEOUT_SECONDS = 86400L;
+    public static final long TOKEN_TIMEOUT_SECONDS = AuthConstants.TOKEN_TIMEOUT_SECONDS;
 
-    // ======================== 登录保护常量 ========================
+    // ======================== 登录保护常量（委托给 AuthConstants/RedisKeyConstants） ========================
 
     /**
      * 登录失败记录 Redis Key 前缀
      */
-    public static final String LOGIN_FAIL_KEY_PREFIX = "nebula:login:fail:";
+    public static final String LOGIN_FAIL_KEY_PREFIX = RedisConstants.LOGIN_FAIL;
 
     /**
      * 最大登录失败次数
      */
-    public static final int MAX_LOGIN_ATTEMPTS = 5;
+    public static final int MAX_LOGIN_ATTEMPTS = AuthConstants.MAX_LOGIN_ATTEMPTS;
 
     /**
      * 账号锁定时间（分钟）
      */
-    public static final int LOCK_TIME_MINUTES = 30;
+    public static final int LOCK_TIME_MINUTES = AuthConstants.LOCK_TIME_MINUTES;
 
-    // ======================== 注册限制常量 ========================
+    // ======================== 注册限制常量（委托给 AuthConstants/RedisKeyConstants） ========================
 
     /**
      * 注册限制 Redis Key 前缀
      */
-    public static final String REGISTER_LIMIT_KEY_PREFIX = "nebula:register:limit:";
+    public static final String REGISTER_LIMIT_KEY_PREFIX = RedisConstants.REGISTER_LIMIT;
 
     /**
      * 每小时最大注册次数（同IP）
      */
-    public static final int MAX_REGISTER_PER_HOUR = 5;
+    public static final int MAX_REGISTER_PER_HOUR = AuthConstants.MAX_REGISTER_PER_HOUR;
 
     /**
      * 注册限制时间（小时）
      */
-    public static final int REGISTER_LIMIT_HOURS = 1;
+    public static final int REGISTER_LIMIT_HOURS = AuthConstants.REGISTER_LIMIT_HOURS;
 
     /**
      * 构建登录返回对象
@@ -155,8 +159,7 @@ public class AuthHelper {
      * @throws BusinessException 如果用户被禁用
      */
     public void checkUserStatus(SysUser user) {
-        // 使用 Integer.valueOf(0).equals() 避免 NPE
-        if (Integer.valueOf(0).equals(user.getStatus())) {
+        if (StatusEnum.isDisabled(user.getStatus())) {
             throw new BusinessException("账号已被禁用，请联系管理员");
         }
     }
@@ -183,22 +186,22 @@ public class AuthHelper {
     public static String getClientIp() {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes == null) {
-            return "unknown";
+            return CommonConstants.UNKNOWN_IP;
         }
         HttpServletRequest request = attributes.getRequest();
 
         // 优先从 X-Forwarded-For 获取（适用于反向代理场景）
         String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+        if (ip == null || ip.isEmpty() || CommonConstants.UNKNOWN_IP.equalsIgnoreCase(ip)) {
             ip = request.getHeader("X-Real-IP");
         }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+        if (ip == null || ip.isEmpty() || CommonConstants.UNKNOWN_IP.equalsIgnoreCase(ip)) {
             ip = request.getHeader("Proxy-Client-IP");
         }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+        if (ip == null || ip.isEmpty() || CommonConstants.UNKNOWN_IP.equalsIgnoreCase(ip)) {
             ip = request.getHeader("WL-Proxy-Client-IP");
         }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+        if (ip == null || ip.isEmpty() || CommonConstants.UNKNOWN_IP.equalsIgnoreCase(ip)) {
             ip = request.getRemoteAddr();
         }
 
@@ -207,6 +210,6 @@ public class AuthHelper {
             ip = ip.split(",")[0].trim();
         }
 
-        return ip != null ? ip : "unknown";
+        return ip != null ? ip : CommonConstants.UNKNOWN_IP;
     }
 }

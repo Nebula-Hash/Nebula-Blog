@@ -3,10 +3,12 @@ package com.nebula.service.auxiliary.impl;
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.nebula.constant.CountConstants;
 import com.nebula.dto.CommentDTO;
 import com.nebula.entity.BlogArticle;
 import com.nebula.entity.BlogComment;
 import com.nebula.entity.SysUser;
+import com.nebula.enumeration.AuditStatusEnum;
 import com.nebula.exception.BusinessException;
 import com.nebula.mapper.BlogArticleMapper;
 import com.nebula.mapper.BlogCommentMapper;
@@ -37,13 +39,13 @@ public class BlogCommentServiceImpl implements BlogCommentService {
         BlogComment comment = new BlogComment();
         BeanUtils.copyProperties(commentDTO, comment);
         comment.setUserId(userId);
-        comment.setLikeCount(0);
-        comment.setAuditStatus(1);
+        comment.setLikeCount(CountConstants.INIT_VALUE);
+        comment.setAuditStatus(AuditStatusEnum.APPROVED.getCode());
         commentMapper.insert(comment);
 
         BlogArticle article = articleMapper.selectById(commentDTO.getArticleId());
         if (article != null) {
-            article.setCommentCount(article.getCommentCount() + 1);
+            article.setCommentCount(article.getCommentCount() + CountConstants.INCREMENT);
             articleMapper.updateById(article);
         }
 
@@ -65,7 +67,7 @@ public class BlogCommentServiceImpl implements BlogCommentService {
 
         BlogArticle article = articleMapper.selectById(comment.getArticleId());
         if (article != null) {
-            article.setCommentCount(Math.max(0, article.getCommentCount() - 1));
+            article.setCommentCount(Math.max(CountConstants.INIT_VALUE, article.getCommentCount() - CountConstants.INCREMENT));
             articleMapper.updateById(article);
         }
     }
@@ -75,7 +77,7 @@ public class BlogCommentServiceImpl implements BlogCommentService {
         // 简化实现,直接更新点赞数
         BlogComment comment = commentMapper.selectById(commentId);
         if (comment != null) {
-            comment.setLikeCount(comment.getLikeCount() + 1);
+            comment.setLikeCount(comment.getLikeCount() + CountConstants.INCREMENT);
             commentMapper.updateById(comment);
         }
     }
@@ -86,7 +88,7 @@ public class BlogCommentServiceImpl implements BlogCommentService {
         LambdaQueryWrapper<BlogComment> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(BlogComment::getArticleId, articleId);
         wrapper.isNull(BlogComment::getParentId);
-        wrapper.eq(BlogComment::getAuditStatus, 1);
+        wrapper.eq(BlogComment::getAuditStatus, AuditStatusEnum.APPROVED.getCode());
         wrapper.orderByDesc(BlogComment::getCreateTime);
 
         Page<BlogComment> commentPage = commentMapper.selectPage(page, wrapper);

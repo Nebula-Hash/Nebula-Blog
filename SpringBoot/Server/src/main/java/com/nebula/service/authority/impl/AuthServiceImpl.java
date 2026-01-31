@@ -1,6 +1,7 @@
 package com.nebula.service.authority.impl;
 
 import cn.dev33.satoken.stp.StpUtil;
+import com.nebula.constant.HttpConstants;
 import com.nebula.dto.LoginDTO;
 import com.nebula.dto.RegisterDTO;
 import com.nebula.entity.SysUser;
@@ -165,7 +166,7 @@ public class AuthServiceImpl implements AuthService {
      */
     private LoginVO doRefreshToken(boolean requireAdmin) {
         if (!StpUtil.isLogin()) {
-            throw new BusinessException(401, "Token已失效，请重新登录");
+            throw new BusinessException(HttpConstants.UNAUTHORIZED, "Token已失效，请重新登录");
         }
 
         Long userId = StpUtil.getLoginIdAsLong();

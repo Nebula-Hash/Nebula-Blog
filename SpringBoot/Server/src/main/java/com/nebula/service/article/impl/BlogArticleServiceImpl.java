@@ -3,8 +3,11 @@ package com.nebula.service.article.impl;
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.nebula.constant.CountConstants;
 import com.nebula.dto.ArticleDTO;
 import com.nebula.entity.*;
+import com.nebula.enumeration.DraftStatusEnum;
+import com.nebula.enumeration.TopStatusEnum;
 import com.nebula.exception.BusinessException;
 import com.nebula.mapper.*;
 import com.nebula.service.article.BlogArticleService;
@@ -50,10 +53,10 @@ public class BlogArticleServiceImpl implements BlogArticleService {
         BlogArticle article = new BlogArticle();
         BeanUtils.copyProperties(articleDTO, article);
         article.setAuthorId(userId);
-        article.setViewCount(0);
-        article.setLikeCount(0);
-        article.setCommentCount(0);
-        article.setCollectCount(0);
+        article.setViewCount(CountConstants.INIT_VALUE);
+        article.setLikeCount(CountConstants.INIT_VALUE);
+        article.setCommentCount(CountConstants.INIT_VALUE);
+        article.setCollectCount(CountConstants.INIT_VALUE);
         
         articleMapper.insert(article);
 
@@ -115,7 +118,7 @@ public class BlogArticleServiceImpl implements BlogArticleService {
     public ArticleVO getArticleDetail(Long id) {
         // 查询文章
         BlogArticle article = articleMapper.selectById(id);
-        if (article == null || article.getIsDraft() == 1) {
+        if (article == null || DraftStatusEnum.isDraft(article.getIsDraft())) {
             throw new BusinessException("文章不存在");
         }
 
@@ -185,7 +188,7 @@ public class BlogArticleServiceImpl implements BlogArticleService {
         LambdaQueryWrapper<BlogArticle> wrapper = new LambdaQueryWrapper<>();
         
         // 只查询已发布的文章
-        wrapper.eq(BlogArticle::getIsDraft, 0);
+        wrapper.eq(BlogArticle::getIsDraft, DraftStatusEnum.PUBLISHED.getCode());
         
         // 分类筛选
         if (categoryId != null) {
@@ -227,7 +230,7 @@ public class BlogArticleServiceImpl implements BlogArticleService {
     @Override
     public List<ArticleListVO> getHotArticles(Integer limit) {
         LambdaQueryWrapper<BlogArticle> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(BlogArticle::getIsDraft, 0);
+        wrapper.eq(BlogArticle::getIsDraft, DraftStatusEnum.PUBLISHED.getCode());
         wrapper.orderByDesc(BlogArticle::getViewCount);
         wrapper.last("LIMIT " + limit);
         
@@ -238,8 +241,8 @@ public class BlogArticleServiceImpl implements BlogArticleService {
     @Override
     public List<ArticleListVO> getRecommendArticles(Integer limit) {
         LambdaQueryWrapper<BlogArticle> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(BlogArticle::getIsDraft, 0);
-        wrapper.eq(BlogArticle::getIsTop, 1);
+        wrapper.eq(BlogArticle::getIsDraft, DraftStatusEnum.PUBLISHED.getCode());
+        wrapper.eq(BlogArticle::getIsTop, TopStatusEnum.TOP.getCode());
         wrapper.orderByDesc(BlogArticle::getCreateTime);
         wrapper.last("LIMIT " + limit);
         
@@ -382,11 +385,11 @@ public class BlogArticleServiceImpl implements BlogArticleService {
             LambdaQueryWrapper<T> deleteWrapper = new LambdaQueryWrapper<>();
             deleteWrapper.eq(idGetter, idGetter.apply(existing));
             mapper.delete(deleteWrapper);
-            countSetter.accept(article, Math.max(0, countGetter.apply(article) - 1));
+            countSetter.accept(article, Math.max(CountConstants.INIT_VALUE, countGetter.apply(article) - CountConstants.INCREMENT));
         } else {
             // 执行操作
             mapper.insert(entitySupplier.get());
-            countSetter.accept(article, countGetter.apply(article) + 1);
+            countSetter.accept(article, countGetter.apply(article) + CountConstants.INCREMENT);
         }
         
         articleMapper.updateById(article);
@@ -397,7 +400,7 @@ public class BlogArticleServiceImpl implements BlogArticleService {
         // 更新文章浏览量
         BlogArticle article = articleMapper.selectById(articleId);
         if (article != null) {
-            article.setViewCount(article.getViewCount() + 1);
+            article.setViewCount(article.getViewCount() + CountConstants.INCREMENT);
             articleMapper.updateById(article);
         }
     }

@@ -1,4 +1,4 @@
-package com.nebula.config;
+package com.nebula.service.authority.satoken;
 
 import cn.dev33.satoken.session.SaSession;
 import cn.dev33.satoken.stp.StpInterface;
