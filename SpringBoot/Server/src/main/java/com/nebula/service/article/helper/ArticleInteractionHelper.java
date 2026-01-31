@@ -2,6 +2,7 @@ package com.nebula.service.article.helper;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.nebula.constant.ArticleConstants;
@@ -17,8 +18,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -49,15 +48,13 @@ public class ArticleInteractionHelper {
                 articleLikeMapper,
                 BlogArticleLike::getArticleId,
                 BlogArticleLike::getUserId,
-                BlogArticleLike::getId,
                 () -> {
                     BlogArticleLike like = new BlogArticleLike();
                     like.setArticleId(articleId);
                     like.setUserId(StpUtil.getLoginIdAsLong());
                     return like;
                 },
-                BlogArticle::getLikeCount,
-                BlogArticle::setLikeCount
+                "like_count"
         );
     }
 
@@ -73,54 +70,54 @@ public class ArticleInteractionHelper {
                 articleCollectMapper,
                 BlogArticleCollect::getArticleId,
                 BlogArticleCollect::getUserId,
-                BlogArticleCollect::getId,
                 () -> {
                     BlogArticleCollect collect = new BlogArticleCollect();
                     collect.setArticleId(articleId);
                     collect.setUserId(StpUtil.getLoginIdAsLong());
                     return collect;
                 },
-                BlogArticle::getCollectCount,
-                BlogArticle::setCollectCount
+                "collect_count"
         );
     }
 
     /**
-     * 记录文章浏览
+     * 记录文章浏览（使用数据库原子更新，避免并发问题）
      *
      * @param articleId 文章ID
      */
     public void incrementViewCount(Long articleId) {
-        BlogArticle article = articleMapper.selectById(articleId);
-        if (article != null) {
-            article.setViewCount(article.getViewCount() + CountConstants.INCREMENT);
-            articleMapper.updateById(article);
-        }
+        articleMapper.update(null, new LambdaUpdateWrapper<BlogArticle>()
+                .eq(BlogArticle::getId, articleId)
+                .setSql("view_count = view_count + " + CountConstants.INCREMENT));
     }
 
     /**
      * 通用的文章交互操作（点赞/收藏）
+     * <p>
+     * 使用数据库原子更新，避免并发竞态条件
      *
      * @param articleId       文章ID
      * @param mapper          Mapper
      * @param articleIdGetter 获取文章ID的方法引用
      * @param userIdGetter    获取用户ID的方法引用
-     * @param idGetter        获取主键ID的方法引用
      * @param entitySupplier  创建新实体的方法
-     * @param countGetter     获取计数的方法引用
-     * @param countSetter     设置计数的方法引用
+     * @param countColumn     计数字段名（数据库列名）
      */
     private <T> void toggleInteraction(
             Long articleId,
             BaseMapper<T> mapper,
             SFunction<T, Long> articleIdGetter,
             SFunction<T, Long> userIdGetter,
-            SFunction<T, Long> idGetter,
             Supplier<T> entitySupplier,
-            Function<BlogArticle, Integer> countGetter,
-            BiConsumer<BlogArticle, Integer> countSetter) {
+            String countColumn) {
 
         Long userId = StpUtil.getLoginIdAsLong();
+
+        // 校验文章是否存在
+        BlogArticle article = articleMapper.selectById(articleId);
+        if (article == null) {
+            throw new BusinessException(ArticleConstants.ERROR_ARTICLE_NOT_FOUND);
+        }
 
         // 查询是否已存在
         LambdaQueryWrapper<T> wrapper = new LambdaQueryWrapper<>();
@@ -128,23 +125,18 @@ public class ArticleInteractionHelper {
                 .eq(userIdGetter, userId);
         T existing = mapper.selectOne(wrapper);
 
-        BlogArticle article = articleMapper.selectById(articleId);
-        if (article == null) {
-            throw new BusinessException(ArticleConstants.ERROR_ARTICLE_NOT_FOUND);
-        }
-
         if (existing != null) {
-            // 取消操作
-            LambdaQueryWrapper<T> deleteWrapper = new LambdaQueryWrapper<>();
-            deleteWrapper.eq(idGetter, idGetter.apply(existing));
-            mapper.delete(deleteWrapper);
-            countSetter.accept(article, Math.max(CountConstants.INIT_VALUE, countGetter.apply(article) - CountConstants.INCREMENT));
+            // 取消操作：删除记录并原子递减计数
+            mapper.delete(wrapper);
+            articleMapper.update(null, new LambdaUpdateWrapper<BlogArticle>()
+                    .eq(BlogArticle::getId, articleId)
+                    .setSql(countColumn + " = GREATEST(0, " + countColumn + " - " + CountConstants.INCREMENT + ")"));
         } else {
-            // 执行操作
+            // 执行操作：插入记录并原子递增计数
             mapper.insert(entitySupplier.get());
-            countSetter.accept(article, countGetter.apply(article) + CountConstants.INCREMENT);
+            articleMapper.update(null, new LambdaUpdateWrapper<BlogArticle>()
+                    .eq(BlogArticle::getId, articleId)
+                    .setSql(countColumn + " = " + countColumn + " + " + CountConstants.INCREMENT));
         }
-
-        articleMapper.updateById(article);
     }
 }

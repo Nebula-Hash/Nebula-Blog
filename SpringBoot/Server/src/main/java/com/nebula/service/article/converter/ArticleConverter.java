@@ -64,6 +64,12 @@ public class ArticleConverter {
                 categoryMapper.selectBatchIds(categoryIds).stream()
                         .collect(Collectors.toMap(BlogCategory::getId, Function.identity()));
 
+        // 批量查询标签信息
+        Set<Long> articleIds = articles.stream()
+                .map(BlogArticle::getId)
+                .collect(Collectors.toSet());
+        Map<Long, List<TagClientVO>> articleTagsMap = batchQueryTags(articleIds);
+
         // 转换为VO
         return articles.stream().map(article -> {
             ArticleListVO vo = new ArticleListVO();
@@ -82,8 +88,52 @@ public class ArticleConverter {
                 vo.setCategoryName(category.getCategoryName());
             }
 
+            // 设置标签信息
+            vo.setTags(articleTagsMap.getOrDefault(article.getId(), new ArrayList<>()));
+
             return vo;
         }).collect(Collectors.toList());
+    }
+
+    /**
+     * 批量查询文章标签（避免N+1查询）
+     *
+     * @param articleIds 文章ID集合
+     * @return 文章ID -> 标签列表的映射
+     */
+    private Map<Long, List<TagClientVO>> batchQueryTags(Set<Long> articleIds) {
+        if (articleIds.isEmpty()) {
+            return Map.of();
+        }
+
+        // 查询文章-标签关联
+        LambdaQueryWrapper<RelevancyArticleTag> wrapper = new LambdaQueryWrapper<>();
+        wrapper.in(RelevancyArticleTag::getArticleId, articleIds);
+        List<RelevancyArticleTag> articleTags = articleTagMapper.selectList(wrapper);
+
+        if (articleTags.isEmpty()) {
+            return Map.of();
+        }
+
+        // 批量查询标签详情
+        Set<Long> tagIds = articleTags.stream()
+                .map(RelevancyArticleTag::getTagId)
+                .collect(Collectors.toSet());
+        Map<Long, BlogTag> tagMap = tagMapper.selectBatchIds(tagIds).stream()
+                .collect(Collectors.toMap(BlogTag::getId, Function.identity()));
+
+        // 构建文章ID -> 标签列表的映射
+        Map<Long, List<TagClientVO>> result = new HashMap<>();
+        for (RelevancyArticleTag articleTag : articleTags) {
+            BlogTag tag = tagMap.get(articleTag.getTagId());
+            if (tag != null) {
+                TagClientVO tagVO = new TagClientVO();
+                BeanUtils.copyProperties(tag, tagVO);
+                result.computeIfAbsent(articleTag.getArticleId(), k -> new ArrayList<>()).add(tagVO);
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -184,24 +234,25 @@ public class ArticleConverter {
      * 填充用户交互状态（点赞/收藏）
      */
     private void fillUserInteractionStatus(ArticleVO articleVO, Long articleId) {
-        try {
-            Long userId = StpUtil.getLoginIdAsLong();
-
-            // 检查是否点赞
-            LambdaQueryWrapper<BlogArticleLike> likeWrapper = new LambdaQueryWrapper<>();
-            likeWrapper.eq(BlogArticleLike::getArticleId, articleId)
-                    .eq(BlogArticleLike::getUserId, userId);
-            articleVO.setIsLiked(articleLikeMapper.selectCount(likeWrapper) > 0);
-
-            // 检查是否收藏
-            LambdaQueryWrapper<BlogArticleCollect> collectWrapper = new LambdaQueryWrapper<>();
-            collectWrapper.eq(BlogArticleCollect::getArticleId, articleId)
-                    .eq(BlogArticleCollect::getUserId, userId);
-            articleVO.setIsCollected(articleCollectMapper.selectCount(collectWrapper) > 0);
-        } catch (Exception e) {
-            // 未登录
+        // 未登录时直接返回默认值
+        if (!StpUtil.isLogin()) {
             articleVO.setIsLiked(false);
             articleVO.setIsCollected(false);
+            return;
         }
+
+        Long userId = StpUtil.getLoginIdAsLong();
+
+        // 检查是否点赞
+        LambdaQueryWrapper<BlogArticleLike> likeWrapper = new LambdaQueryWrapper<>();
+        likeWrapper.eq(BlogArticleLike::getArticleId, articleId)
+                .eq(BlogArticleLike::getUserId, userId);
+        articleVO.setIsLiked(articleLikeMapper.selectCount(likeWrapper) > 0);
+
+        // 检查是否收藏
+        LambdaQueryWrapper<BlogArticleCollect> collectWrapper = new LambdaQueryWrapper<>();
+        collectWrapper.eq(BlogArticleCollect::getArticleId, articleId)
+                .eq(BlogArticleCollect::getUserId, userId);
+        articleVO.setIsCollected(articleCollectMapper.selectCount(collectWrapper) > 0);
     }
 }

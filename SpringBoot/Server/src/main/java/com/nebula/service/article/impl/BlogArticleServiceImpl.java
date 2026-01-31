@@ -7,16 +7,19 @@ import com.nebula.constant.ArticleConstants;
 import com.nebula.constant.CountConstants;
 import com.nebula.dto.ArticleDTO;
 import com.nebula.entity.BlogArticle;
+import com.nebula.entity.BlogTag;
 import com.nebula.entity.RelevancyArticleTag;
 import com.nebula.enumeration.DraftStatusEnum;
 import com.nebula.enumeration.TopStatusEnum;
 import com.nebula.exception.BusinessException;
 import com.nebula.mapper.BlogArticleMapper;
+import com.nebula.mapper.BlogTagMapper;
 import com.nebula.mapper.RelevancyArticleTagMapper;
 import com.nebula.service.article.BlogArticleService;
 import com.nebula.service.article.converter.ArticleConverter;
 import com.nebula.service.article.helper.ArticleInteractionHelper;
 import com.nebula.service.article.helper.ArticleQueryHelper;
+import com.nebula.service.article.helper.MarkdownHelper;
 import com.nebula.vo.ArticleListVO;
 import com.nebula.vo.ArticleVO;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +28,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 文章服务实现类
@@ -37,12 +42,14 @@ import java.util.List;
 public class BlogArticleServiceImpl implements BlogArticleService {
 
     private final BlogArticleMapper articleMapper;
+    private final BlogTagMapper tagMapper;
     private final RelevancyArticleTagMapper articleTagMapper;
 
     // Helper组件
     private final ArticleQueryHelper queryHelper;
     private final ArticleConverter converter;
     private final ArticleInteractionHelper interactionHelper;
+    private final MarkdownHelper markdownHelper;
 
     // ==================== 文章CRUD ====================
 
@@ -55,6 +62,8 @@ public class BlogArticleServiceImpl implements BlogArticleService {
         BlogArticle article = new BlogArticle();
         BeanUtils.copyProperties(articleDTO, article);
         article.setAuthorId(userId);
+        // 生成 HTML 内容
+        article.setHtmlContent(markdownHelper.toHtml(articleDTO.getContent()));
         article.setViewCount(CountConstants.INIT_VALUE);
         article.setLikeCount(CountConstants.INIT_VALUE);
         article.setCommentCount(CountConstants.INIT_VALUE);
@@ -78,6 +87,8 @@ public class BlogArticleServiceImpl implements BlogArticleService {
 
         // 更新文章
         BeanUtils.copyProperties(articleDTO, article);
+        // 重新生成 HTML 内容
+        article.setHtmlContent(markdownHelper.toHtml(articleDTO.getContent()));
         articleMapper.updateById(article);
 
         // 删除旧的标签关联
@@ -90,11 +101,19 @@ public class BlogArticleServiceImpl implements BlogArticleService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteArticle(Long id) {
         BlogArticle article = articleMapper.selectById(id);
         if (article == null) {
             throw new BusinessException(ArticleConstants.ERROR_ARTICLE_NOT_FOUND);
         }
+
+        // 删除文章-标签关联
+        LambdaQueryWrapper<RelevancyArticleTag> tagWrapper = new LambdaQueryWrapper<>();
+        tagWrapper.eq(RelevancyArticleTag::getArticleId, id);
+        articleTagMapper.delete(tagWrapper);
+
+        // 删除文章（逻辑删除）
         articleMapper.deleteById(id);
     }
 
@@ -167,25 +186,27 @@ public class BlogArticleServiceImpl implements BlogArticleService {
 
     @Override
     public List<ArticleListVO> getHotArticles(Integer limit) {
+        // 使用分页查询，不查询总数
+        Page<BlogArticle> page = new Page<>(1, limit, false);
         LambdaQueryWrapper<BlogArticle> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(BlogArticle::getIsDraft, DraftStatusEnum.PUBLISHED.getCode());
-        wrapper.orderByDesc(BlogArticle::getViewCount);
-        wrapper.last("LIMIT " + limit);
+        wrapper.eq(BlogArticle::getIsDraft, DraftStatusEnum.PUBLISHED.getCode())
+                .orderByDesc(BlogArticle::getViewCount);
 
-        List<BlogArticle> articles = articleMapper.selectList(wrapper);
-        return converter.batchToListVO(articles);
+        Page<BlogArticle> articlePage = articleMapper.selectPage(page, wrapper);
+        return converter.batchToListVO(articlePage.getRecords());
     }
 
     @Override
     public List<ArticleListVO> getRecommendArticles(Integer limit) {
+        // 使用分页查询，不查询总数
+        Page<BlogArticle> page = new Page<>(1, limit, false);
         LambdaQueryWrapper<BlogArticle> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(BlogArticle::getIsDraft, DraftStatusEnum.PUBLISHED.getCode());
-        wrapper.eq(BlogArticle::getIsTop, TopStatusEnum.TOP.getCode());
-        wrapper.orderByDesc(BlogArticle::getCreateTime);
-        wrapper.last("LIMIT " + limit);
+        wrapper.eq(BlogArticle::getIsDraft, DraftStatusEnum.PUBLISHED.getCode())
+                .eq(BlogArticle::getIsTop, TopStatusEnum.TOP.getCode())
+                .orderByDesc(BlogArticle::getCreateTime);
 
-        List<BlogArticle> articles = articleMapper.selectList(wrapper);
-        return converter.batchToListVO(articles);
+        Page<BlogArticle> articlePage = articleMapper.selectPage(page, wrapper);
+        return converter.batchToListVO(articlePage.getRecords());
     }
 
     // ==================== 文章互动 ====================
@@ -208,13 +229,23 @@ public class BlogArticleServiceImpl implements BlogArticleService {
     // ==================== 私有方法 ====================
 
     /**
-     * 保存文章标签关联
+     * 保存文章标签关联（带标签有效性校验）
      */
     private void saveArticleTags(Long articleId, List<Long> tagIds) {
         if (tagIds == null || tagIds.isEmpty()) {
             return;
         }
+
+        // 校验标签是否存在
+        List<BlogTag> existingTags = tagMapper.selectBatchIds(tagIds);
+        Set<Long> existingTagIds = existingTags.stream()
+                .map(BlogTag::getId)
+                .collect(Collectors.toSet());
+
         for (Long tagId : tagIds) {
+            if (!existingTagIds.contains(tagId)) {
+                throw new BusinessException(ArticleConstants.ERROR_TAG_NOT_FOUND + ": " + tagId);
+            }
             RelevancyArticleTag articleTag = new RelevancyArticleTag();
             articleTag.setArticleId(articleId);
             articleTag.setTagId(tagId);

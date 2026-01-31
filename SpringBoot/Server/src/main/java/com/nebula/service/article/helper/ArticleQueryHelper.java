@@ -22,6 +22,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ArticleQueryHelper {
 
+    /**
+     * 查询结果数量限制，避免大IN查询影响性能
+     */
+    private static final int QUERY_LIMIT = 1000;
+
     private final SysUserMapper userMapper;
     private final BlogCategoryMapper categoryMapper;
     private final BlogTagMapper tagMapper;
@@ -72,7 +77,8 @@ public class ArticleQueryHelper {
         }
 
         LambdaQueryWrapper<SysUser> userWrapper = new LambdaQueryWrapper<>();
-        userWrapper.like(SysUser::getNickname, authorName);
+        userWrapper.like(SysUser::getNickname, authorName)
+                .last("LIMIT " + QUERY_LIMIT);
         List<SysUser> matchedUsers = userMapper.selectList(userWrapper);
 
         Set<Long> authorIds = matchedUsers.stream()
@@ -107,7 +113,8 @@ public class ArticleQueryHelper {
         }
 
         LambdaQueryWrapper<BlogCategory> categoryWrapper = new LambdaQueryWrapper<>();
-        categoryWrapper.like(BlogCategory::getCategoryName, categoryName);
+        categoryWrapper.like(BlogCategory::getCategoryName, categoryName)
+                .last("LIMIT " + QUERY_LIMIT);
         List<BlogCategory> matchedCategories = categoryMapper.selectList(categoryWrapper);
 
         Set<Long> categoryIds = matchedCategories.stream()
@@ -124,6 +131,8 @@ public class ArticleQueryHelper {
 
     /**
      * 应用标签搜索条件
+     * <p>
+     * 添加数量限制避免大IN查询影响性能
      *
      * @return true-成功，false-无匹配结果
      */
@@ -132,9 +141,10 @@ public class ArticleQueryHelper {
             return true;
         }
 
-        // 查询匹配的标签
+        // 查询匹配的标签（限制数量）
         LambdaQueryWrapper<BlogTag> tagQueryWrapper = new LambdaQueryWrapper<>();
-        tagQueryWrapper.like(BlogTag::getTagName, tagName);
+        tagQueryWrapper.like(BlogTag::getTagName, tagName)
+                .last("LIMIT " + QUERY_LIMIT);
         List<BlogTag> matchedTags = tagMapper.selectList(tagQueryWrapper);
 
         Set<Long> tagIds = matchedTags.stream()
@@ -145,9 +155,10 @@ public class ArticleQueryHelper {
             return false;
         }
 
-        // 查询包含这些标签的文章
+        // 查询包含这些标签的文章（限制数量）
         LambdaQueryWrapper<RelevancyArticleTag> tagWrapper = new LambdaQueryWrapper<>();
-        tagWrapper.in(RelevancyArticleTag::getTagId, tagIds);
+        tagWrapper.in(RelevancyArticleTag::getTagId, tagIds)
+                .last("LIMIT " + QUERY_LIMIT);
         List<RelevancyArticleTag> articleTags = articleTagMapper.selectList(tagWrapper);
 
         Set<Long> articleIds = articleTags.stream()

@@ -1,6 +1,7 @@
 package com.nebula.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.util.List;
@@ -44,6 +45,7 @@ public class ArticleDTO {
     /**
      * 分类ID
      */
+    @NotNull(message = "文章分类不能为空")
     private Long categoryId;
 
     /**
