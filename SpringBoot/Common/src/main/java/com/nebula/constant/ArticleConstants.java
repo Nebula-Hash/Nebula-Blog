@@ -36,6 +36,11 @@ public final class ArticleConstants {
      */
     public static final String DEFAULT_RECOMMEND_LIMIT_STR = "5";
 
+    /**
+     * 热门文章候选池大小（用于综合评分算法）
+     */
+    public static final int HOT_ARTICLE_CANDIDATE_POOL_SIZE = 100;
+
     // ==================== 成功消息 ====================
 
     /**

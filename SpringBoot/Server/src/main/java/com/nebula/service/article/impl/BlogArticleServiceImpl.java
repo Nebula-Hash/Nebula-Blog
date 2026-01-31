@@ -19,6 +19,7 @@ import com.nebula.service.article.BlogArticleService;
 import com.nebula.service.article.converter.ArticleConverter;
 import com.nebula.service.article.helper.ArticleInteractionHelper;
 import com.nebula.service.article.helper.ArticleQueryHelper;
+import com.nebula.service.article.helper.HotArticleScoreHelper;
 import com.nebula.service.article.helper.MarkdownHelper;
 import com.nebula.vo.ArticleListVO;
 import com.nebula.vo.ArticleVO;
@@ -50,6 +51,7 @@ public class BlogArticleServiceImpl implements BlogArticleService {
     private final ArticleConverter converter;
     private final ArticleInteractionHelper interactionHelper;
     private final MarkdownHelper markdownHelper;
+    private final HotArticleScoreHelper hotArticleScoreHelper;
 
     // ==================== 文章CRUD ====================
 
@@ -186,14 +188,16 @@ public class BlogArticleServiceImpl implements BlogArticleService {
 
     @Override
     public List<ArticleListVO> getHotArticles(Integer limit) {
-        // 使用分页查询，不查询总数
-        Page<BlogArticle> page = new Page<>(1, limit, false);
+        // 查询候选池（按基础互动指标初筛）
+        Page<BlogArticle> page = new Page<>(1, ArticleConstants.HOT_ARTICLE_CANDIDATE_POOL_SIZE, false);
         LambdaQueryWrapper<BlogArticle> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(BlogArticle::getIsDraft, DraftStatusEnum.PUBLISHED.getCode())
-                .orderByDesc(BlogArticle::getViewCount);
+        wrapper.eq(BlogArticle::getIsDraft, DraftStatusEnum.PUBLISHED.getCode());
 
         Page<BlogArticle> articlePage = articleMapper.selectPage(page, wrapper);
-        return converter.batchToListVO(articlePage.getRecords());
+
+        // 使用综合评分算法排序并取前N条
+        List<BlogArticle> hotArticles = hotArticleScoreHelper.getTopHotArticles(articlePage.getRecords(), limit);
+        return converter.batchToListVO(hotArticles);
     }
 
     @Override
