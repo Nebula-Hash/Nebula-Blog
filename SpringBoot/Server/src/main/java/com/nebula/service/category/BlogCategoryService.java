@@ -1,4 +1,4 @@
-package com.nebula.service.auxiliary;
+package com.nebula.service.category;
 
 import com.nebula.dto.CategoryDTO;
 import com.nebula.vo.CategoryAdminVO;

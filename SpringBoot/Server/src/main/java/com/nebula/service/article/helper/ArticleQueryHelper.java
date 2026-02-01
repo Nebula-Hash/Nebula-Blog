@@ -1,6 +1,7 @@
 package com.nebula.service.article.helper;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nebula.entity.*;
 import com.nebula.mapper.*;
 import lombok.RequiredArgsConstructor;
@@ -76,12 +77,13 @@ public class ArticleQueryHelper {
             return true;
         }
 
+        // 使用 MyBatis-Plus 分页替代 wrapper.last(LIMIT)
+        Page<SysUser> page = new Page<>(1, QUERY_LIMIT, false);
         LambdaQueryWrapper<SysUser> userWrapper = new LambdaQueryWrapper<>();
-        userWrapper.like(SysUser::getNickname, authorName)
-                .last("LIMIT " + QUERY_LIMIT);
-        List<SysUser> matchedUsers = userMapper.selectList(userWrapper);
+        userWrapper.like(SysUser::getNickname, authorName);
+        Page<SysUser> userPage = userMapper.selectPage(page, userWrapper);
 
-        Set<Long> authorIds = matchedUsers.stream()
+        Set<Long> authorIds = userPage.getRecords().stream()
                 .map(SysUser::getId)
                 .collect(Collectors.toSet());
 
@@ -112,12 +114,13 @@ public class ArticleQueryHelper {
             return true;
         }
 
+        // 使用 MyBatis-Plus 分页替代 wrapper.last(LIMIT)
+        Page<BlogCategory> page = new Page<>(1, QUERY_LIMIT, false);
         LambdaQueryWrapper<BlogCategory> categoryWrapper = new LambdaQueryWrapper<>();
-        categoryWrapper.like(BlogCategory::getCategoryName, categoryName)
-                .last("LIMIT " + QUERY_LIMIT);
-        List<BlogCategory> matchedCategories = categoryMapper.selectList(categoryWrapper);
+        categoryWrapper.like(BlogCategory::getCategoryName, categoryName);
+        Page<BlogCategory> categoryPage = categoryMapper.selectPage(page, categoryWrapper);
 
-        Set<Long> categoryIds = matchedCategories.stream()
+        Set<Long> categoryIds = categoryPage.getRecords().stream()
                 .map(BlogCategory::getId)
                 .collect(Collectors.toSet());
 
@@ -132,7 +135,7 @@ public class ArticleQueryHelper {
     /**
      * 应用标签搜索条件
      * <p>
-     * 添加数量限制避免大IN查询影响性能
+     * 使用分页限制数量避免大IN查询影响性能
      *
      * @return true-成功，false-无匹配结果
      */
@@ -141,13 +144,13 @@ public class ArticleQueryHelper {
             return true;
         }
 
-        // 查询匹配的标签（限制数量）
+        // 使用 MyBatis-Plus 分页查询匹配的标签
+        Page<BlogTag> tagPage = new Page<>(1, QUERY_LIMIT, false);
         LambdaQueryWrapper<BlogTag> tagQueryWrapper = new LambdaQueryWrapper<>();
-        tagQueryWrapper.like(BlogTag::getTagName, tagName)
-                .last("LIMIT " + QUERY_LIMIT);
-        List<BlogTag> matchedTags = tagMapper.selectList(tagQueryWrapper);
+        tagQueryWrapper.like(BlogTag::getTagName, tagName);
+        tagPage = tagMapper.selectPage(tagPage, tagQueryWrapper);
 
-        Set<Long> tagIds = matchedTags.stream()
+        Set<Long> tagIds = tagPage.getRecords().stream()
                 .map(BlogTag::getId)
                 .collect(Collectors.toSet());
 
@@ -155,13 +158,13 @@ public class ArticleQueryHelper {
             return false;
         }
 
-        // 查询包含这些标签的文章（限制数量）
-        LambdaQueryWrapper<RelevancyArticleTag> tagWrapper = new LambdaQueryWrapper<>();
-        tagWrapper.in(RelevancyArticleTag::getTagId, tagIds)
-                .last("LIMIT " + QUERY_LIMIT);
-        List<RelevancyArticleTag> articleTags = articleTagMapper.selectList(tagWrapper);
+        // 使用 MyBatis-Plus 分页查询包含这些标签的文章
+        Page<RelevancyArticleTag> articleTagPage = new Page<>(1, QUERY_LIMIT, false);
+        LambdaQueryWrapper<RelevancyArticleTag> articleTagWrapper = new LambdaQueryWrapper<>();
+        articleTagWrapper.in(RelevancyArticleTag::getTagId, tagIds);
+        articleTagPage = articleTagMapper.selectPage(articleTagPage, articleTagWrapper);
 
-        Set<Long> articleIds = articleTags.stream()
+        Set<Long> articleIds = articleTagPage.getRecords().stream()
                 .map(RelevancyArticleTag::getArticleId)
                 .collect(Collectors.toSet());
 

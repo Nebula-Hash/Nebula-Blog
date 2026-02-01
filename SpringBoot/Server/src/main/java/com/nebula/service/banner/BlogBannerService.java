@@ -1,4 +1,4 @@
-package com.nebula.service.auxiliary;
+package com.nebula.service.banner;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nebula.dto.BannerDTO;

@@ -16,14 +16,25 @@ import java.util.List;
 public class ArticleDTO {
 
     /**
-     * 文章ID (编辑时传)
+     * 发布操作校验分组
      */
+    public interface Publish {}
+
+    /**
+     * 更新操作校验分组
+     */
+    public interface Update {}
+
+    /**
+     * 文章ID (编辑时必传)
+     */
+    @NotNull(groups = Update.class, message = "文章ID不能为空")
     private Long id;
 
     /**
      * 文章标题
      */
-    @NotBlank(message = "文章标题不能为空")
+    @NotBlank(groups = {Publish.class, Update.class}, message = "文章标题不能为空")
     private String title;
 
     /**
@@ -39,13 +50,13 @@ public class ArticleDTO {
     /**
      * 文章内容(Markdown)
      */
-    @NotBlank(message = "文章内容不能为空")
+    @NotBlank(groups = {Publish.class, Update.class}, message = "文章内容不能为空")
     private String content;
 
     /**
      * 分类ID
      */
-    @NotNull(message = "文章分类不能为空")
+    @NotNull(groups = {Publish.class, Update.class}, message = "文章分类不能为空")
     private Long categoryId;
 
     /**

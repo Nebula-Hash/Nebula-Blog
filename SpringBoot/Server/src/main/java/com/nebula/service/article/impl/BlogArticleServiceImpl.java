@@ -7,12 +7,18 @@ import com.nebula.constant.ArticleConstants;
 import com.nebula.constant.CountConstants;
 import com.nebula.dto.ArticleDTO;
 import com.nebula.entity.BlogArticle;
+import com.nebula.entity.BlogArticleCollect;
+import com.nebula.entity.BlogArticleLike;
+import com.nebula.entity.BlogCategory;
 import com.nebula.entity.BlogTag;
 import com.nebula.entity.RelevancyArticleTag;
 import com.nebula.enumeration.DraftStatusEnum;
 import com.nebula.enumeration.TopStatusEnum;
 import com.nebula.exception.BusinessException;
+import com.nebula.mapper.BlogArticleCollectMapper;
+import com.nebula.mapper.BlogArticleLikeMapper;
 import com.nebula.mapper.BlogArticleMapper;
+import com.nebula.mapper.BlogCategoryMapper;
 import com.nebula.mapper.BlogTagMapper;
 import com.nebula.mapper.RelevancyArticleTagMapper;
 import com.nebula.service.article.BlogArticleService;
@@ -28,6 +34,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -43,6 +50,9 @@ import java.util.stream.Collectors;
 public class BlogArticleServiceImpl implements BlogArticleService {
 
     private final BlogArticleMapper articleMapper;
+    private final BlogArticleLikeMapper articleLikeMapper;
+    private final BlogArticleCollectMapper articleCollectMapper;
+    private final BlogCategoryMapper categoryMapper;
     private final BlogTagMapper tagMapper;
     private final RelevancyArticleTagMapper articleTagMapper;
 
@@ -59,6 +69,9 @@ public class BlogArticleServiceImpl implements BlogArticleService {
     @Transactional(rollbackFor = Exception.class)
     public Long publishArticle(ArticleDTO articleDTO) {
         Long userId = StpUtil.getLoginIdAsLong();
+
+        // 校验分类是否存在
+        validateCategory(articleDTO.getCategoryId());
 
         // 创建文章
         BlogArticle article = new BlogArticle();
@@ -86,6 +99,9 @@ public class BlogArticleServiceImpl implements BlogArticleService {
         if (article == null) {
             throw new BusinessException(ArticleConstants.ERROR_ARTICLE_NOT_FOUND);
         }
+
+        // 校验分类是否存在
+        validateCategory(articleDTO.getCategoryId());
 
         // 更新文章
         BeanUtils.copyProperties(articleDTO, article);
@@ -115,6 +131,16 @@ public class BlogArticleServiceImpl implements BlogArticleService {
         tagWrapper.eq(RelevancyArticleTag::getArticleId, id);
         articleTagMapper.delete(tagWrapper);
 
+        // 删除点赞记录
+        LambdaQueryWrapper<BlogArticleLike> likeWrapper = new LambdaQueryWrapper<>();
+        likeWrapper.eq(BlogArticleLike::getArticleId, id);
+        articleLikeMapper.delete(likeWrapper);
+
+        // 删除收藏记录
+        LambdaQueryWrapper<BlogArticleCollect> collectWrapper = new LambdaQueryWrapper<>();
+        collectWrapper.eq(BlogArticleCollect::getArticleId, id);
+        articleCollectMapper.delete(collectWrapper);
+
         // 删除文章（逻辑删除）
         articleMapper.deleteById(id);
     }
@@ -127,6 +153,22 @@ public class BlogArticleServiceImpl implements BlogArticleService {
         if (article == null || DraftStatusEnum.isDraft(article.getIsDraft())) {
             throw new BusinessException(ArticleConstants.ERROR_ARTICLE_NOT_FOUND);
         }
+        return converter.toDetailVO(article);
+    }
+
+    @Override
+    public ArticleVO getClientArticleDetailWithView(Long id) {
+        // 先查询文章确认存在
+        BlogArticle article = articleMapper.selectById(id);
+        if (article == null || DraftStatusEnum.isDraft(article.getIsDraft())) {
+            throw new BusinessException(ArticleConstants.ERROR_ARTICLE_NOT_FOUND);
+        }
+
+        // 文章存在才更新浏览量
+        interactionHelper.incrementViewCount(id);
+
+        // 重新查询获取更新后的数据
+        article = articleMapper.selectById(id);
         return converter.toDetailVO(article);
     }
 
@@ -188,10 +230,13 @@ public class BlogArticleServiceImpl implements BlogArticleService {
 
     @Override
     public List<ArticleListVO> getHotArticles(Integer limit) {
-        // 查询候选池（按基础互动指标初筛）
+        // 查询候选池（按基础互动指标初筛，确保候选池质量）
         Page<BlogArticle> page = new Page<>(1, ArticleConstants.HOT_ARTICLE_CANDIDATE_POOL_SIZE, false);
         LambdaQueryWrapper<BlogArticle> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(BlogArticle::getIsDraft, DraftStatusEnum.PUBLISHED.getCode());
+        wrapper.eq(BlogArticle::getIsDraft, DraftStatusEnum.PUBLISHED.getCode())
+                // 按浏览量和点赞数预排序，确保候选池包含热门文章
+                .orderByDesc(BlogArticle::getViewCount)
+                .orderByDesc(BlogArticle::getLikeCount);
 
         Page<BlogArticle> articlePage = articleMapper.selectPage(page, wrapper);
 
@@ -233,27 +278,37 @@ public class BlogArticleServiceImpl implements BlogArticleService {
     // ==================== 私有方法 ====================
 
     /**
-     * 保存文章标签关联（带标签有效性校验）
+     * 保存文章标签关联（带标签有效性校验 + 去重 + 批量插入）
      */
     private void saveArticleTags(Long articleId, List<Long> tagIds) {
         if (tagIds == null || tagIds.isEmpty()) {
             return;
         }
 
+        // 去重处理，避免重复标签
+        List<Long> distinctTagIds = tagIds.stream().distinct().toList();
+
         // 校验标签是否存在
-        List<BlogTag> existingTags = tagMapper.selectBatchIds(tagIds);
+        List<BlogTag> existingTags = tagMapper.selectBatchIds(distinctTagIds);
         Set<Long> existingTagIds = existingTags.stream()
                 .map(BlogTag::getId)
                 .collect(Collectors.toSet());
 
-        for (Long tagId : tagIds) {
+        // 构建批量插入列表
+        List<RelevancyArticleTag> articleTagList = new ArrayList<>();
+        for (Long tagId : distinctTagIds) {
             if (!existingTagIds.contains(tagId)) {
                 throw new BusinessException(ArticleConstants.ERROR_TAG_NOT_FOUND + ": " + tagId);
             }
             RelevancyArticleTag articleTag = new RelevancyArticleTag();
             articleTag.setArticleId(articleId);
             articleTag.setTagId(tagId);
-            articleTagMapper.insert(articleTag);
+            articleTagList.add(articleTag);
+        }
+
+        // 批量插入
+        if (!articleTagList.isEmpty()) {
+            articleTagMapper.batchInsert(articleTagList);
         }
     }
 
@@ -263,5 +318,18 @@ public class BlogArticleServiceImpl implements BlogArticleService {
     private void applyDefaultSort(LambdaQueryWrapper<BlogArticle> wrapper) {
         wrapper.orderByDesc(BlogArticle::getIsTop);
         wrapper.orderByDesc(BlogArticle::getCreateTime);
+    }
+
+    /**
+     * 校验分类是否存在
+     */
+    private void validateCategory(Long categoryId) {
+        if (categoryId == null) {
+            return;
+        }
+        BlogCategory category = categoryMapper.selectById(categoryId);
+        if (category == null) {
+            throw new BusinessException(ArticleConstants.ERROR_CATEGORY_NOT_FOUND);
+        }
     }
 }

@@ -1,4 +1,4 @@
-package com.nebula.service.auxiliary.impl;
+package com.nebula.service.tag.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.nebula.dto.TagDTO;
@@ -9,7 +9,7 @@ import com.nebula.exception.BusinessException;
 import com.nebula.mapper.BlogArticleMapper;
 import com.nebula.mapper.RelevancyArticleTagMapper;
 import com.nebula.mapper.BlogTagMapper;
-import com.nebula.service.auxiliary.BlogTagService;
+import com.nebula.service.tag.BlogTagService;
 import com.nebula.vo.TagAdminVO;
 import com.nebula.vo.TagClientVO;
 import lombok.RequiredArgsConstructor;

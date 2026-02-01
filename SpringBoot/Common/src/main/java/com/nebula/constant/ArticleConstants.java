@@ -20,6 +20,11 @@ public final class ArticleConstants {
     public static final String ERROR_ARTICLE_NOT_FOUND = "文章不存在";
 
     /**
+     * 分类不存在
+     */
+    public static final String ERROR_CATEGORY_NOT_FOUND = "分类不存在";
+
+    /**
      * 标签不存在
      */
     public static final String ERROR_TAG_NOT_FOUND = "标签不存在";

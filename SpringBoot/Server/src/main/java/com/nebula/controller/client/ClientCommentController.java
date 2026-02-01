@@ -5,7 +5,7 @@ import com.nebula.constant.CommonConstants;
 import com.nebula.controller.config.ClientController;
 import com.nebula.dto.CommentDTO;
 import com.nebula.result.Result;
-import com.nebula.service.auxiliary.BlogCommentService;
+import com.nebula.service.comment.BlogCommentService;
 import com.nebula.vo.CommentClientVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

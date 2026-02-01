@@ -1,0 +1,387 @@
+package com.nebula.service.comment.impl;
+
+import cn.dev33.satoken.stp.StpUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.nebula.constant.CommentConstants;
+import com.nebula.constant.CountConstants;
+import com.nebula.dto.CommentDTO;
+import com.nebula.entity.BlogArticle;
+import com.nebula.entity.BlogComment;
+import com.nebula.entity.BlogCommentLike;
+import com.nebula.enumeration.AuditStatusEnum;
+import com.nebula.exception.BusinessException;
+import com.nebula.mapper.BlogArticleMapper;
+import com.nebula.mapper.BlogCommentLikeMapper;
+import com.nebula.mapper.BlogCommentMapper;
+import com.nebula.service.comment.BlogCommentService;
+import com.nebula.service.comment.converter.CommentConverter;
+import com.nebula.service.comment.helper.CommentCountHelper;
+import com.nebula.vo.CommentAdminVO;
+import com.nebula.vo.CommentClientVO;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
+import org.springframework.web.util.HtmlUtils;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * 评论服务实现类
+ * <p>
+ * 职责：编排评论业务逻辑，具体的转换和查询逻辑委托给辅助类
+ *
+ * @author Nebula-Hash
+ * @date 2026/1/22
+ */
+@Service
+@RequiredArgsConstructor
+public class BlogCommentServiceImpl implements BlogCommentService {
+
+    private final BlogCommentMapper commentMapper;
+    private final BlogCommentLikeMapper commentLikeMapper;
+    private final BlogArticleMapper articleMapper;
+
+    private final CommentConverter converter;
+    private final CommentCountHelper countHelper;
+
+    // ==================== 客户端方法 ====================
+
+    /**
+     * 发布评论
+     * <p>
+     * TODO: 后续添加评论审核功能，目前默认发布即审核通过
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long publishComment(CommentDTO commentDTO) {
+        // 1. 校验文章是否存在
+        BlogArticle article = articleMapper.selectById(commentDTO.getArticleId());
+        if (article == null) {
+            throw new BusinessException(CommentConstants.ERR_ARTICLE_NOT_FOUND);
+        }
+
+        // 2. 构建评论实体
+        BlogComment comment = buildComment(commentDTO);
+
+        // 3. 处理回复关系（计算rootId）
+        processReplyRelation(comment, commentDTO.getParentId());
+
+        // 4. 保存评论
+        commentMapper.insert(comment);
+
+        // 5. 更新文章评论数
+        countHelper.incrementCommentCount(article.getId(), 1);
+
+        return comment.getId();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void likeComment(Long commentId) {
+        Long userId = StpUtil.getLoginIdAsLong();
+
+        // 检查评论是否存在
+        BlogComment comment = commentMapper.selectById(commentId);
+        if (comment == null) {
+            throw new BusinessException(CommentConstants.ERR_COMMENT_NOT_FOUND);
+        }
+
+        // 检查是否已点赞
+        LambdaQueryWrapper<BlogCommentLike> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(BlogCommentLike::getCommentId, commentId)
+                .eq(BlogCommentLike::getUserId, userId);
+        BlogCommentLike existLike = commentLikeMapper.selectOne(wrapper);
+
+        if (existLike != null) {
+            // 取消点赞
+            commentLikeMapper.deleteById(existLike.getId());
+            updateLikeCount(commentId, -1);
+        } else {
+            // 点赞
+            BlogCommentLike like = new BlogCommentLike();
+            like.setCommentId(commentId);
+            like.setUserId(userId);
+            commentLikeMapper.insert(like);
+            updateLikeCount(commentId, 1);
+        }
+    }
+
+    @Override
+    public Page<CommentClientVO> getArticleComments(Long articleId, Long current, Long size) {
+        // 1. 分页查询根评论
+        Page<BlogComment> page = new Page<>(current, size);
+        LambdaQueryWrapper<BlogComment> rootWrapper = new LambdaQueryWrapper<>();
+        rootWrapper.eq(BlogComment::getArticleId, articleId)
+                .isNull(BlogComment::getRootId)
+                .eq(BlogComment::getAuditStatus, AuditStatusEnum.APPROVED.getCode())
+                .orderByDesc(BlogComment::getCreateTime);
+
+        Page<BlogComment> rootPage = commentMapper.selectPage(page, rootWrapper);
+        List<BlogComment> rootComments = rootPage.getRecords();
+
+        if (rootComments.isEmpty()) {
+            return buildEmptyPage(current, size, rootPage.getTotal());
+        }
+
+        // 2. 批量查询所有回复
+        List<Long> rootIds = rootComments.stream()
+                .map(BlogComment::getId)
+                .collect(Collectors.toList());
+        List<BlogComment> allReplies = queryRepliesByRootIds(rootIds);
+
+        // 3. 使用转换器组装结果
+        return converter.toClientVOPage(rootPage, rootComments, allReplies, current, size);
+    }
+
+    // ==================== 管理端方法 ====================
+
+    @Override
+    public Page<CommentAdminVO> getAdminCommentList(Long current, Long size, Long articleId,
+                                                     Long userId, Integer auditStatus, String keyword) {
+        Page<BlogComment> page = new Page<>(current, size);
+        LambdaQueryWrapper<BlogComment> wrapper = new LambdaQueryWrapper<>();
+
+        // 条件筛选
+        wrapper.eq(articleId != null, BlogComment::getArticleId, articleId)
+                .eq(userId != null, BlogComment::getUserId, userId)
+                .eq(auditStatus != null, BlogComment::getAuditStatus, auditStatus)
+                .like(StringUtils.hasText(keyword), BlogComment::getContent, keyword)
+                .orderByDesc(BlogComment::getCreateTime);
+
+        Page<BlogComment> commentPage = commentMapper.selectPage(page, wrapper);
+
+        if (commentPage.getRecords().isEmpty()) {
+            return buildEmptyAdminPage(current, size);
+        }
+
+        return converter.toAdminVOPage(commentPage, current, size);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void auditComment(Long commentId, Integer auditStatus) {
+        BlogComment comment = commentMapper.selectById(commentId);
+        if (comment == null) {
+            throw new BusinessException(CommentConstants.ERR_COMMENT_NOT_FOUND);
+        }
+
+        validateAuditStatus(auditStatus);
+
+        Integer oldStatus = comment.getAuditStatus();
+        comment.setAuditStatus(auditStatus);
+        commentMapper.updateById(comment);
+
+        // 审核通过且原状态为待审核时，文章评论数+1
+        if (AuditStatusEnum.isApproved(auditStatus) && AuditStatusEnum.isPending(oldStatus)) {
+            countHelper.incrementCommentCount(comment.getArticleId(), 1);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteComment(Long commentId) {
+        BlogComment comment = commentMapper.selectById(commentId);
+        if (comment == null) {
+            throw new BusinessException(CommentConstants.ERR_COMMENT_NOT_FOUND);
+        }
+
+        Long articleId = comment.getArticleId();
+        int deleteCount = 0;
+
+        // 如果是根评论，级联删除所有子评论
+        if (comment.getRootId() == null) {
+            deleteCount += deleteChildComments(commentId);
+        }
+
+        // 统计当前评论
+        if (countHelper.shouldCountComment(comment)) {
+            deleteCount += 1;
+        }
+
+        // 删除当前评论
+        commentMapper.deleteById(commentId);
+
+        // 更新文章评论数
+        countHelper.decrementCommentCount(articleId, deleteCount);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchAuditComments(List<Long> commentIds, Integer auditStatus) {
+        if (CollectionUtils.isEmpty(commentIds)) {
+            throw new BusinessException(CommentConstants.ERR_COMMENT_IDS_EMPTY);
+        }
+        validateAuditStatus(auditStatus);
+
+        // 查询待审核的评论
+        LambdaQueryWrapper<BlogComment> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(BlogComment::getId, commentIds)
+                .eq(BlogComment::getAuditStatus, AuditStatusEnum.PENDING.getCode());
+        List<BlogComment> pendingComments = commentMapper.selectList(queryWrapper);
+
+        // 批量更新审核状态
+        LambdaUpdateWrapper<BlogComment> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.in(BlogComment::getId, commentIds)
+                .set(BlogComment::getAuditStatus, auditStatus);
+        commentMapper.update(null, updateWrapper);
+
+        // 审核通过时更新文章评论数
+        if (AuditStatusEnum.isApproved(auditStatus)) {
+            countHelper.batchIncrementCommentCount(pendingComments);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchDeleteComments(List<Long> commentIds) {
+        if (CollectionUtils.isEmpty(commentIds)) {
+            throw new BusinessException(CommentConstants.ERR_COMMENT_IDS_EMPTY);
+        }
+
+        for (Long commentId : commentIds) {
+            try {
+                deleteComment(commentId);
+            } catch (BusinessException e) {
+                // 评论不存在时跳过
+                if (!CommentConstants.ERR_COMMENT_NOT_FOUND.equals(e.getMessage())) {
+                    throw e;
+                }
+            }
+        }
+    }
+
+    @Override
+    public Long getPendingAuditCount() {
+        LambdaQueryWrapper<BlogComment> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(BlogComment::getAuditStatus, AuditStatusEnum.PENDING.getCode());
+        return commentMapper.selectCount(wrapper);
+    }
+
+    // ==================== 私有辅助方法 ====================
+
+    /**
+     * 构建评论实体
+     */
+    private BlogComment buildComment(CommentDTO commentDTO) {
+        Long userId = StpUtil.getLoginIdAsLong();
+
+        BlogComment comment = new BlogComment();
+        BeanUtils.copyProperties(commentDTO, comment);
+        comment.setUserId(userId);
+        comment.setLikeCount(CountConstants.INIT_VALUE);
+        comment.setAuditStatus(AuditStatusEnum.APPROVED.getCode());
+        comment.setContent(HtmlUtils.htmlEscape(commentDTO.getContent()));
+
+        return comment;
+    }
+
+    /**
+     * 处理回复关系，计算rootId
+     */
+    private void processReplyRelation(BlogComment comment, Long parentId) {
+        if (parentId == null) {
+            return;
+        }
+
+        BlogComment parentComment = commentMapper.selectById(parentId);
+        if (parentComment == null) {
+            throw new BusinessException(CommentConstants.ERR_PARENT_COMMENT_NOT_FOUND);
+        }
+
+        // 如果父评论是根评论，则rootId = 父评论ID
+        // 如果父评论不是根评论，则rootId = 父评论的rootId
+        comment.setRootId(parentComment.getRootId() != null
+                ? parentComment.getRootId()
+                : parentComment.getId());
+    }
+
+    /**
+     * 更新评论点赞数
+     */
+    private void updateLikeCount(Long commentId, int delta) {
+        if (delta > 0) {
+            commentMapper.update(null, new LambdaUpdateWrapper<BlogComment>()
+                    .eq(BlogComment::getId, commentId)
+                    .setSql("like_count = like_count + " + delta));
+        } else {
+            commentMapper.update(null, new LambdaUpdateWrapper<BlogComment>()
+                    .eq(BlogComment::getId, commentId)
+                    .setSql("like_count = GREATEST(like_count - " + Math.abs(delta) + ", 0)"));
+        }
+    }
+
+    /**
+     * 根据根评论ID列表查询所有回复
+     */
+    private List<BlogComment> queryRepliesByRootIds(List<Long> rootIds) {
+        if (rootIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        LambdaQueryWrapper<BlogComment> replyWrapper = new LambdaQueryWrapper<>();
+        replyWrapper.in(BlogComment::getRootId, rootIds)
+                .eq(BlogComment::getAuditStatus, AuditStatusEnum.APPROVED.getCode())
+                .orderByAsc(BlogComment::getCreateTime);
+
+        return commentMapper.selectList(replyWrapper);
+    }
+
+    /**
+     * 删除子评论并返回删除的审核通过评论数量
+     */
+    private int deleteChildComments(Long rootCommentId) {
+        LambdaQueryWrapper<BlogComment> childWrapper = new LambdaQueryWrapper<>();
+        childWrapper.eq(BlogComment::getRootId, rootCommentId);
+        List<BlogComment> childComments = commentMapper.selectList(childWrapper);
+
+        if (childComments.isEmpty()) {
+            return 0;
+        }
+
+        // 统计审核通过的子评论数量
+        int approvedCount = countHelper.countApprovedComments(childComments);
+
+        // 删除所有子评论
+        LambdaUpdateWrapper<BlogComment> deleteWrapper = new LambdaUpdateWrapper<>();
+        deleteWrapper.eq(BlogComment::getRootId, rootCommentId);
+        commentMapper.delete(deleteWrapper);
+
+        return approvedCount;
+    }
+
+    /**
+     * 验证审核状态
+     */
+    private void validateAuditStatus(Integer auditStatus) {
+        if (!AuditStatusEnum.isApproved(auditStatus) && !AuditStatusEnum.isRejected(auditStatus)) {
+            throw new BusinessException(CommentConstants.ERR_INVALID_AUDIT_STATUS);
+        }
+    }
+
+    /**
+     * 构建空的客户端评论分页
+     */
+    private Page<CommentClientVO> buildEmptyPage(Long current, Long size, Long total) {
+        Page<CommentClientVO> emptyPage = new Page<>(current, size);
+        emptyPage.setTotal(total);
+        emptyPage.setRecords(Collections.emptyList());
+        return emptyPage;
+    }
+
+    /**
+     * 构建空的管理端评论分页
+     */
+    private Page<CommentAdminVO> buildEmptyAdminPage(Long current, Long size) {
+        Page<CommentAdminVO> emptyPage = new Page<>(current, size);
+        emptyPage.setTotal(0L);
+        emptyPage.setRecords(Collections.emptyList());
+        return emptyPage;
+    }
+}

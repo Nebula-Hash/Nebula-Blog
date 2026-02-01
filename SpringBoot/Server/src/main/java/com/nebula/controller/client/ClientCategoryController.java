@@ -2,7 +2,7 @@ package com.nebula.controller.client;
 
 import com.nebula.controller.config.ClientController;
 import com.nebula.result.Result;
-import com.nebula.service.auxiliary.BlogCategoryService;
+import com.nebula.service.category.BlogCategoryService;
 import com.nebula.vo.CategoryClientVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

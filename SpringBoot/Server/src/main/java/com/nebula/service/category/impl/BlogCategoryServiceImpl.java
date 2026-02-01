@@ -1,4 +1,4 @@
-package com.nebula.service.auxiliary.impl;
+package com.nebula.service.category.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.nebula.dto.CategoryDTO;
@@ -7,7 +7,7 @@ import com.nebula.entity.BlogCategory;
 import com.nebula.exception.BusinessException;
 import com.nebula.mapper.BlogArticleMapper;
 import com.nebula.mapper.BlogCategoryMapper;
-import com.nebula.service.auxiliary.BlogCategoryService;
+import com.nebula.service.category.BlogCategoryService;
 import com.nebula.vo.CategoryAdminVO;
 import com.nebula.vo.CategoryClientVO;
 import lombok.RequiredArgsConstructor;

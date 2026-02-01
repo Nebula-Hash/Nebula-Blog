@@ -3,7 +3,7 @@ package com.nebula.controller.admin;
 import com.nebula.controller.config.AdminController;
 import com.nebula.dto.CategoryDTO;
 import com.nebula.result.Result;
-import com.nebula.service.auxiliary.BlogCategoryService;
+import com.nebula.service.category.BlogCategoryService;
 import com.nebula.vo.CategoryAdminVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

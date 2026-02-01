@@ -204,30 +204,11 @@ public class ArticleConverter {
     }
 
     /**
-     * 填充标签信息
+     * 填充标签信息（复用批量查询方法）
      */
     private void fillTagsInfo(ArticleVO articleVO, Long articleId) {
-        LambdaQueryWrapper<RelevancyArticleTag> tagWrapper = new LambdaQueryWrapper<>();
-        tagWrapper.eq(RelevancyArticleTag::getArticleId, articleId);
-        List<RelevancyArticleTag> articleTags = articleTagMapper.selectList(tagWrapper);
-
-        if (articleTags.isEmpty()) {
-            articleVO.setTags(new ArrayList<>());
-            return;
-        }
-
-        List<Long> tagIds = articleTags.stream()
-                .map(RelevancyArticleTag::getTagId)
-                .collect(Collectors.toList());
-        List<BlogTag> tags = tagMapper.selectBatchIds(tagIds);
-
-        List<TagClientVO> tagVOs = tags.stream().map(tag -> {
-            TagClientVO tagVO = new TagClientVO();
-            BeanUtils.copyProperties(tag, tagVO);
-            return tagVO;
-        }).collect(Collectors.toList());
-
-        articleVO.setTags(tagVOs);
+        Map<Long, List<TagClientVO>> tagsMap = batchQueryTags(Set.of(articleId));
+        articleVO.setTags(tagsMap.getOrDefault(articleId, new ArrayList<>()));
     }
 
     /**

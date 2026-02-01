@@ -91,6 +91,16 @@ public interface BlogArticleService {
     ArticleVO getClientArticleDetail(Long id);
 
     /**
+     * 客户端获取文章详情（并更新浏览量）
+     * <p>
+     * 先查询文章确认存在，再更新浏览量，最后返回详情
+     *
+     * @param id 文章ID
+     * @return 文章详情（包含更新后的浏览量）
+     */
+    ArticleVO getClientArticleDetailWithView(Long id);
+
+    /**
      * 获取热门文章
      *
      * @param limit 数量

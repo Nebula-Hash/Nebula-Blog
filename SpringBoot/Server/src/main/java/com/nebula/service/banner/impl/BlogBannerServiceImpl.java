@@ -1,4 +1,4 @@
-package com.nebula.service.auxiliary.impl;
+package com.nebula.service.banner.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -7,7 +7,7 @@ import com.nebula.entity.BlogBanner;
 import com.nebula.enumeration.StatusEnum;
 import com.nebula.exception.BusinessException;
 import com.nebula.mapper.BlogBannerMapper;
-import com.nebula.service.auxiliary.BlogBannerService;
+import com.nebula.service.banner.BlogBannerService;
 import com.nebula.upload.FileUploadUtil;
 import com.nebula.vo.BannerAdminVO;
 import com.nebula.vo.BannerClientVO;

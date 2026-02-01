@@ -50,4 +50,14 @@ public final class CommentConstants {
      * 无效的审核状态
      */
     public static final String ERR_INVALID_AUDIT_STATUS = "无效的审核状态";
+
+    /**
+     * 文章不存在
+     */
+    public static final String ERR_ARTICLE_NOT_FOUND = "文章不存在";
+
+    /**
+     * 父评论不存在
+     */
+    public static final String ERR_PARENT_COMMENT_NOT_FOUND = "父评论不存在";
 }

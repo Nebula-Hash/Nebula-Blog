@@ -5,7 +5,7 @@ import com.nebula.constant.CommentConstants;
 import com.nebula.constant.CommonConstants;
 import com.nebula.controller.config.AdminController;
 import com.nebula.result.Result;
-import com.nebula.service.auxiliary.BlogCommentService;
+import com.nebula.service.comment.BlogCommentService;
 import com.nebula.vo.CommentAdminVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

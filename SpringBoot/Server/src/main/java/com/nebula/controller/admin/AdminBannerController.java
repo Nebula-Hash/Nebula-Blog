@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nebula.controller.config.AdminController;
 import com.nebula.dto.BannerDTO;
 import com.nebula.result.Result;
-import com.nebula.service.auxiliary.BlogBannerService;
+import com.nebula.service.banner.BlogBannerService;
 import com.nebula.upload.FileUploadUtil;
 import com.nebula.vo.BannerAdminVO;
 import jakarta.validation.Valid;

@@ -10,6 +10,7 @@ import com.nebula.service.article.BlogArticleService;
 import com.nebula.vo.ArticleListVO;
 import com.nebula.vo.ArticleVO;
 import jakarta.validation.Valid;
+import org.springframework.validation.annotation.Validated;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -69,7 +70,7 @@ public class AdminArticleController {
      * 发布文章
      */
     @PostMapping("/publish")
-    public Result<Long> publishArticle(@Valid @RequestBody ArticleDTO articleDTO) {
+    public Result<Long> publishArticle(@Validated(ArticleDTO.Publish.class) @RequestBody ArticleDTO articleDTO) {
         Long articleId = articleService.publishArticle(articleDTO);
         return Result.success(ArticleConstants.MSG_PUBLISH_SUCCESS, articleId);
     }
@@ -78,7 +79,7 @@ public class AdminArticleController {
      * 编辑文章
      */
     @PutMapping("/update")
-    public Result<String> updateArticle(@Valid @RequestBody ArticleDTO articleDTO) {
+    public Result<String> updateArticle(@Validated(ArticleDTO.Update.class) @RequestBody ArticleDTO articleDTO) {
         articleService.updateArticle(articleDTO);
         return Result.success(ArticleConstants.MSG_UPDATE_SUCCESS);
     }
