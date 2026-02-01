@@ -6,46 +6,55 @@
                 <span style="font-weight: 600; font-size: 16px; color: rgba(255, 255, 255, 0.9);">热门文章</span>
             </n-space>
         </template>
-        <n-list hoverable clickable>
-            <n-list-item v-for="(article, index) in hotArticles" :key="article.id" @click="goToArticle(article.id)">
-                <template #prefix>
-                    <n-tag :type="index < 3 ? 'error' : 'default'" size="small" round>
-                        {{ index + 1 }}
-                    </n-tag>
-                </template>
-                <n-ellipsis style="max-width: 200px; color: rgba(255, 255, 255, 0.85);">
-                    {{ article.title }}
-                </n-ellipsis>
-                <template #suffix>
-                    <n-text depth="3" style="font-size: 12px; color: rgba(255, 255, 255, 0.5);">
-                        {{ article.viewCount }}
-                    </n-text>
-                </template>
-            </n-list-item>
-        </n-list>
+        <n-spin :show="loading">
+            <n-list v-if="hotArticles.length > 0" hoverable clickable>
+                <n-list-item v-for="(article, index) in hotArticles" :key="article.id" @click="goToDetail(article.id)">
+                    <template #prefix>
+                        <n-tag :type="index < 3 ? 'error' : 'default'" size="small" round>
+                            {{ index + 1 }}
+                        </n-tag>
+                    </template>
+                    <n-ellipsis style="max-width: 200px; color: rgba(255, 255, 255, 0.85);">
+                        {{ article.title }}
+                    </n-ellipsis>
+                    <template #suffix>
+                        <n-text depth="3" style="font-size: 12px; color: rgba(255, 255, 255, 0.5);">
+                            {{ article.viewCount }}
+                        </n-text>
+                    </template>
+                </n-list-item>
+            </n-list>
+            <n-empty v-else description="暂无热门文章" size="small" />
+        </n-spin>
     </n-card>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { getHotArticles } from '@/api/article'
-import { NCard, NList, NListItem, NTag, NSpace, NText, NEllipsis, NIcon } from 'naive-ui'
+import { useArticleNavigation } from '@/composables/useArticle'
+import { ArticleQueryService } from '@/services/articleService'
+import { NCard, NList, NListItem, NTag, NSpace, NText, NEllipsis, NIcon, NSpin, NEmpty } from 'naive-ui'
 import { FlameOutline } from '@vicons/ionicons5'
 import { PAGINATION_CONFIG } from '@/config/constants'
+import { createErrorHandler } from '@/utils/errorHandler'
 
-const router = useRouter()
+const errorHandler = createErrorHandler('HotArticles')
+const { goToDetail } = useArticleNavigation()
+
+const loading = ref(false)
 const hotArticles = ref([])
 
 // 加载热门文章
 const loadHotArticles = async () => {
-    const res = await getHotArticles(PAGINATION_CONFIG.HOT_ARTICLES_SIZE)
-    hotArticles.value = res.data
-}
-
-// 跳转到文章详情
-const goToArticle = (id) => {
-    router.push(`/article/${id}`)
+    loading.value = true
+    try {
+        const data = await ArticleQueryService.getHotArticles(PAGINATION_CONFIG.HOT_ARTICLES_SIZE)
+        hotArticles.value = data
+    } catch (error) {
+        errorHandler.handleLoad(error, '热门文章', true) // 静默失败
+    } finally {
+        loading.value = false
+    }
 }
 
 onMounted(() => {

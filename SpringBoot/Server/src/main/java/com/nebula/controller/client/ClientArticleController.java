@@ -54,16 +54,6 @@ public class ClientArticleController {
     }
 
     /**
-     * 获取文章详情（包含浏览量更新）
-     */
-    @GetMapping("/detail/{id}")
-    public Result<ArticleVO> getArticleDetail(@PathVariable Long id) {
-        // 查询详情并更新浏览量（Service层保证先查后更新）
-        ArticleVO articleVO = articleService.getClientArticleDetailWithView(id);
-        return Result.success(articleVO);
-    }
-
-    /**
      * 获取热门文章
      */
     @GetMapping("/hot")
@@ -81,6 +71,16 @@ public class ClientArticleController {
             @RequestParam(defaultValue = ArticleConstants.DEFAULT_RECOMMEND_LIMIT_STR) Integer limit) {
         List<ArticleListVO> articles = articleService.getRecommendArticles(limit);
         return Result.success(articles);
+    }
+
+    /**
+     * 获取文章详情（包含浏览量更新）
+     */
+    @GetMapping("/detail/{id}")
+    public Result<ArticleVO> getArticleDetail(@PathVariable Long id) {
+        // 查询详情并更新浏览量（Service层保证先查后更新）
+        ArticleVO articleVO = articleService.getClientArticleDetailWithView(id);
+        return Result.success(articleVO);
     }
 
     /**

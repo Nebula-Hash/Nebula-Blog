@@ -80,6 +80,11 @@ public class CommentClientVO {
     private List<CommentClientVO> children;
 
     /**
+     * 回复总数（仅根评论有值）
+     */
+    private Integer replyCount;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;

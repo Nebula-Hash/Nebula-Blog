@@ -18,12 +18,29 @@ public interface BlogCommentService {
     // ==================== 客户端方法 ====================
 
     /**
+     * 获取文章评论列表
+     *
+     * @param articleId 文章ID
+     * @param current   当前页
+     * @param size      每页大小
+     * @return 评论列表
+     */
+    Page<CommentClientVO> getArticleComments(Long articleId, Long current, Long size);
+
+    /**
      * 发布评论
      *
      * @param commentDTO 评论信息
      * @return 评论ID
      */
     Long publishComment(CommentDTO commentDTO);
+
+    /**
+     * 用户删除自己的评论
+     *
+     * @param commentId 评论ID
+     */
+    void deleteMyComment(Long commentId);
 
     /**
      * 评论点赞/取消点赞
@@ -33,14 +50,15 @@ public interface BlogCommentService {
     void likeComment(Long commentId);
 
     /**
-     * 获取文章评论列表
+     * 获取根评论下的更多回复（分页）
      *
-     * @param articleId 文章ID
-     * @param current   当前页
-     * @param size      每页大小
-     * @return 评论列表
+     * @param rootId  根评论ID
+     * @param current 当前页
+     * @param size    每页大小
+     * @return 回复列表
      */
-    Page<CommentClientVO> getArticleComments(Long articleId, Long current, Long size);
+    Page<CommentClientVO> getReplies(Long rootId, Long current, Long size);
+
 
     // ==================== 管理端方法 ====================
 

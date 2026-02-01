@@ -27,12 +27,14 @@
 </template>
 
 <script setup>
-import BannerCarousel from '@/components/home/BannerCarousel.vue'
-import RecommendArticles from '@/components/home/RecommendArticles.vue'
-import ArticleList from '@/components/home/ArticleList.vue'
-import HotArticles from '@/components/home/HotArticles.vue'
-import CategoryList from '@/components/home/CategoryList.vue'
-import TagCloud from '@/components/home/TagCloud.vue'
+import {
+  BannerCarousel,
+  RecommendArticles,
+  ArticleList,
+  HotArticles,
+  CategoryList,
+  TagCloud
+} from '@/components/home'
 import { NGrid, NGi } from 'naive-ui'
 </script>
 

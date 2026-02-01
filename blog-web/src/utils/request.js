@@ -327,4 +327,131 @@ function silentLogout(showMessage = true) {
   }
 }
 
+/**
+ * 请求去重管理器
+ * 防止相同请求在短时间内重复发送
+ */
+class RequestDeduplicator {
+  constructor() {
+    this.pendingRequests = new Map()
+  }
+
+  /**
+   * 生成请求唯一键
+   */
+  generateKey(config) {
+    const { method, url, params, data } = config
+    return `${method}:${url}:${JSON.stringify(params)}:${JSON.stringify(data)}`
+  }
+
+  /**
+   * 添加请求
+   */
+  addRequest(config, promise) {
+    const key = this.generateKey(config)
+    this.pendingRequests.set(key, promise)
+
+    // 请求完成后移除
+    promise.finally(() => {
+      this.pendingRequests.delete(key)
+    })
+
+    return promise
+  }
+
+  /**
+   * 获取已存在的请求
+   */
+  getRequest(config) {
+    const key = this.generateKey(config)
+    return this.pendingRequests.get(key)
+  }
+
+  /**
+   * 移除请求
+   */
+  removeRequest(config) {
+    const key = this.generateKey(config)
+    this.pendingRequests.delete(key)
+  }
+}
+
+/**
+ * 请求取消管理器
+ * 管理可取消的请求
+ */
+class RequestCanceller {
+  constructor() {
+    this.cancelTokens = new Map()
+  }
+
+  /**
+   * 添加取消令牌
+   */
+  addCancelToken(key, cancelToken) {
+    this.cancelTokens.set(key, cancelToken)
+  }
+
+  /**
+   * 取消指定请求
+   */
+  cancel(key, message = 'Request canceled') {
+    const cancelToken = this.cancelTokens.get(key)
+    if (cancelToken) {
+      cancelToken.cancel(message)
+      this.cancelTokens.delete(key)
+    }
+  }
+
+  /**
+   * 取消所有请求
+   */
+  cancelAll(message = 'All requests canceled') {
+    this.cancelTokens.forEach((cancelToken) => {
+      cancelToken.cancel(message)
+    })
+    this.cancelTokens.clear()
+  }
+
+  /**
+   * 移除取消令牌
+   */
+  remove(key) {
+    this.cancelTokens.delete(key)
+  }
+}
+
+/**
+ * 创建可取消的请求
+ * @param {Object} config - axios请求配置
+ * @param {string} cancelKey - 取消键（可选）
+ * @returns {Promise} 请求Promise
+ */
+export function createCancellableRequest(config, cancelKey) {
+  const source = axios.CancelToken.source()
+  const key = cancelKey || `${config.method}:${config.url}`
+
+  config.cancelToken = source.token
+
+  // 添加到取消管理器
+  requestCanceller.addCancelToken(key, source)
+
+  const promise = request(config)
+
+  // 请求完成后移除
+  promise.finally(() => {
+    requestCanceller.remove(key)
+  })
+
+  return {
+    promise,
+    cancel: (message) => source.cancel(message),
+    key
+  }
+}
+
+// 导出单例实例
+export const requestDeduplicator = new RequestDeduplicator()
+export const requestCanceller = new RequestCanceller()
+
 export default request

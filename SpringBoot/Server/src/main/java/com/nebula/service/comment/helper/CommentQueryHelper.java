@@ -6,8 +6,10 @@ import com.nebula.entity.BlogArticle;
 import com.nebula.entity.BlogComment;
 import com.nebula.entity.BlogCommentLike;
 import com.nebula.entity.SysUser;
+import com.nebula.enumeration.AuditStatusEnum;
 import com.nebula.mapper.BlogArticleMapper;
 import com.nebula.mapper.BlogCommentLikeMapper;
+import com.nebula.mapper.BlogCommentMapper;
 import com.nebula.mapper.SysUserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -30,6 +32,7 @@ public class CommentQueryHelper {
     private final SysUserMapper userMapper;
     private final BlogArticleMapper articleMapper;
     private final BlogCommentLikeMapper commentLikeMapper;
+    private final BlogCommentMapper commentMapper;
 
     /**
      * 批量获取用户信息Map
@@ -137,5 +140,33 @@ public class CommentQueryHelper {
 
         return userMapper.selectBatchIds(userIds).stream()
                 .collect(Collectors.toMap(SysUser::getId, user -> user, (a, b) -> a));
+    }
+
+    /**
+     * 批量统计根评论的回复总数
+     * <p>
+     * 仅统计审核通过的回复
+     *
+     * @param rootIds 根评论ID列表
+     * @return 根评论ID -> 回复数 Map
+     */
+    public Map<Long, Integer> batchCountReplies(List<Long> rootIds) {
+        if (rootIds == null || rootIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        LambdaQueryWrapper<BlogComment> wrapper = new LambdaQueryWrapper<>();
+        wrapper.in(BlogComment::getRootId, rootIds)
+                .eq(BlogComment::getAuditStatus, AuditStatusEnum.APPROVED.getCode())
+                .select(BlogComment::getRootId);
+
+        List<BlogComment> replies = commentMapper.selectList(wrapper);
+
+        // 按 rootId 分组统计数量
+        return replies.stream()
+                .collect(Collectors.groupingBy(
+                        BlogComment::getRootId,
+                        Collectors.collectingAndThen(Collectors.counting(), Long::intValue)
+                ));
     }
 }

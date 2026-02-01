@@ -10,6 +10,7 @@ import com.nebula.dto.CommentDTO;
 import com.nebula.entity.BlogArticle;
 import com.nebula.entity.BlogComment;
 import com.nebula.entity.BlogCommentLike;
+import com.nebula.entity.SysUser;
 import com.nebula.enumeration.AuditStatusEnum;
 import com.nebula.exception.BusinessException;
 import com.nebula.mapper.BlogArticleMapper;
@@ -18,6 +19,7 @@ import com.nebula.mapper.BlogCommentMapper;
 import com.nebula.service.comment.BlogCommentService;
 import com.nebula.service.comment.converter.CommentConverter;
 import com.nebula.service.comment.helper.CommentCountHelper;
+import com.nebula.service.comment.helper.CommentQueryHelper;
 import com.nebula.vo.CommentAdminVO;
 import com.nebula.vo.CommentClientVO;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,8 @@ import org.springframework.web.util.HtmlUtils;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -50,12 +54,42 @@ public class BlogCommentServiceImpl implements BlogCommentService {
 
     private final CommentConverter converter;
     private final CommentCountHelper countHelper;
+    private final CommentQueryHelper queryHelper;
 
     // ==================== 客户端方法 ====================
 
     /**
+     * 获取文章评论列表
+     */
+    @Override
+    public Page<CommentClientVO> getArticleComments(Long articleId, Long current, Long size) {
+        // 1. 分页查询根评论
+        Page<BlogComment> page = new Page<>(current, size);
+        LambdaQueryWrapper<BlogComment> rootWrapper = new LambdaQueryWrapper<>();
+        rootWrapper.eq(BlogComment::getArticleId, articleId)
+                .isNull(BlogComment::getRootId)
+                .eq(BlogComment::getAuditStatus, AuditStatusEnum.APPROVED.getCode())
+                .orderByDesc(BlogComment::getCreateTime);
+
+        Page<BlogComment> rootPage = commentMapper.selectPage(page, rootWrapper);
+        List<BlogComment> rootComments = rootPage.getRecords();
+
+        if (rootComments.isEmpty()) {
+            return buildEmptyPage(current, size, rootPage.getTotal());
+        }
+
+        // 2. 批量查询所有回复
+        List<Long> rootIds = rootComments.stream()
+                .map(BlogComment::getId)
+                .collect(Collectors.toList());
+        List<BlogComment> allReplies = queryRepliesByRootIds(rootIds);
+
+        // 3. 使用转换器组装结果
+        return converter.toClientVOPage(rootPage, rootComments, allReplies, current, size);
+    }
+
+    /**
      * 发布评论
-     * <p>
      * TODO: 后续添加评论审核功能，目前默认发布即审核通过
      */
     @Override
@@ -82,6 +116,31 @@ public class BlogCommentServiceImpl implements BlogCommentService {
         return comment.getId();
     }
 
+    /**
+     * 删除自己的评论
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteMyComment(Long commentId) {
+        Long userId = StpUtil.getLoginIdAsLong();
+
+        BlogComment comment = commentMapper.selectById(commentId);
+        if (comment == null) {
+            throw new BusinessException(CommentConstants.ERR_COMMENT_NOT_FOUND);
+        }
+
+        // 校验是否是自己的评论
+        if (!comment.getUserId().equals(userId)) {
+            throw new BusinessException(CommentConstants.ERR_NO_PERMISSION_DELETE);
+        }
+
+        // 复用管理端删除逻辑（级联删除子评论 + 更新计数）
+        deleteComment(commentId);
+    }
+
+    /**
+     * 点赞评论
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void likeComment(Long commentId) {
@@ -113,35 +172,52 @@ public class BlogCommentServiceImpl implements BlogCommentService {
         }
     }
 
+    /**
+     * 获取评论的回复列表
+     */
     @Override
-    public Page<CommentClientVO> getArticleComments(Long articleId, Long current, Long size) {
-        // 1. 分页查询根评论
-        Page<BlogComment> page = new Page<>(current, size);
-        LambdaQueryWrapper<BlogComment> rootWrapper = new LambdaQueryWrapper<>();
-        rootWrapper.eq(BlogComment::getArticleId, articleId)
-                .isNull(BlogComment::getRootId)
-                .eq(BlogComment::getAuditStatus, AuditStatusEnum.APPROVED.getCode())
-                .orderByDesc(BlogComment::getCreateTime);
-
-        Page<BlogComment> rootPage = commentMapper.selectPage(page, rootWrapper);
-        List<BlogComment> rootComments = rootPage.getRecords();
-
-        if (rootComments.isEmpty()) {
-            return buildEmptyPage(current, size, rootPage.getTotal());
+    public Page<CommentClientVO> getReplies(Long rootId, Long current, Long size) {
+        // 验证根评论是否存在
+        BlogComment rootComment = commentMapper.selectById(rootId);
+        if (rootComment == null) {
+            throw new BusinessException(CommentConstants.ERR_COMMENT_NOT_FOUND);
         }
 
-        // 2. 批量查询所有回复
-        List<Long> rootIds = rootComments.stream()
-                .map(BlogComment::getId)
-                .collect(Collectors.toList());
-        List<BlogComment> allReplies = queryRepliesByRootIds(rootIds);
+        // 分页查询该根评论下的所有回复
+        Page<BlogComment> page = new Page<>(current, size);
+        LambdaQueryWrapper<BlogComment> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(BlogComment::getRootId, rootId)
+                .eq(BlogComment::getAuditStatus, AuditStatusEnum.APPROVED.getCode())
+                .orderByAsc(BlogComment::getCreateTime);
 
-        // 3. 使用转换器组装结果
-        return converter.toClientVOPage(rootPage, rootComments, allReplies, current, size);
+        Page<BlogComment> replyPage = commentMapper.selectPage(page, wrapper);
+        List<BlogComment> replies = replyPage.getRecords();
+
+        if (replies.isEmpty()) {
+            return buildEmptyPage(current, size, replyPage.getTotal());
+        }
+
+        // 批量获取用户信息和点赞状态
+        Map<Long, SysUser> userMap = queryHelper.batchGetUserMap(replies);
+        Set<Long> likedCommentIds = queryHelper.getCurrentUserLikedCommentIds(replies);
+
+        // 转换为VO
+        List<CommentClientVO> voList = replies.stream()
+                .map(reply -> converter.toClientVO(reply, userMap, likedCommentIds))
+                .collect(Collectors.toList());
+
+        Page<CommentClientVO> voPage = new Page<>(current, size);
+        voPage.setTotal(replyPage.getTotal());
+        voPage.setRecords(voList);
+        return voPage;
     }
+
 
     // ==================== 管理端方法 ====================
 
+    /**
+     * 获取后台评论列表
+     */
     @Override
     public Page<CommentAdminVO> getAdminCommentList(Long current, Long size, Long articleId,
                                                      Long userId, Integer auditStatus, String keyword) {
@@ -164,6 +240,9 @@ public class BlogCommentServiceImpl implements BlogCommentService {
         return converter.toAdminVOPage(commentPage, current, size);
     }
 
+    /**
+     * 审核评论
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void auditComment(Long commentId, Integer auditStatus) {
@@ -184,6 +263,9 @@ public class BlogCommentServiceImpl implements BlogCommentService {
         }
     }
 
+    /**
+     * 删除评论（级联删除子评论）
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteComment(Long commentId) {
@@ -212,6 +294,9 @@ public class BlogCommentServiceImpl implements BlogCommentService {
         countHelper.decrementCommentCount(articleId, deleteCount);
     }
 
+    /**
+     * 批量审核评论
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchAuditComments(List<Long> commentIds, Integer auditStatus) {
@@ -238,6 +323,9 @@ public class BlogCommentServiceImpl implements BlogCommentService {
         }
     }
 
+    /**
+     * 批量删除评论
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void batchDeleteComments(List<Long> commentIds) {
@@ -257,6 +345,9 @@ public class BlogCommentServiceImpl implements BlogCommentService {
         }
     }
 
+    /**
+     * 获取待审核评论数
+     */
     @Override
     public Long getPendingAuditCount() {
         LambdaQueryWrapper<BlogComment> wrapper = new LambdaQueryWrapper<>();
@@ -283,7 +374,7 @@ public class BlogCommentServiceImpl implements BlogCommentService {
     }
 
     /**
-     * 处理回复关系，计算rootId
+     * 处理回复关系，计算rootId并校验replyUserId
      */
     private void processReplyRelation(BlogComment comment, Long parentId) {
         if (parentId == null) {
@@ -295,7 +386,17 @@ public class BlogCommentServiceImpl implements BlogCommentService {
             throw new BusinessException(CommentConstants.ERR_PARENT_COMMENT_NOT_FOUND);
         }
 
-        // 如果父评论是根评论，则rootId = 父评论ID
+        // 校验被回复用户：如果前端传了replyUserId，必须与父评论作者一致
+        if (comment.getReplyUserId() != null) {
+            if (!comment.getReplyUserId().equals(parentComment.getUserId())) {
+                throw new BusinessException(CommentConstants.ERR_REPLY_USER_MISMATCH);
+            }
+        } else {
+            // 如果未指定，默认回复父评论作者
+            comment.setReplyUserId(parentComment.getUserId());
+        }
+
+        // 计算rootId：如果父评论是根评论，则rootId = 父评论ID
         // 如果父评论不是根评论，则rootId = 父评论的rootId
         comment.setRootId(parentComment.getRootId() != null
                 ? parentComment.getRootId()
@@ -318,19 +419,25 @@ public class BlogCommentServiceImpl implements BlogCommentService {
     }
 
     /**
-     * 根据根评论ID列表查询所有回复
+     * 根据根评论ID列表查询所有回复（带数量限制）
+     * <p>
+     * 使用 MyBatis-Plus 分页限制总查询数量，避免单个热门评论回复过多导致性能问题
      */
     private List<BlogComment> queryRepliesByRootIds(List<Long> rootIds) {
         if (rootIds.isEmpty()) {
             return Collections.emptyList();
         }
 
+        // 计算分页大小：每个根评论最多加载 MAX_REPLIES_PER_ROOT 条回复
+        int maxSize = CommentConstants.MAX_REPLIES_PER_ROOT * rootIds.size();
+        Page<BlogComment> page = new Page<>(1, maxSize, false);
+
         LambdaQueryWrapper<BlogComment> replyWrapper = new LambdaQueryWrapper<>();
         replyWrapper.in(BlogComment::getRootId, rootIds)
                 .eq(BlogComment::getAuditStatus, AuditStatusEnum.APPROVED.getCode())
                 .orderByAsc(BlogComment::getCreateTime);
 
-        return commentMapper.selectList(replyWrapper);
+        return commentMapper.selectPage(page, replyWrapper).getRecords();
     }
 
     /**

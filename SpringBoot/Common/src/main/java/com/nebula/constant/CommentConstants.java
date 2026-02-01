@@ -60,4 +60,21 @@ public final class CommentConstants {
      * 父评论不存在
      */
     public static final String ERR_PARENT_COMMENT_NOT_FOUND = "父评论不存在";
+
+    /**
+     * 被回复用户不匹配
+     */
+    public static final String ERR_REPLY_USER_MISMATCH = "被回复用户与父评论作者不匹配";
+
+    /**
+     * 无权删除该评论
+     */
+    public static final String ERR_NO_PERMISSION_DELETE = "只能删除自己的评论";
+
+    // ==================== 业务常量 ====================
+
+    /**
+     * 每个根评论下最多加载的子回复数量
+     */
+    public static final int MAX_REPLIES_PER_ROOT = 10;
 }

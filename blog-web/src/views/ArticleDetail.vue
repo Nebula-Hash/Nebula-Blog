@@ -90,10 +90,10 @@
 import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { getArticleDetail, likeArticle, collectArticle } from '@/api/article'
+import { useArticleDetail, useArticleInteraction } from '@/composables/useArticle'
 import { getCommentList, publishComment, likeComment } from '@/api/comment'
-import CommentItem from '@/components/CommentItem.vue'
-import { formatDateTime, showSuccess, showWarning, checkLogin, validateNotEmpty } from '@/utils/common'
+import { CommentItem } from '@/components/comment'
+import { formatDateTime, showSuccess, checkLogin, validateNotEmpty } from '@/utils/common'
 import { escapeHtml } from '@/utils/security'
 import { PAGINATION_CONFIG } from '@/config/constants'
 import {
@@ -123,8 +123,12 @@ import {
 const route = useRoute()
 const userStore = useUserStore()
 
-const loading = ref(false)
-const article = ref(null)
+// 使用文章详情组合式函数
+const { loading, article, loadArticle } = useArticleDetail()
+
+// 使用文章交互组合式函数
+const { liking, collecting, toggleLike, toggleCollect } = useArticleInteraction()
+
 const comments = ref([])
 const commentContent = ref('')
 const commentLoading = ref(false)
@@ -136,22 +140,6 @@ const replyTarget = ref(null)
 
 // 创建 AbortController 用于取消请求
 const abortController = new AbortController()
-
-const loadArticle = async () => {
-  loading.value = true
-  try {
-    const res = await getArticleDetail(route.params.id, { signal: abortController.signal })
-    article.value = res.data
-  } catch (error) {
-    // 如果是取消请求，不处理错误
-    if (error.name === 'AbortError' || error.name === 'CanceledError') {
-      return
-    }
-    throw error
-  } finally {
-    loading.value = false
-  }
-}
 
 // 安全的文章内容（XSS 防护）
 const safeArticleContent = computed(() => {
@@ -179,21 +167,11 @@ const loadComments = async () => {
 }
 
 const handleLike = async () => {
-  if (!checkLogin(userStore)) return
-
-  await likeArticle(route.params.id)
-  article.value.isLiked = !article.value.isLiked
-  article.value.likeCount += article.value.isLiked ? 1 : -1
-  showSuccess(article.value.isLiked ? '点赞成功' : '取消点赞')
+  await toggleLike(route.params.id, article)
 }
 
 const handleCollect = async () => {
-  if (!checkLogin(userStore)) return
-
-  await collectArticle(route.params.id)
-  article.value.isCollected = !article.value.isCollected
-  article.value.collectCount += article.value.isCollected ? 1 : -1
-  showSuccess(article.value.isCollected ? '收藏成功' : '取消收藏')
+  await toggleCollect(route.params.id, article)
 }
 
 const handlePublishComment = async () => {
@@ -254,7 +232,7 @@ const formatDate = (date) => {
 }
 
 onMounted(() => {
-  loadArticle()
+  loadArticle(route.params.id)
   loadComments()
 })
 

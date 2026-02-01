@@ -1,7 +1,8 @@
 <template>
   <n-card hoverable class="article-card" @click="handleClick">
     <div class="article-content">
-      <img v-if="article.coverImage" :src="article.coverImage" class="cover-image" />
+      <LazyImage v-if="article.coverImage" :src="article.coverImage" :alt="article.title" class="cover-image"
+        width="200" height="150" />
       <div class="article-info">
         <h3 class="article-title">{{ article.title }}</h3>
         <p class="article-summary">{{ article.summary }}</p>
@@ -37,6 +38,7 @@
 import { NCard, NSpace, NAvatar, NText, NTag, NIcon } from 'naive-ui'
 import { EyeOutline, HeartOutline, ChatbubbleOutline } from '@vicons/ionicons5'
 import { formatDateTime } from '@/utils/common'
+import LazyImage from '../common/LazyImage.vue'
 
 const props = defineProps({
   article: {
@@ -79,9 +81,13 @@ const formatDate = (date) => {
 .cover-image {
   width: 200px;
   height: 150px;
-  object-fit: cover;
   border-radius: 8px;
   flex-shrink: 0;
+}
+
+.cover-image :deep(.image) {
+  object-fit: cover;
+  border-radius: 8px;
 }
 
 .article-info {

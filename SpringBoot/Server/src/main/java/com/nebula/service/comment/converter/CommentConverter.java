@@ -54,6 +54,12 @@ public class CommentConverter {
         Map<Long, SysUser> userMap = queryHelper.batchGetUserMap(allComments);
         Set<Long> likedCommentIds = queryHelper.getCurrentUserLikedCommentIds(allComments);
 
+        // 批量统计每个根评论的回复总数
+        List<Long> rootIds = rootComments.stream()
+                .map(BlogComment::getId)
+                .collect(Collectors.toList());
+        Map<Long, Integer> replyCountMap = queryHelper.batchCountReplies(rootIds);
+
         // 按 rootId 分组回复
         Map<Long, List<BlogComment>> replyMap = (allReplies == null) ? Collections.emptyMap() :
                 allReplies.stream().collect(Collectors.groupingBy(BlogComment::getRootId));
@@ -62,6 +68,9 @@ public class CommentConverter {
         List<CommentClientVO> voList = new ArrayList<>();
         for (BlogComment rootComment : rootComments) {
             CommentClientVO rootVO = toClientVO(rootComment, userMap, likedCommentIds);
+
+            // 设置回复总数
+            rootVO.setReplyCount(replyCountMap.getOrDefault(rootComment.getId(), 0));
 
             // 获取该根评论下的所有回复
             List<BlogComment> replies = replyMap.getOrDefault(rootComment.getId(), Collections.emptyList());

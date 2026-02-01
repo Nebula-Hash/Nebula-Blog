@@ -1,6 +1,7 @@
 package com.nebula.controller.client;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.nebula.constant.CommentConstants;
 import com.nebula.constant.CommonConstants;
 import com.nebula.controller.config.ClientController;
 import com.nebula.dto.CommentDTO;
@@ -55,6 +56,18 @@ public class ClientCommentController {
     }
 
     /**
+     * 删除自己的评论
+     *
+     * @param id 评论ID
+     * @return 操作结果
+     */
+    @DeleteMapping("/delete/{id}")
+    public Result<String> deleteMyComment(@PathVariable Long id) {
+        commentService.deleteMyComment(id);
+        return Result.success(CommentConstants.MSG_DELETE_SUCCESS);
+    }
+
+    /**
      * 点赞评论
      *
      * @param id 评论ID
@@ -64,5 +77,22 @@ public class ClientCommentController {
     public Result<String> likeComment(@PathVariable Long id) {
         commentService.likeComment(id);
         return Result.success(CommonConstants.MSG_SUCCESS);
+    }
+
+    /**
+     * 获取根评论下的更多回复
+     *
+     * @param rootId  根评论ID
+     * @param current 当前页
+     * @param size    每页大小
+     * @return 回复列表
+     */
+    @GetMapping("/replies/{rootId}")
+    public Result<Page<CommentClientVO>> getMoreReplies(
+            @PathVariable Long rootId,
+            @RequestParam(defaultValue = CommonConstants.DEFAULT_PAGE_CURRENT) Long current,
+            @RequestParam(defaultValue = CommonConstants.DEFAULT_PAGE_SIZE) Long size) {
+        Page<CommentClientVO> page = commentService.getReplies(rootId, current, size);
+        return Result.success(page);
     }
 }

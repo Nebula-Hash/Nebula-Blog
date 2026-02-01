@@ -1,0 +1,245 @@
+<template>
+  <div class="comment-list">
+    <!-- 评论总数 -->
+    <div class="comment-header">
+      <n-text strong style="font-size: 18px">
+        评论 {{ total }}
+      </n-text>
+    </div>
+
+    <!-- 发布评论输入框 -->
+    <div class="publish-comment">
+      <CommentInput ref="publishInputRef" placeholder="写下你的评论..." submit-text="发布评论" :loading="publishing"
+        @submit="handlePublish" />
+    </div>
+
+    <!-- 评论列表 -->
+    <div class="comments-container">
+      <!-- 加载中骨架屏 -->
+      <CommentSkeleton v-if="loading && comments.length === 0" :count="3" />
+
+      <!-- 评论树 -->
+      <CommentTree v-else-if="comments.length > 0" :comments="comments" :liked-comments="likedComments"
+        :current-user-id="currentUserId" :article-id="props.articleId" @reply="handleReply" @like="handleLike"
+        @delete="handleDelete" @load-more-replies="handleLoadMoreReplies" />
+
+      <!-- 空状态 -->
+      <n-empty v-else description="暂无评论，快来发表第一条评论吧！" style="margin: 40px 0" />
+
+      <!-- 加载更多触发器 -->
+      <div v-if="hasMore" ref="loadMoreTrigger" class="load-more">
+        <n-spin v-if="loading" size="small" />
+        <n-text v-else depth="3">加载更多...</n-text>
+      </div>
+
+      <!-- 没有更多 -->
+      <div v-else-if="comments.length > 0" class="no-more">
+        <n-text depth="3">没有更多评论了</n-text>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted, watch } from 'vue'
+import { NText, NSpin, NEmpty, useMessage, useDialog } from 'naive-ui'
+import { useCommentStore } from '@/stores/comment'
+import { useUserStore } from '@/stores/user'
+import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
+import { useDebounce } from '@/composables/useDebounce'
+import CommentInput from './CommentInput.vue'
+import CommentTree from './CommentTree.vue'
+import CommentSkeleton from './CommentSkeleton.vue'
+
+const props = defineProps({
+  articleId: {
+    type: String,
+    required: true
+  }
+})
+
+const message = useMessage()
+const dialog = useDialog()
+const commentStore = useCommentStore()
+const userStore = useUserStore()
+
+const publishInputRef = ref(null)
+const publishing = ref(false)
+
+// 从store获取数据
+const comments = computed(() => commentStore.getArticleComments(props.articleId))
+const likedComments = computed(() => commentStore.likedComments)
+const loading = computed(() => commentStore.loading[props.articleId] || false)
+const total = computed(() => commentStore.getCommentTotal(props.articleId))
+const hasMore = computed(() => commentStore.hasMoreComments(props.articleId))
+const currentUserId = computed(() => userStore.userInfo?.id || null)
+
+// 无限滚动
+const { targetRef: loadMoreTrigger } = useInfiniteScroll(
+  async () => {
+    if (!hasMore.value || loading.value) return false
+
+    try {
+      await commentStore.loadMoreComments(props.articleId)
+      return hasMore.value
+    } catch (error) {
+      message.error('加载评论失败')
+      return false
+    }
+  },
+  {
+    rootMargin: '100px',
+    threshold: 0.01
+  }
+)
+
+// 发布评论
+const handlePublish = async (content) => {
+  if (!userStore.isLoggedIn) {
+    message.warning('请先登录')
+    return
+  }
+
+  publishing.value = true
+  try {
+    await commentStore.publishComment({
+      articleId: props.articleId,
+      content
+    })
+
+    message.success('评论发布成功')
+    if (publishInputRef.value) {
+      publishInputRef.value.clear()
+    }
+  } catch (error) {
+    message.error(error.message || '评论发布失败')
+  } finally {
+    publishing.value = false
+  }
+}
+
+// 回复评论（使用防抖）
+const handleReply = useDebounce(async (replyData) => {
+  if (!userStore.isLoggedIn) {
+    message.warning('请先登录')
+    return
+  }
+
+  const { content, parentId, replyUserId } = replyData
+  if (!content) return
+
+  try {
+    await commentStore.publishComment({
+      articleId: props.articleId,
+      content,
+      parentId,
+      replyUserId
+    })
+
+    message.success('回复成功')
+  } catch (error) {
+    message.error(error.message || '回复失败')
+  }
+}, 500)
+
+// 加载更多回复
+const handleLoadMoreReplies = async ({ rootId, currentPage }) => {
+  try {
+    await commentStore.loadMoreReplies(rootId, props.articleId, currentPage)
+  } catch (error) {
+    message.error('加载回复失败')
+  }
+}
+
+// 点赞评论（使用防抖）
+const handleLike = useDebounce(async (commentId) => {
+  if (!userStore.isLoggedIn) {
+    message.warning('请先登录')
+    return
+  }
+
+  try {
+    await commentStore.toggleLike(commentId, props.articleId)
+  } catch (error) {
+    message.error('操作失败，请稍后重试')
+  }
+}, 300)
+
+// 删除评论
+const handleDelete = async (commentId) => {
+  dialog.warning({
+    title: '确认删除',
+    content: '确定要删除这条评论吗？删除后无法恢复。',
+    positiveText: '删除',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      try {
+        await commentStore.deleteComment(commentId, props.articleId)
+        message.success('删除成功')
+      } catch (error) {
+        message.error('删除失败')
+      }
+    }
+  })
+}
+
+// 初始化加载评论
+onMounted(async () => {
+  try {
+    await commentStore.loadComments(props.articleId)
+  } catch (error) {
+    message.error('加载评论失败')
+  }
+})
+
+// 监听文章ID变化，重新加载评论
+watch(() => props.articleId, async (newId) => {
+  if (newId) {
+    try {
+      await commentStore.loadComments(newId)
+    } catch (error) {
+      message.error('加载评论失败')
+    }
+  }
+})
+</script>
+
+<style scoped>
+.comment-list {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.comment-header {
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(150, 150, 150, 0.2);
+}
+
+.publish-comment {
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: rgba(150, 150, 150, 0.05);
+  border-radius: 8px;
+}
+
+.comments-container {
+  margin-top: 20px;
+}
+
+.load-more {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.no-more {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  margin-top: 20px;
+}
+</style>

@@ -6,48 +6,51 @@
                 <span style="font-weight: 600; font-size: 16px; color: rgba(255, 255, 255, 0.9);">推荐文章</span>
             </n-space>
         </template>
-        <n-list hoverable clickable>
-            <n-list-item v-for="article in recommendArticles" :key="article.id" @click="goToArticle(article.id)">
-                <template #prefix>
-                    <n-tag type="warning" size="small">置顶</n-tag>
-                </template>
-                <span style="color: rgba(255, 255, 255, 0.85);">{{ article.title }}</span>
-                <template #suffix>
-                    <n-space :size="6" align="center" style="display: flex; flex-direction: row;">
-                        <n-icon :component="EyeOutline" size="16" style="display: flex;" />
-                        <span style="color: rgba(255, 255, 255, 0.6); line-height: 1;">{{ article.viewCount }}</span>
-                    </n-space>
-                </template>
-            </n-list-item>
-        </n-list>
+        <n-spin :show="loading">
+            <n-list hoverable clickable>
+                <n-list-item v-for="article in recommendArticles" :key="article.id" @click="goToDetail(article.id)">
+                    <template #prefix>
+                        <n-tag type="warning" size="small">置顶</n-tag>
+                    </template>
+                    <span style="color: rgba(255, 255, 255, 0.85);">{{ article.title }}</span>
+                    <template #suffix>
+                        <n-space :size="6" align="center" style="display: flex; flex-direction: row;">
+                            <n-icon :component="EyeOutline" size="16" style="display: flex;" />
+                            <span style="color: rgba(255, 255, 255, 0.6); line-height: 1;">{{ article.viewCount
+                                }}</span>
+                        </n-space>
+                    </template>
+                </n-list-item>
+            </n-list>
+        </n-spin>
     </n-card>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { getRecommendArticles } from '@/api/article'
-import { NCard, NList, NListItem, NTag, NSpace, NIcon } from 'naive-ui'
+import { useArticleNavigation } from '@/composables/useArticle'
+import { ArticleQueryService } from '@/services/articleService'
+import { NCard, NList, NListItem, NTag, NSpace, NIcon, NSpin } from 'naive-ui'
 import { EyeOutline, BookmarkOutline } from '@vicons/ionicons5'
 import { createErrorHandler } from '@/utils/errorHandler'
 
-const router = useRouter()
 const errorHandler = createErrorHandler('RecommendArticles')
+const { goToDetail } = useArticleNavigation()
+
+const loading = ref(false)
 const recommendArticles = ref([])
 
 // 加载推荐文章
 const loadRecommendArticles = async () => {
+    loading.value = true
     try {
-        const res = await getRecommendArticles(3)
-        recommendArticles.value = res.data
+        const data = await ArticleQueryService.getRecommendArticles(3)
+        recommendArticles.value = data
     } catch (error) {
         errorHandler.handleLoad(error, '推荐文章', true) // 静默失败，不影响用户体验
+    } finally {
+        loading.value = false
     }
-}
-
-// 跳转到文章详情
-const goToArticle = (id) => {
-    router.push(`/article/${id}`)
 }
 
 onMounted(() => {

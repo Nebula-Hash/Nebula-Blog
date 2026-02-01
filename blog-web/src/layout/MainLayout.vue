@@ -33,7 +33,8 @@
               <n-icon :component="SearchOutline" @click="handleSearch" style="cursor: pointer" />
             </template>
           </n-input>
-          <n-button text @click="themeStore.toggleTheme" class="nav-button theme-toggle" :title="themeStore.isDark ? '切换到浅色模式' : '切换到深色模式'">
+          <n-button text @click="themeStore.toggleTheme" class="nav-button theme-toggle"
+            :title="themeStore.isDark ? '切换到浅色模式' : '切换到深色模式'">
             <template #icon>
               <n-icon :component="themeStore.isDark ? SunnyOutline : MoonOutline" size="20" class="theme-icon" />
             </template>
@@ -102,8 +103,7 @@ import { useTokenRefresh } from '@/composables/useTokenRefresh'
 import { useThemeStore } from '@/stores/theme'
 import { getCategoryList } from '@/api/category'
 import { getTagList } from '@/api/tag'
-import LoginModal from '@/components/LoginModal.vue'
-import RegisterModal from '@/components/RegisterModal.vue'
+import { LoginModal, RegisterModal } from '@/components'
 import {
   NLayout,
   NLayoutHeader,
@@ -252,7 +252,7 @@ onUnmounted(() => {
   box-shadow: 0 2px 12px var(--shadow-color);
   border-bottom: 1px solid rgba(42, 219, 92, 0.1);
   transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .header-content {
@@ -322,6 +322,6 @@ onUnmounted(() => {
   color: var(--text-tertiary);
   border-top: 1px solid rgba(42, 219, 92, 0.1);
   transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

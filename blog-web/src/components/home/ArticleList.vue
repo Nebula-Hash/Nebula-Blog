@@ -9,57 +9,39 @@
         <n-spin :show="loading">
             <n-list v-if="articles.length > 0">
                 <n-list-item v-for="article in articles" :key="article.id">
-                    <ArticleCard :article="article" @click="goToArticle(article.id)" />
+                    <ArticleCard :article="article" @click="goToDetail(article.id)" />
                 </n-list-item>
             </n-list>
             <n-empty v-else description="暂无文章" />
         </n-spin>
 
-        <n-pagination v-model:page="currentPage" :page-count="totalPages"
-            style="margin-top: 20px; justify-content: center" @update:page="loadArticles" />
+        <n-pagination v-if="totalPages > 1" v-model:page="currentPage" :page-count="totalPages"
+            style="margin-top: 20px; justify-content: center" @update:page="changePage" />
     </n-card>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { getArticleList } from '@/api/article'
-import ArticleCard from '@/components/ArticleCard.vue'
+import { onMounted } from 'vue'
+import { useArticleList, useArticleNavigation } from '@/composables/useArticle'
+import { ArticleCard } from '@/components/article'
 import { NCard, NList, NListItem, NSpace, NSpin, NPagination, NEmpty, NIcon } from 'naive-ui'
 import { DocumentTextOutline } from '@vicons/ionicons5'
 import { PAGINATION_CONFIG } from '@/config/constants'
-import { createErrorHandler } from '@/utils/errorHandler'
 
-const router = useRouter()
-const errorHandler = createErrorHandler('ArticleList')
+// 使用文章列表组合式函数
+const {
+    loading,
+    articles,
+    currentPage,
+    totalPages,
+    loadArticles,
+    changePage
+} = useArticleList({
+    pageSize: PAGINATION_CONFIG.DEFAULT_PAGE_SIZE
+})
 
-const loading = ref(false)
-const articles = ref([])
-const currentPage = ref(1)
-const pageSize = ref(PAGINATION_CONFIG.DEFAULT_PAGE_SIZE)
-const totalPages = ref(0)
-
-// 加载文章列表
-const loadArticles = async () => {
-    loading.value = true
-    try {
-        const res = await getArticleList({
-            current: currentPage.value,
-            size: pageSize.value
-        })
-        articles.value = res.data.records
-        totalPages.value = Math.ceil(res.data.total / pageSize.value)
-    } catch (error) {
-        errorHandler.handleLoad(error, '文章列表')
-    } finally {
-        loading.value = false
-    }
-}
-
-// 跳转到文章详情
-const goToArticle = (id) => {
-    router.push(`/article/${id}`)
-}
+// 使用文章导航组合式函数
+const { goToDetail } = useArticleNavigation()
 
 onMounted(() => {
     loadArticles()
