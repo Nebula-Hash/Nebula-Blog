@@ -1,8 +1,17 @@
 <template>
-  <n-modal v-model:show="show" preset="card" title="注册" style="width: 400px; max-width: 90vw;">
+  <n-modal 
+    v-model:show="show" 
+    preset="card" 
+    title="注册" 
+    style="width: 400px; max-width: 90vw;"
+    :trap-focus="true"
+    :block-scroll="true"
+    @after-enter="handleAfterEnter"
+  >
     <n-form ref="formRef" :model="formData" :rules="rules">
       <n-form-item path="username" label="用户名">
         <n-input 
+          ref="usernameInputRef"
           v-model:value="formData.username" 
           placeholder="请输入用户名（3-20个字符）"
           autocomplete="username"
@@ -91,7 +100,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useAuth } from '@/composables/useAuth'
 import { checkPasswordStrength } from '@/utils/security'
 import { 
@@ -116,6 +125,7 @@ const show = computed({
 const { loading, register } = useAuth()
 
 const formRef = ref(null)
+const usernameInputRef = ref(null)
 const formData = ref({
   username: '',
   nickname: '',
@@ -173,6 +183,13 @@ const rules = {
   email: emailRules,
   password: passwordRules,
   confirmPassword: confirmPasswordRules(formData.value)
+}
+
+// 模态框打开后自动聚焦到用户名输入框
+const handleAfterEnter = () => {
+  nextTick(() => {
+    usernameInputRef.value?.focus()
+  })
 }
 
 const handleRegister = async () => {

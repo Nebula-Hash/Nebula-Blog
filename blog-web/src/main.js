@@ -14,9 +14,9 @@ import naive from 'naive-ui'
 
 // 性能监控（仅在开发环境）
 if (import.meta.env.DEV) {
-    import('./composables/usePerformance').then(({ usePerformance }) => {
-        // 全局性能监控
-        const { monitor } = usePerformance({
+    import('./composables/usePerformance').then(({ createGlobalPerformanceMonitor }) => {
+        // 全局性能监控（不依赖组件生命周期）
+        const { monitor, cleanup } = createGlobalPerformanceMonitor({
             onMetric: (name, value) => {
                 console.log(`[Performance] ${name}:`, value)
             }
@@ -29,6 +29,11 @@ if (import.meta.env.DEV) {
                 console.table(metrics.pageLoad)
             }, 1000)
         })
+
+        // 页面卸载时清理
+        window.addEventListener('beforeunload', () => {
+            cleanup()
+        })
     })
 }
 
@@ -38,6 +43,20 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 app.use(naive)
+
+// 全局配置 - 禁用 Naive UI 的 aria-hidden 警告（这是库的已知问题）
+// 参考：https://github.com/tusen-ai/naive-ui/issues/4820
+if (import.meta.env.DEV) {
+    const originalWarn = console.warn
+    console.warn = (...args) => {
+        const msg = args[0]
+        // 过滤掉 aria-hidden 相关的警告（这是 Naive UI 的已知问题，不影响功能）
+        if (typeof msg === 'string' && msg.includes('aria-hidden')) {
+            return
+        }
+        originalWarn.apply(console, args)
+    }
+}
 
 // 应用初始化
 const userStore = useUserStore()

@@ -23,7 +23,7 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useArticleList, useArticleNavigation } from '@/composables/useArticle'
-import { ArticleCard } from '@/components/article'
+import ArticleCard from '@/components/article/ArticleCard.vue'
 import { NCard, NList, NListItem, NSpace, NSpin, NPagination, NEmpty, NIcon } from 'naive-ui'
 import { DocumentTextOutline } from '@vicons/ionicons5'
 import { PAGINATION_CONFIG } from '@/config/constants'

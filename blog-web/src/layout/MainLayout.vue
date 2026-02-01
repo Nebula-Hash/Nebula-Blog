@@ -63,10 +63,23 @@
   </n-layout>
 
   <!-- 分类抽屉 -->
-  <n-drawer v-model:show="showCategoryDrawer" width="400" placement="right">
+  <n-drawer 
+    v-model:show="showCategoryDrawer" 
+    width="400" 
+    placement="right"
+    :trap-focus="true"
+    :block-scroll="true"
+    @after-enter="handleCategoryDrawerOpen"
+  >
     <n-drawer-content title="文章分类">
       <n-list hoverable clickable>
-        <n-list-item v-for="cat in categories" :key="cat.id" @click="goToCategory(cat.id)">
+        <n-list-item 
+          v-for="cat in categories" 
+          :key="cat.id" 
+          @click="goToCategory(cat.id)"
+          tabindex="0"
+          @keyup.enter="goToCategory(cat.id)"
+        >
           <template #suffix>
             <n-tag :bordered="false">{{ cat.articleCount }}</n-tag>
           </template>
@@ -77,11 +90,26 @@
   </n-drawer>
 
   <!-- 标签抽屉 -->
-  <n-drawer v-model:show="showTagDrawer" width="400" placement="right">
+  <n-drawer 
+    v-model:show="showTagDrawer" 
+    width="400" 
+    placement="right"
+    :trap-focus="true"
+    :block-scroll="true"
+    @after-enter="handleTagDrawerOpen"
+  >
     <n-drawer-content title="文章标签">
       <n-space>
-        <n-tag v-for="tag in tags" :key="tag.id" :bordered="false" round style="cursor: pointer"
-          @click="goToTag(tag.id)">
+        <n-tag 
+          v-for="tag in tags" 
+          :key="tag.id" 
+          :bordered="false" 
+          round 
+          style="cursor: pointer"
+          tabindex="0"
+          @click="goToTag(tag.id)"
+          @keyup.enter="goToTag(tag.id)"
+        >
           {{ tag.tagName }} ({{ tag.articleCount }})
         </n-tag>
       </n-space>
@@ -96,7 +124,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, h } from 'vue'
+import { ref, onMounted, h, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { useTokenRefresh } from '@/composables/useTokenRefresh'
@@ -193,6 +221,20 @@ const handleUserAction = (key) => {
   } else if (key === 'profile') {
     router.push('/profile')
   }
+}
+
+// 抽屉打开后的焦点管理
+const handleCategoryDrawerOpen = () => {
+  nextTick(() => {
+    // 抽屉打开后，焦点会自动管理，不需要手动设置
+    console.log('[MainLayout] 分类抽屉已打开')
+  })
+}
+
+const handleTagDrawerOpen = () => {
+  nextTick(() => {
+    console.log('[MainLayout] 标签抽屉已打开')
+  })
 }
 
 const switchToRegister = () => {

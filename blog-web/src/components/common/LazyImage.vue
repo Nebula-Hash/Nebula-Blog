@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { NSpin } from 'naive-ui'
 import { useLazyLoad } from '@/composables/useLazyLoad'
 
@@ -114,7 +114,7 @@ const placeholderStyle = computed(() => {
 })
 
 // 使用懒加载
-const { targetRef: containerRef, isVisible } = useLazyLoad({
+const { targetRef: containerRef, isVisible, setupObserver, cleanupObserver } = useLazyLoad({
   rootMargin: '100px', // 提前 100px 开始加载
   threshold: 0.01,
   onVisible: () => {
@@ -123,6 +123,15 @@ const { targetRef: containerRef, isVisible } = useLazyLoad({
       currentSrc.value = props.src
     }
   }
+})
+
+// 手动设置和清理观察器
+onMounted(() => {
+  setupObserver()
+})
+
+onUnmounted(() => {
+  cleanupObserver()
 })
 
 // 图片加载成功

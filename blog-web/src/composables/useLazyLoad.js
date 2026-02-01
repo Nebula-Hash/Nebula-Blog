@@ -1,4 +1,4 @@
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, getCurrentInstance } from 'vue'
 
 /**
  * 懒加载组合式函数
@@ -21,7 +21,10 @@ export function useLazyLoad(options = {}) {
     const isVisible = ref(false)
     let observer = null
 
-    onMounted(() => {
+    // 检查是否在组件实例中调用
+    const instance = getCurrentInstance()
+
+    const setupObserver = () => {
         if (!targetRef.value) return
 
         // 检查浏览器是否支持 Intersection Observer
@@ -58,18 +61,26 @@ export function useLazyLoad(options = {}) {
         )
 
         observer.observe(targetRef.value)
-    })
+    }
 
-    onUnmounted(() => {
+    const cleanupObserver = () => {
         if (observer && targetRef.value) {
             observer.unobserve(targetRef.value)
             observer.disconnect()
         }
-    })
+    }
+
+    // 只在有组件实例时注册生命周期钩子
+    if (instance) {
+        onMounted(setupObserver)
+        onUnmounted(cleanupObserver)
+    }
 
     return {
         targetRef,
         isLoaded,
-        isVisible
+        isVisible,
+        setupObserver,
+        cleanupObserver
     }
 }

@@ -31,7 +31,7 @@ import { useUserStore } from '@/stores/user'
 import { useArticleDetail, useArticleInteraction } from '@/composables/useArticle'
 import { useAbortController } from '@/composables/useAbortController'
 import { asyncWrapper } from '@/utils/errorHandler'
-import { getCommentList, publishComment, likeComment } from '@/api/comment'
+import { getCommentList, publishComment, toggleLikeComment } from '@/api/comment'
 import ArticleHeader from '@/components/article/ArticleHeader.vue'
 import ArticleTags from '@/components/article/ArticleTags.vue'
 import ArticleCommentSection from '@/components/article/ArticleCommentSection.vue'
@@ -120,7 +120,7 @@ const handleCommentLike = async (commentId) => {
 
   await asyncWrapper(
     async () => {
-      await likeComment(commentId)
+      await toggleLikeComment(commentId)
       showSuccess('点赞成功')
       await loadComments()
     },

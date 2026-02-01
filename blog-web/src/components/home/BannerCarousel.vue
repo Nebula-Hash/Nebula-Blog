@@ -186,8 +186,9 @@ onMounted(() => {
     window.addEventListener('keydown', handleKeydown)
 
     if (carouselRef.value) {
-        carouselRef.value.addEventListener('touchstart', handleTouchStart)
-        carouselRef.value.addEventListener('touchend', handleTouchEnd)
+        // 添加 passive 选项以提高滚动性能
+        carouselRef.value.addEventListener('touchstart', handleTouchStart, { passive: true })
+        carouselRef.value.addEventListener('touchend', handleTouchEnd, { passive: true })
     }
 })
 
