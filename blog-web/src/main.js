@@ -12,6 +12,26 @@ import * as authService from './services/authService'
 // 导入 Naive UI
 import naive from 'naive-ui'
 
+// 性能监控（仅在开发环境）
+if (import.meta.env.DEV) {
+    import('./composables/usePerformance').then(({ usePerformance }) => {
+        // 全局性能监控
+        const { monitor } = usePerformance({
+            onMetric: (name, value) => {
+                console.log(`[Performance] ${name}:`, value)
+            }
+        })
+
+        // 页面加载完成后输出性能指标
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const metrics = monitor.getAllMetrics()
+                console.table(metrics.pageLoad)
+            }, 1000)
+        })
+    })
+}
+
 const app = createApp(App)
 const pinia = createPinia()
 

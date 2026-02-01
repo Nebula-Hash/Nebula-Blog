@@ -179,6 +179,219 @@ export const cancel = (debouncedOrThrottledFn) => {
     }
 }
 
+/**
+ * 性能监控类
+ * 用于监控页面性能指标
+ */
+export class PerformanceMonitor {
+    constructor() {
+        this.metrics = {}
+        this.observers = []
+    }
+
+    /**
+     * 开始性能标记
+     * @param {string} name - 标记名称
+     */
+    mark(name) {
+        if (window.performance && window.performance.mark) {
+            window.performance.mark(name)
+        }
+    }
+
+    /**
+     * 测量性能
+     * @param {string} name - 测量名称
+     * @param {string} startMark - 开始标记
+     * @param {string} endMark - 结束标记
+     * @returns {number} 持续时间（毫秒）
+     */
+    measure(name, startMark, endMark) {
+        if (window.performance && window.performance.measure) {
+            try {
+                window.performance.measure(name, startMark, endMark)
+                const measure = window.performance.getEntriesByName(name)[0]
+                this.metrics[name] = measure.duration
+                return measure.duration
+            } catch (error) {
+                console.warn('[PerformanceMonitor] 测量失败:', error)
+                return 0
+            }
+        }
+        return 0
+    }
+
+    /**
+     * 获取页面加载性能
+     * @returns {Object} 性能指标
+     */
+    getPageLoadMetrics() {
+        if (!window.performance || !window.performance.timing) {
+            return null
+        }
+
+        const timing = window.performance.timing
+        const navigation = window.performance.navigation
+
+        return {
+            // DNS 查询时间
+            dns: timing.domainLookupEnd - timing.domainLookupStart,
+            // TCP 连接时间
+            tcp: timing.connectEnd - timing.connectStart,
+            // 请求时间
+            request: timing.responseStart - timing.requestStart,
+            // 响应时间
+            response: timing.responseEnd - timing.responseStart,
+            // DOM 解析时间
+            domParse: timing.domInteractive - timing.domLoading,
+            // DOM 内容加载完成时间
+            domContentLoaded: timing.domContentLoadedEventEnd - timing.domContentLoadedEventStart,
+            // 页面完全加载时间
+            load: timing.loadEventEnd - timing.loadEventStart,
+            // 总时间（从开始到页面完全加载）
+            total: timing.loadEventEnd - timing.navigationStart,
+            // 重定向次数
+            redirectCount: navigation.redirectCount,
+            // 导航类型（0: 正常导航, 1: 重新加载, 2: 前进/后退）
+            navigationType: navigation.type
+        }
+    }
+
+    /**
+     * 获取资源加载性能
+     * @returns {Array} 资源性能列表
+     */
+    getResourceMetrics() {
+        if (!window.performance || !window.performance.getEntriesByType) {
+            return []
+        }
+
+        const resources = window.performance.getEntriesByType('resource')
+        return resources.map(resource => ({
+            name: resource.name,
+            type: resource.initiatorType,
+            duration: resource.duration,
+            size: resource.transferSize || 0,
+            startTime: resource.startTime
+        }))
+    }
+
+    /**
+     * 监控首次内容绘制（FCP）
+     * @param {Function} callback - 回调函数
+     */
+    observeFCP(callback) {
+        if (!window.PerformanceObserver) return
+
+        try {
+            const observer = new PerformanceObserver((list) => {
+                for (const entry of list.getEntries()) {
+                    if (entry.name === 'first-contentful-paint') {
+                        callback(entry.startTime)
+                        observer.disconnect()
+                    }
+                }
+            })
+            observer.observe({ entryTypes: ['paint'] })
+            this.observers.push(observer)
+        } catch (error) {
+            console.warn('[PerformanceMonitor] FCP 监控失败:', error)
+        }
+    }
+
+    /**
+     * 监控最大内容绘制（LCP）
+     * @param {Function} callback - 回调函数
+     */
+    observeLCP(callback) {
+        if (!window.PerformanceObserver) return
+
+        try {
+            const observer = new PerformanceObserver((list) => {
+                const entries = list.getEntries()
+                const lastEntry = entries[entries.length - 1]
+                callback(lastEntry.startTime)
+            })
+            observer.observe({ entryTypes: ['largest-contentful-paint'] })
+            this.observers.push(observer)
+        } catch (error) {
+            console.warn('[PerformanceMonitor] LCP 监控失败:', error)
+        }
+    }
+
+    /**
+     * 监控首次输入延迟（FID）
+     * @param {Function} callback - 回调函数
+     */
+    observeFID(callback) {
+        if (!window.PerformanceObserver) return
+
+        try {
+            const observer = new PerformanceObserver((list) => {
+                for (const entry of list.getEntries()) {
+                    callback(entry.processingStart - entry.startTime)
+                }
+            })
+            observer.observe({ entryTypes: ['first-input'] })
+            this.observers.push(observer)
+        } catch (error) {
+            console.warn('[PerformanceMonitor] FID 监控失败:', error)
+        }
+    }
+
+    /**
+     * 监控累积布局偏移（CLS）
+     * @param {Function} callback - 回调函数
+     */
+    observeCLS(callback) {
+        if (!window.PerformanceObserver) return
+
+        try {
+            let clsValue = 0
+            const observer = new PerformanceObserver((list) => {
+                for (const entry of list.getEntries()) {
+                    if (!entry.hadRecentInput) {
+                        clsValue += entry.value
+                        callback(clsValue)
+                    }
+                }
+            })
+            observer.observe({ entryTypes: ['layout-shift'] })
+            this.observers.push(observer)
+        } catch (error) {
+            console.warn('[PerformanceMonitor] CLS 监控失败:', error)
+        }
+    }
+
+    /**
+     * 获取所有指标
+     * @returns {Object} 所有性能指标
+     */
+    getAllMetrics() {
+        return {
+            custom: this.metrics,
+            pageLoad: this.getPageLoadMetrics(),
+            resources: this.getResourceMetrics()
+        }
+    }
+
+    /**
+     * 清理所有观察器
+     */
+    cleanup() {
+        this.observers.forEach(observer => observer.disconnect())
+        this.observers = []
+    }
+}
+
+/**
+ * 创建性能监控实例
+ * @returns {PerformanceMonitor}
+ */
+export const createPerformanceMonitor = () => {
+    return new PerformanceMonitor()
+}
+
 export default {
     debounce,
     throttle,
@@ -186,5 +399,7 @@ export default {
     createDebouncedSearch,
     createThrottledScroll,
     rafThrottle,
-    cancel
+    cancel,
+    PerformanceMonitor,
+    createPerformanceMonitor
 }

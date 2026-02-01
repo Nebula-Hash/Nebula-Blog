@@ -47,6 +47,7 @@ import { useCommentStore } from '@/stores/comment'
 import { useUserStore } from '@/stores/user'
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 import { useDebounce } from '@/composables/useDebounce'
+import { asyncWrapper } from '@/utils/errorHandler'
 import CommentInput from './CommentInput.vue'
 import CommentTree from './CommentTree.vue'
 import CommentSkeleton from './CommentSkeleton.vue'
@@ -79,13 +80,15 @@ const { targetRef: loadMoreTrigger } = useInfiniteScroll(
   async () => {
     if (!hasMore.value || loading.value) return false
 
-    try {
-      await commentStore.loadMoreComments(props.articleId)
-      return hasMore.value
-    } catch (error) {
-      message.error('加载评论失败')
-      return false
-    }
+    const result = await asyncWrapper(
+      async () => {
+        await commentStore.loadMoreComments(props.articleId)
+        return hasMore.value
+      },
+      { operation: '加载评论', silent: false }
+    )
+
+    return result !== null ? result : false
   },
   {
     rootMargin: '100px',
@@ -101,21 +104,21 @@ const handlePublish = async (content) => {
   }
 
   publishing.value = true
-  try {
-    await commentStore.publishComment({
-      articleId: props.articleId,
-      content
-    })
+  await asyncWrapper(
+    async () => {
+      await commentStore.publishComment({
+        articleId: props.articleId,
+        content
+      })
 
-    message.success('评论发布成功')
-    if (publishInputRef.value) {
-      publishInputRef.value.clear()
-    }
-  } catch (error) {
-    message.error(error.message || '评论发布失败')
-  } finally {
-    publishing.value = false
-  }
+      message.success('评论发布成功')
+      if (publishInputRef.value) {
+        publishInputRef.value.clear()
+      }
+    },
+    { operation: '发布评论' }
+  )
+  publishing.value = false
 }
 
 // 回复评论（使用防抖）
@@ -128,27 +131,29 @@ const handleReply = useDebounce(async (replyData) => {
   const { content, parentId, replyUserId } = replyData
   if (!content) return
 
-  try {
-    await commentStore.publishComment({
-      articleId: props.articleId,
-      content,
-      parentId,
-      replyUserId
-    })
+  await asyncWrapper(
+    async () => {
+      await commentStore.publishComment({
+        articleId: props.articleId,
+        content,
+        parentId,
+        replyUserId
+      })
 
-    message.success('回复成功')
-  } catch (error) {
-    message.error(error.message || '回复失败')
-  }
+      message.success('回复成功')
+    },
+    { operation: '回复评论' }
+  )
 }, 500)
 
 // 加载更多回复
 const handleLoadMoreReplies = async ({ rootId, currentPage }) => {
-  try {
-    await commentStore.loadMoreReplies(rootId, props.articleId, currentPage)
-  } catch (error) {
-    message.error('加载回复失败')
-  }
+  await asyncWrapper(
+    async () => {
+      await commentStore.loadMoreReplies(rootId, props.articleId, currentPage)
+    },
+    { operation: '加载回复' }
+  )
 }
 
 // 点赞评论（使用防抖）
@@ -158,11 +163,12 @@ const handleLike = useDebounce(async (commentId) => {
     return
   }
 
-  try {
-    await commentStore.toggleLike(commentId, props.articleId)
-  } catch (error) {
-    message.error('操作失败，请稍后重试')
-  }
+  await asyncWrapper(
+    async () => {
+      await commentStore.toggleLike(commentId, props.articleId)
+    },
+    { operation: '点赞评论' }
+  )
 }, 300)
 
 // 删除评论
@@ -173,33 +179,36 @@ const handleDelete = async (commentId) => {
     positiveText: '删除',
     negativeText: '取消',
     onPositiveClick: async () => {
-      try {
-        await commentStore.deleteComment(commentId, props.articleId)
-        message.success('删除成功')
-      } catch (error) {
-        message.error('删除失败')
-      }
+      await asyncWrapper(
+        async () => {
+          await commentStore.deleteComment(commentId, props.articleId)
+          message.success('删除成功')
+        },
+        { operation: '删除评论' }
+      )
     }
   })
 }
 
 // 初始化加载评论
 onMounted(async () => {
-  try {
-    await commentStore.loadComments(props.articleId)
-  } catch (error) {
-    message.error('加载评论失败')
-  }
+  await asyncWrapper(
+    async () => {
+      await commentStore.loadComments(props.articleId)
+    },
+    { operation: '加载评论' }
+  )
 })
 
 // 监听文章ID变化，重新加载评论
 watch(() => props.articleId, async (newId) => {
   if (newId) {
-    try {
-      await commentStore.loadComments(newId)
-    } catch (error) {
-      message.error('加载评论失败')
-    }
+    await asyncWrapper(
+      async () => {
+        await commentStore.loadComments(newId)
+      },
+      { operation: '加载评论' }
+    )
   }
 })
 </script>

@@ -4,24 +4,18 @@
     <div v-if="!isLoaded && !error" class="placeholder" :style="placeholderStyle">
       <n-spin v-if="isVisible" size="small" />
     </div>
-    
+
     <!-- 实际图片 -->
-    <img
-      v-show="isLoaded && !error"
-      :src="src"
-      :alt="alt"
-      :class="['image', { 'fade-in': showAnimation && isLoaded }]"
-      @load="handleLoad"
-      @error="handleError"
-    />
-    
+    <picture v-if="isVisible && !error">
+      <!-- WebP 格式（如果支持）-->
+      <source v-if="webpSrc" :srcset="webpSrc" type="image/webp" />
+      <!-- 原始格式 -->
+      <img v-show="isLoaded" :src="currentSrc" :alt="alt" :class="['image', { 'fade-in': showAnimation && isLoaded }]"
+        :loading="nativeLazy ? 'lazy' : 'eager'" @load="handleLoad" @error="handleError" />
+    </picture>
+
     <!-- 错误降级 -->
-    <img
-      v-if="error"
-      :src="fallbackSrc"
-      :alt="alt"
-      class="image fallback"
-    />
+    <img v-if="error" :src="fallbackSrc" :alt="alt" class="image fallback" />
   </div>
 </template>
 
@@ -58,6 +52,16 @@ const props = defineProps({
   aspectRatio: {
     type: String,
     default: null
+  },
+  // 是否使用原生懒加载
+  nativeLazy: {
+    type: Boolean,
+    default: false
+  },
+  // 是否支持 WebP
+  supportWebp: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -65,7 +69,35 @@ const emit = defineEmits(['load', 'error'])
 
 const isLoaded = ref(false)
 const error = ref(false)
-const imgSrc = ref(null)
+const currentSrc = ref(null)
+
+// 检查是否支持 WebP
+const supportsWebP = ref(false)
+
+// 检测 WebP 支持
+const checkWebPSupport = () => {
+  if (!props.supportWebp) return false
+
+  const canvas = document.createElement('canvas')
+  if (canvas.getContext && canvas.getContext('2d')) {
+    return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0
+  }
+  return false
+}
+
+supportsWebP.value = checkWebPSupport()
+
+// WebP 图片源
+const webpSrc = computed(() => {
+  if (!supportsWebP.value || !props.src) return null
+
+  // 如果原图已经是 WebP，直接返回
+  if (props.src.endsWith('.webp')) return props.src
+
+  // 尝试生成 WebP 路径（假设服务器支持）
+  const ext = props.src.split('.').pop()
+  return props.src.replace(`.${ext}`, '.webp')
+})
 
 // 占位符样式
 const placeholderStyle = computed(() => {
@@ -73,43 +105,51 @@ const placeholderStyle = computed(() => {
     width: typeof props.width === 'number' ? `${props.width}px` : props.width,
     height: typeof props.height === 'number' ? `${props.height}px` : props.height
   }
-  
+
   if (props.aspectRatio) {
     style.aspectRatio = props.aspectRatio
   }
-  
+
   return style
 })
 
 // 使用懒加载
 const { targetRef: containerRef, isVisible } = useLazyLoad({
-  rootMargin: '50px',
+  rootMargin: '100px', // 提前 100px 开始加载
   threshold: 0.01,
   onVisible: () => {
     // 图片进入视口时开始加载
     if (!isLoaded.value && !error.value) {
-      imgSrc.value = props.src
+      currentSrc.value = props.src
     }
   }
 })
 
 // 图片加载成功
-const handleLoad = () => {
+const handleLoad = (event) => {
   isLoaded.value = true
-  emit('load')
+
+  // 记录图片加载性能
+  if (window.performance && window.performance.now) {
+    const loadTime = window.performance.now()
+    console.debug(`[LazyImage] 图片加载完成: ${props.src}, 耗时: ${loadTime.toFixed(2)}ms`)
+  }
+
+  emit('load', event)
 }
 
 // 图片加载失败
-const handleError = () => {
+const handleError = (event) => {
   error.value = true
-  emit('error')
+  console.warn(`[LazyImage] 图片加载失败: ${props.src}`)
+  emit('error', event)
 }
 
 // 监听src变化，重置状态
 watch(() => props.src, () => {
   isLoaded.value = false
   error.value = false
-  imgSrc.value = null
+  currentSrc.value = null
 })
 </script>
 
@@ -134,6 +174,7 @@ watch(() => props.src, () => {
   0% {
     background-position: 200% 0;
   }
+
   100% {
     background-position: -200% 0;
   }
@@ -154,6 +195,7 @@ watch(() => props.src, () => {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }

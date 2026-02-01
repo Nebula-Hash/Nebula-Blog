@@ -96,14 +96,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted, h, onUnmounted } from 'vue'
+import { ref, onMounted, h } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { useTokenRefresh } from '@/composables/useTokenRefresh'
+import { useAbortController } from '@/composables/useAbortController'
 import { useThemeStore } from '@/stores/theme'
+import { asyncWrapper } from '@/utils/errorHandler'
 import { getCategoryList } from '@/api/category'
 import { getTagList } from '@/api/tag'
-import { LoginModal, RegisterModal } from '@/components'
+import LoginModal from '@/components/login/LoginModal.vue'
+import RegisterModal from '@/components/login/RegisterModal.vue'
 import {
   NLayout,
   NLayoutHeader,
@@ -140,6 +143,9 @@ const themeStore = useThemeStore()
 // 启动Token自动刷新
 useTokenRefresh()
 
+// 使用请求取消控制器
+const { createSignal } = useAbortController()
+
 const searchKeyword = ref('')
 const showCategoryDrawer = ref(false)
 const showTagDrawer = ref(false)
@@ -148,9 +154,6 @@ const showRegisterModal = ref(false)
 
 const categories = ref([])
 const tags = ref([])
-
-// 创建 AbortController 用于取消请求
-const abortController = new AbortController()
 
 const userOptions = [
   {
@@ -203,39 +206,28 @@ const switchToLogin = () => {
 }
 
 const loadCategories = async () => {
-  try {
-    const res = await getCategoryList({ signal: abortController.signal })
-    categories.value = res.data
-  } catch (error) {
-    // 如果是取消请求，不处理错误
-    if (error.name === 'AbortError' || error.name === 'CanceledError') {
-      return
-    }
-    console.error('加载分类失败:', error)
-  }
+  return asyncWrapper(
+    async () => {
+      const res = await getCategoryList({ signal: createSignal() })
+      categories.value = res.data
+    },
+    { operation: '加载分类', silent: true }
+  )
 }
 
 const loadTags = async () => {
-  try {
-    const res = await getTagList({ signal: abortController.signal })
-    tags.value = res.data
-  } catch (error) {
-    // 如果是取消请求，不处理错误
-    if (error.name === 'AbortError' || error.name === 'CanceledError') {
-      return
-    }
-    console.error('加载标签失败:', error)
-  }
+  return asyncWrapper(
+    async () => {
+      const res = await getTagList({ signal: createSignal() })
+      tags.value = res.data
+    },
+    { operation: '加载标签', silent: true }
+  )
 }
 
 onMounted(() => {
   loadCategories()
   loadTags()
-})
-
-// 组件卸载时取消所有进行中的请求
-onUnmounted(() => {
-  abortController.abort()
 })
 </script>
 

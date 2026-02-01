@@ -6,14 +6,22 @@ import {
     likeArticle,
     collectArticle
 } from '@/api/article'
+import { createCacheManager } from '@/utils/cacheManager'
 import { getItem, setItem } from '@/utils/storage'
 
 export const useArticleStore = defineStore('article', () => {
-    // 文章列表缓存 { [cacheKey]: { data, timestamp } }
-    const listCache = ref({})
+    // 创建缓存管理器
+    const listCacheManager = createCacheManager({
+        storageKey: 'articleListCache',
+        ttl: 5 * 60 * 1000, // 5分钟
+        maxSize: 10
+    })
 
-    // 文章详情缓存 { [articleId]: { data, timestamp } }
-    const detailCache = ref({})
+    const detailCacheManager = createCacheManager({
+        storageKey: 'articleDetailCache',
+        ttl: 10 * 60 * 1000, // 10分钟
+        maxSize: 20
+    })
 
     // 用户点赞状态 { [articleId]: boolean }
     const likedArticles = ref({})
@@ -21,123 +29,13 @@ export const useArticleStore = defineStore('article', () => {
     // 用户收藏状态 { [articleId]: boolean }
     const favoriteArticles = ref({})
 
-    // 缓存过期时间（毫秒）
-    const cacheExpiry = {
-        list: 5 * 60 * 1000, // 5分钟
-        detail: 10 * 60 * 1000, // 10分钟
-    }
-
-    /**
-     * 生成列表缓存键
-     */
-    function generateListCacheKey(params) {
-        return JSON.stringify(params || {})
-    }
-
-    /**
-     * 检查缓存是否过期
-     */
-    function isCacheExpired(timestamp, expiry) {
-        return Date.now() - timestamp > expiry
-    }
-
-    /**
-     * 获取缓存的列表数据
-     */
-    function getCachedList(params) {
-        const key = generateListCacheKey(params)
-        const cached = listCache.value[key]
-
-        if (!cached) return null
-
-        if (isCacheExpired(cached.timestamp, cacheExpiry.list)) {
-            delete listCache.value[key]
-            return null
-        }
-
-        return cached.data
-    }
-
-    /**
-     * 设置列表缓存
-     */
-    function setCachedList(params, data) {
-        const key = generateListCacheKey(params)
-        listCache.value[key] = {
-            data,
-            timestamp: Date.now()
-        }
-        saveListCache()
-    }
-
-    /**
-     * 获取缓存的详情数据
-     */
-    function getCachedDetail(articleId) {
-        const cached = detailCache.value[articleId]
-
-        if (!cached) return null
-
-        if (isCacheExpired(cached.timestamp, cacheExpiry.detail)) {
-            delete detailCache.value[articleId]
-            return null
-        }
-
-        return cached.data
-    }
-
-    /**
-     * 设置详情缓存
-     */
-    function setCachedDetail(articleId, data) {
-        detailCache.value[articleId] = {
-            data,
-            timestamp: Date.now()
-        }
-        saveDetailCache()
-    }
-
-    /**
-     * 清除过期缓存
-     */
-    function clearExpiredCache() {
-        const now = Date.now()
-
-        // 清除过期的列表缓存
-        Object.keys(listCache.value).forEach(key => {
-            if (isCacheExpired(listCache.value[key].timestamp, cacheExpiry.list)) {
-                delete listCache.value[key]
-            }
-        })
-
-        // 清除过期的详情缓存
-        Object.keys(detailCache.value).forEach(key => {
-            if (isCacheExpired(detailCache.value[key].timestamp, cacheExpiry.detail)) {
-                delete detailCache.value[key]
-            }
-        })
-
-        saveListCache()
-        saveDetailCache()
-    }
-
-    /**
-     * 清除所有缓存
-     */
-    function clearAllCache() {
-        listCache.value = {}
-        detailCache.value = {}
-        saveListCache()
-        saveDetailCache()
-    }
-
     /**
      * 获取文章列表（带缓存）
      */
     async function fetchArticleList(params = {}, useCache = true) {
         // 尝试从缓存获取
         if (useCache) {
-            const cached = getCachedList(params)
+            const cached = listCacheManager.get(params)
             if (cached) {
                 return cached
             }
@@ -148,7 +46,7 @@ export const useArticleStore = defineStore('article', () => {
         const data = response.data
 
         // 缓存数据
-        setCachedList(params, data)
+        listCacheManager.set(params, data)
 
         return data
     }
@@ -159,7 +57,7 @@ export const useArticleStore = defineStore('article', () => {
     async function fetchArticleDetail(articleId, useCache = true) {
         // 尝试从缓存获取
         if (useCache) {
-            const cached = getCachedDetail(articleId)
+            const cached = detailCacheManager.get(articleId)
             if (cached) {
                 return cached
             }
@@ -170,7 +68,7 @@ export const useArticleStore = defineStore('article', () => {
         const data = response.data
 
         // 缓存数据
-        setCachedDetail(articleId, data)
+        detailCacheManager.set(articleId, data)
 
         return data
     }
@@ -186,10 +84,11 @@ export const useArticleStore = defineStore('article', () => {
             likedArticles.value[articleId] = !originalState
 
             // 更新缓存中的点赞数
-            const cached = detailCache.value[articleId]
+            const cached = detailCacheManager.get(articleId)
             if (cached) {
-                cached.data.likeCount = (cached.data.likeCount || 0) + (originalState ? -1 : 1)
-                cached.data.isLiked = !originalState
+                cached.likeCount = (cached.likeCount || 0) + (originalState ? -1 : 1)
+                cached.isLiked = !originalState
+                detailCacheManager.set(articleId, cached)
             }
 
             // 发送请求
@@ -202,10 +101,11 @@ export const useArticleStore = defineStore('article', () => {
             likedArticles.value[articleId] = originalState
 
             // 回滚缓存
-            const cached = detailCache.value[articleId]
+            const cached = detailCacheManager.get(articleId)
             if (cached) {
-                cached.data.likeCount = (cached.data.likeCount || 0) + (originalState ? 1 : -1)
-                cached.data.isLiked = originalState
+                cached.likeCount = (cached.likeCount || 0) + (originalState ? 1 : -1)
+                cached.isLiked = originalState
+                detailCacheManager.set(articleId, cached)
             }
 
             console.error('[ArticleStore] 点赞操作失败:', error)
@@ -224,10 +124,11 @@ export const useArticleStore = defineStore('article', () => {
             favoriteArticles.value[articleId] = !originalState
 
             // 更新缓存中的收藏数
-            const cached = detailCache.value[articleId]
+            const cached = detailCacheManager.get(articleId)
             if (cached) {
-                cached.data.collectCount = (cached.data.collectCount || 0) + (originalState ? -1 : 1)
-                cached.data.isCollected = !originalState
+                cached.collectCount = (cached.collectCount || 0) + (originalState ? -1 : 1)
+                cached.isCollected = !originalState
+                detailCacheManager.set(articleId, cached)
             }
 
             // 发送请求
@@ -240,10 +141,11 @@ export const useArticleStore = defineStore('article', () => {
             favoriteArticles.value[articleId] = originalState
 
             // 回滚缓存
-            const cached = detailCache.value[articleId]
+            const cached = detailCacheManager.get(articleId)
             if (cached) {
-                cached.data.collectCount = (cached.data.collectCount || 0) + (originalState ? 1 : -1)
-                cached.data.isCollected = originalState
+                cached.collectCount = (cached.collectCount || 0) + (originalState ? 1 : -1)
+                cached.isCollected = originalState
+                detailCacheManager.set(articleId, cached)
             }
 
             console.error('[ArticleStore] 收藏操作失败:', error)
@@ -266,46 +168,6 @@ export const useArticleStore = defineStore('article', () => {
     })
 
     /**
-     * 保存列表缓存到本地存储
-     */
-    function saveListCache() {
-        // 只保存最近的10个列表缓存
-        const keys = Object.keys(listCache.value)
-        if (keys.length > 10) {
-            const sortedKeys = keys.sort((a, b) => {
-                return listCache.value[b].timestamp - listCache.value[a].timestamp
-            })
-            const keysToKeep = sortedKeys.slice(0, 10)
-            const newCache = {}
-            keysToKeep.forEach(key => {
-                newCache[key] = listCache.value[key]
-            })
-            listCache.value = newCache
-        }
-        setItem('articleListCache', listCache.value)
-    }
-
-    /**
-     * 保存详情缓存到本地存储
-     */
-    function saveDetailCache() {
-        // 只保存最近的20个详情缓存
-        const keys = Object.keys(detailCache.value)
-        if (keys.length > 20) {
-            const sortedKeys = keys.sort((a, b) => {
-                return detailCache.value[b].timestamp - detailCache.value[a].timestamp
-            })
-            const keysToKeep = sortedKeys.slice(0, 20)
-            const newCache = {}
-            keysToKeep.forEach(key => {
-                newCache[key] = detailCache.value[key]
-            })
-            detailCache.value = newCache
-        }
-        setItem('articleDetailCache', detailCache.value)
-    }
-
-    /**
      * 保存点赞状态到本地存储
      */
     function saveLikedArticles() {
@@ -320,11 +182,35 @@ export const useArticleStore = defineStore('article', () => {
     }
 
     /**
+     * 清除所有缓存
+     */
+    function clearAllCache() {
+        listCacheManager.clear()
+        detailCacheManager.clear()
+    }
+
+    /**
+     * 清除过期缓存
+     */
+    function clearExpiredCache() {
+        listCacheManager.clearExpired()
+        detailCacheManager.clearExpired()
+    }
+
+    /**
+     * 获取缓存统计信息
+     */
+    function getCacheStats() {
+        return {
+            list: listCacheManager.getStats(),
+            detail: detailCacheManager.getStats()
+        }
+    }
+
+    /**
      * 初始化 - 从localStorage恢复状态
      */
     function initialize() {
-        listCache.value = getItem('articleListCache', {})
-        detailCache.value = getItem('articleDetailCache', {})
         likedArticles.value = getItem('likedArticles', {})
         favoriteArticles.value = getItem('favoriteArticles', {})
 
@@ -337,27 +223,21 @@ export const useArticleStore = defineStore('article', () => {
 
     return {
         // State
-        listCache,
-        detailCache,
         likedArticles,
         favoriteArticles,
-        cacheExpiry,
 
         // Getters
         isArticleLiked,
         isArticleFavorited,
 
         // Actions
-        getCachedList,
-        setCachedList,
-        getCachedDetail,
-        setCachedDetail,
-        clearExpiredCache,
-        clearAllCache,
         fetchArticleList,
         fetchArticleDetail,
         toggleLike,
         toggleFavorite,
+        clearAllCache,
+        clearExpiredCache,
+        getCacheStats,
         initialize
     }
 })

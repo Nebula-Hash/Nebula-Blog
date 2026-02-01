@@ -2,7 +2,17 @@
  * 统一错误处理工具
  * 提供一致的错误处理和用户反馈
  */
-import { showError } from '@/utils/common'
+import { showError, showWarning } from '@/utils/common'
+import axios from 'axios'
+
+/**
+ * 判断是否是请求取消错误
+ * @param {Error} error - 错误对象
+ * @returns {boolean}
+ */
+export const isCancelError = (error) => {
+    return axios.isCancel(error) || error?.name === 'AbortError' || error?.name === 'CanceledError'
+}
 
 /**
  * 处理 API 错误
@@ -12,6 +22,12 @@ import { showError } from '@/utils/common'
  * @returns {boolean} 是否成功处理
  */
 export const handleApiError = (error, operation = '操作', silent = false) => {
+    // 如果是请求取消，静默处理
+    if (isCancelError(error)) {
+        console.log(`[ErrorHandler] ${operation}请求已取消`)
+        return false
+    }
+
     console.error(`[ErrorHandler] ${operation}失败:`, error)
 
     if (!silent) {
@@ -61,15 +77,30 @@ export const handleDeleteError = (error, resourceName = '数据', silent = false
  * @param {Object} options - 配置选项
  * @param {string} options.operation - 操作名称
  * @param {boolean} options.silent - 是否静默
+ * @param {boolean} options.throwOnCancel - 取消时是否抛出错误（默认false）
  * @param {Function} options.onError - 自定义错误处理函数
+ * @param {Function} options.onSuccess - 成功回调
  * @returns {Promise<any>} 返回异步函数的结果，错误时返回 null
  */
 export const asyncWrapper = async (asyncFn, options = {}) => {
-    const { operation = '操作', silent = false, onError } = options
+    const { operation = '操作', silent = false, throwOnCancel = false, onError, onSuccess } = options
 
     try {
-        return await asyncFn()
+        const result = await asyncFn()
+        if (onSuccess) {
+            onSuccess(result)
+        }
+        return result
     } catch (error) {
+        // 请求取消的特殊处理
+        if (isCancelError(error)) {
+            console.log(`[ErrorHandler] ${operation}请求已取消`)
+            if (throwOnCancel) {
+                throw error
+            }
+            return null
+        }
+
         if (onError) {
             onError(error)
         } else {
@@ -130,11 +161,25 @@ export const createErrorHandler = (componentName) => {
     }
 }
 
+/**
+ * 创建带错误处理的请求函数
+ * @param {Function} requestFn - 请求函数
+ * @param {Object} options - 配置选项
+ * @returns {Function} 包装后的请求函数
+ */
+export const withErrorHandler = (requestFn, options = {}) => {
+    return async (...args) => {
+        return asyncWrapper(() => requestFn(...args), options)
+    }
+}
+
 export default {
     handleApiError,
     handleLoadError,
     handleSaveError,
     handleDeleteError,
     asyncWrapper,
-    createErrorHandler
+    createErrorHandler,
+    withErrorHandler,
+    isCancelError
 }
