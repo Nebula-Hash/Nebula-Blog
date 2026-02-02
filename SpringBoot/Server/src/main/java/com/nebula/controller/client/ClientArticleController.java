@@ -36,7 +36,9 @@ public class ClientArticleController {
      * @param size         每页大小
      * @param authorName   作者名称（可选，模糊搜索）
      * @param title        文章标题（可选，模糊搜索）
+     * @param categoryId   分类ID（可选，精确匹配）
      * @param categoryName 分类名称（可选，模糊搜索）
+     * @param tagId        标签ID（可选，精确匹配）
      * @param tagName      标签名称（可选，模糊搜索）
      * @return 文章分页列表
      */
@@ -46,10 +48,12 @@ public class ClientArticleController {
             @RequestParam(defaultValue = CommonConstants.DEFAULT_PAGE_SIZE) Long size,
             @RequestParam(required = false) String authorName,
             @RequestParam(required = false) String title,
+            @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String categoryName,
+            @RequestParam(required = false) Long tagId,
             @RequestParam(required = false) String tagName) {
         Page<ArticleListVO> page = articleService.getClientArticleList(
-                current, size, authorName, title, categoryName, tagName);
+                current, size, authorName, title, categoryId, categoryName, tagId, tagName);
         return Result.success(page);
     }
 

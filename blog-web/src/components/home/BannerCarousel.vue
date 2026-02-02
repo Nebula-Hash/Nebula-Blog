@@ -1,5 +1,6 @@
 <template>
-    <div class="banner-carousel" @mouseenter="pauseAutoPlay" @mouseleave="resumeAutoPlay">
+    <div v-if="!loading && banners.length > 0" class="banner-carousel" @mouseenter="pauseAutoPlay"
+        @mouseleave="resumeAutoPlay">
         <!-- 轮播图容器 -->
         <div class="carousel-container" ref="carouselRef">
             <!-- 轮播图片列表 -->
@@ -20,7 +21,6 @@
                     <!-- 标题信息 -->
                     <div class="banner-info">
                         <h2 class="banner-title">{{ banner.title }}</h2>
-                        <p v-if="banner.description" class="banner-description">{{ banner.description }}</p>
                     </div>
                 </div>
             </transition-group>
@@ -41,15 +41,7 @@
             </div>
         </div>
 
-        <!-- 加载状态 -->
-        <div v-if="loading" class="carousel-loading">
-            <n-spin size="large" />
-        </div>
 
-        <!-- 空状态 -->
-        <div v-if="!loading && banners.length === 0" class="carousel-empty">
-            <n-empty description="暂无轮播图" />
-        </div>
     </div>
 </template>
 
@@ -291,27 +283,13 @@ onUnmounted(() => {
 }
 
 .banner-title {
-    margin: 0 0 12px 0;
+    margin: 0;
     font-size: 36px;
     font-weight: 700;
     color: #ffffff;
     line-height: 1.3;
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
     max-width: 80%;
-}
-
-.banner-description {
-    margin: 0;
-    font-size: 16px;
-    color: rgba(255, 255, 255, 0.85);
-    line-height: 1.6;
-    max-width: 60%;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    line-clamp: 2;
-    overflow: hidden;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
 }
 
 /* 导航箭头 */
@@ -418,17 +396,6 @@ onUnmounted(() => {
     transform: translateX(100%);
 }
 
-/* 加载和空状态 */
-.carousel-loading,
-.carousel-empty {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 400px;
-    background: #141517;
-    border-radius: 16px;
-}
-
 /* 响应式设计 */
 @media (max-width: 1200px) {
     .banner-carousel {
@@ -438,10 +405,6 @@ onUnmounted(() => {
 
     .banner-title {
         font-size: 30px;
-    }
-
-    .banner-description {
-        font-size: 15px;
     }
 
     .banner-info {
@@ -461,13 +424,6 @@ onUnmounted(() => {
     .banner-title {
         font-size: 24px;
         max-width: 90%;
-    }
-
-    .banner-description {
-        font-size: 14px;
-        max-width: 90%;
-        -webkit-line-clamp: 1;
-        line-clamp: 1;
     }
 
     .banner-info {
@@ -514,10 +470,6 @@ onUnmounted(() => {
 
     .banner-title {
         font-size: 20px;
-    }
-
-    .banner-description {
-        display: none;
     }
 
     .banner-info {

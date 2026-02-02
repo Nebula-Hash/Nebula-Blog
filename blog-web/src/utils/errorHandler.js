@@ -121,7 +121,6 @@ export const createErrorHandler = (componentName) => {
          * 处理加载错误
          */
         handleLoad: (error, resourceName, silent = false) => {
-            console.error(`[${componentName}] 加载${resourceName}失败:`, error)
             return handleLoadError(error, resourceName, silent)
         },
 
@@ -129,7 +128,6 @@ export const createErrorHandler = (componentName) => {
          * 处理保存错误
          */
         handleSave: (error, operation, silent = false) => {
-            console.error(`[${componentName}] ${operation}失败:`, error)
             return handleSaveError(error, operation, silent)
         },
 
@@ -137,7 +135,6 @@ export const createErrorHandler = (componentName) => {
          * 处理删除错误
          */
         handleDelete: (error, resourceName, silent = false) => {
-            console.error(`[${componentName}] 删除${resourceName}失败:`, error)
             return handleDeleteError(error, resourceName, silent)
         },
 
@@ -145,7 +142,6 @@ export const createErrorHandler = (componentName) => {
          * 处理通用错误
          */
         handle: (error, operation, silent = false) => {
-            console.error(`[${componentName}] ${operation}失败:`, error)
             return handleApiError(error, operation, silent)
         },
 

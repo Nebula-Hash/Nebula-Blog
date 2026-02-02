@@ -1,4 +1,9 @@
 // 通信请求与响应封装（含无感刷新Token机制）
+//
+// 错误处理说明：
+// 1. 默认情况下，拦截器不会显示错误提示，由业务层使用 errorHandler.js 统一处理
+// 2. 如需在拦截器中显示错误，可在请求配置中设置 showErrorInInterceptor: true
+// 3. 使用 silent: true 可完全静默处理错误（拦截器和业务层都不显示）
 
 import axios from 'axios'
 import * as tokenService from '@/services/tokenService'
@@ -134,12 +139,16 @@ request.interceptors.response.use(
       if (res.code === BUSINESS_CODE.UNAUTHORIZED) {
         return handleTokenExpired(response.config)
       } else {
-        // 业务错误处理（只在非静默模式下弹窗）
-        if (!response.config.silent) {
+        // 业务错误处理（只在非静默模式且未禁用拦截器提示时弹窗）
+        // showErrorInInterceptor 默认为 false，避免与业务层错误处理重复
+        if (!response.config.silent && response.config.showErrorInInterceptor) {
           handleBusinessError(res)
         }
       }
-      return Promise.reject(new Error(res.message || '请求失败'))
+      // 将完整的响应信息附加到错误对象上，方便业务层使用
+      const error = new Error(res.message || '请求失败')
+      error.response = response
+      return Promise.reject(error)
     }
   },
   error => {
@@ -153,8 +162,9 @@ request.interceptors.response.use(
     if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
       return handleTokenExpired(error.config)
     } else {
-      // 网络错误处理（只在非静默模式下弹窗）
-      if (!error.config?.silent) {
+      // 网络错误处理（只在非静默模式且未禁用拦截器提示时弹窗）
+      // showErrorInInterceptor 默认为 false，避免与业务层错误处理重复
+      if (!error.config?.silent && error.config?.showErrorInInterceptor) {
         handleNetworkError(error)
       }
     }

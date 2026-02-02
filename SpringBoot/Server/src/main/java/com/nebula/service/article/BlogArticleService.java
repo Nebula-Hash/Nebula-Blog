@@ -75,12 +75,14 @@ public interface BlogArticleService {
      * @param size         每页大小
      * @param authorName   作者名称（可选，模糊搜索）
      * @param title        文章标题（可选，模糊搜索）
+     * @param categoryId   分类ID（可选，精确匹配）
      * @param categoryName 分类名称（可选，模糊搜索）
+     * @param tagId        标签ID（可选，精确匹配）
      * @param tagName      标签名称（可选，模糊搜索）
      * @return 文章列表
      */
     Page<ArticleListVO> getClientArticleList(Long current, Long size, String authorName, String title,
-                                             String categoryName, String tagName);
+                                             Long categoryId, String categoryName, Long tagId, String tagName);
 
     /**
      * 客户端获取文章详情

@@ -227,7 +227,7 @@ public class BlogArticleServiceImpl implements BlogArticleService {
 
     @Override
     public Page<ArticleListVO> getClientArticleList(Long current, Long size, String authorName, String title,
-                                                    String categoryName, String tagName) {
+                                                    Long categoryId, String categoryName, Long tagId, String tagName) {
         Page<BlogArticle> page = new Page<>(current, size);
         LambdaQueryWrapper<BlogArticle> wrapper = new LambdaQueryWrapper<>();
 
@@ -235,7 +235,7 @@ public class BlogArticleServiceImpl implements BlogArticleService {
         wrapper.eq(BlogArticle::getIsDraft, DraftStatusEnum.PUBLISHED.getCode());
 
         // 应用搜索条件
-        if (!queryHelper.applySearchConditions(wrapper, authorName, title, categoryName, tagName)) {
+        if (!queryHelper.applySearchConditions(wrapper, authorName, title, categoryId, categoryName, tagId, tagName)) {
             return new Page<>(current, size);
         }
 
@@ -260,8 +260,8 @@ public class BlogArticleServiceImpl implements BlogArticleService {
             wrapper.eq(BlogArticle::getIsTop, isTop);
         }
 
-        // 应用搜索条件
-        if (!queryHelper.applySearchConditions(wrapper, authorName, title, categoryName, tagName)) {
+        // 应用搜索条件（管理端只使用名称搜索，不使用ID）
+        if (!queryHelper.applySearchConditions(wrapper, authorName, title, null, categoryName, null, tagName)) {
             return new Page<>(current, size);
         }
 

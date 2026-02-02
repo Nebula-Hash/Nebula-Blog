@@ -38,18 +38,24 @@ public class WebPImageConversion {
      * 将图片转换为WebP格式
      *
      * @param file 原始图片文件
-     * @return WebP格式的字节数组
-     * @throws BusinessException 转换失败时抛出
+     * @return WebP格式的字节数组，转换失败返回null
      */
     public byte[] convertToWebP(MultipartFile file) {
+        if (!webPConfig.isEnabled()) {
+            log.debug("WebP转换已禁用");
+            return null;
+        }
+
         try {
             // 读取原始图片
             BufferedImage image = ImageIO.read(file.getInputStream());
             if (image == null) {
-                throw new BusinessException("无法读取图片文件，可能不是有效的图片格式");
+                log.warn("无法读取图片文件: {}", file.getOriginalFilename());
+                return null;
             }
 
-            log.debug("原始图片尺寸: {}x{}", image.getWidth(), image.getHeight());
+            log.debug("原始图片尺寸: {}x{}, 格式: {}", 
+                image.getWidth(), image.getHeight(), file.getContentType());
 
             // 如果图片过大，进行缩放
             if (image.getWidth() > webPConfig.getMaxWidth() || image.getHeight() > webPConfig.getMaxHeight()) {
@@ -62,18 +68,19 @@ public class WebPImageConversion {
             byte[] webpBytes = encodeToWebP(image);
 
             if (webPConfig.isEnableStats()) {
-                log.info("图片转换成功: {} -> WebP, 原始大小: {}KB, WebP大小: {}KB, 压缩率: {}%",
+                double compressionRatio = (1 - (double) webpBytes.length / file.getSize()) * 100;
+                log.info("✓ WebP转换成功: {} | 原始: {}KB -> WebP: {}KB | 压缩率: {:.1f}%",
                         file.getOriginalFilename(),
                         file.getSize() / 1024,
                         webpBytes.length / 1024,
-                        String.format("%.1f", (1 - (double) webpBytes.length / file.getSize()) * 100)
+                        compressionRatio
                 );
             }
 
             return webpBytes;
 
-        } catch (IOException e) {
-            log.error("图片转换失败: {}, 错误: {}", file.getOriginalFilename(), e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("WebP转换失败: {}, 错误: {}", file.getOriginalFilename(), e.getMessage());
             
             // 根据配置的失败策略处理
             if (webPConfig.getFailureStrategy() == WebPConfig.FailureStrategy.THROW_EXCEPTION) {
@@ -81,6 +88,7 @@ public class WebPImageConversion {
             }
             
             // 返回null表示转换失败，调用方应保留原图
+            log.warn("WebP转换失败，将使用原图格式");
             return null;
         }
     }
@@ -137,27 +145,50 @@ public class WebPImageConversion {
      * @return WebP格式的字节数组
      */
     private byte[] encodeToWebP(BufferedImage image) throws IOException {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
         // 获取WebP编码器
-        Iterator<ImageWriter> writers = ImageIO.getImageWritersByMIMEType("image/webp");
+        Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("webp");
         if (!writers.hasNext()) {
-            throw new BusinessException("系统不支持WebP格式，请检查是否添加了imageio-webp依赖");
+            // 尝试通过MIME类型获取
+            writers = ImageIO.getImageWritersByMIMEType("image/webp");
+            if (!writers.hasNext()) {
+                String[] availableFormats = ImageIO.getWriterFormatNames();
+                log.error("系统不支持WebP格式。可用的ImageWriter格式: {}", 
+                    String.join(", ", availableFormats));
+                throw new BusinessException("系统不支持WebP格式，请检查webp-imageio依赖是否正确加载");
+            }
         }
 
         ImageWriter writer = writers.next();
-        ImageWriteParam writeParam = writer.getDefaultWriteParam();
-
-        // 设置压缩参数
-        if (writeParam.canWriteCompressed()) {
-            writeParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-            writeParam.setCompressionQuality(webPConfig.getQuality());
-            log.debug("WebP压缩质量设置为: {}", webPConfig.getQuality());
-        }
-
+        log.debug("使用WebP编码器: {}", writer.getClass().getName());
+        
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        
         try (ImageOutputStream ios = ImageIO.createImageOutputStream(outputStream)) {
             writer.setOutput(ios);
+            
+            ImageWriteParam writeParam = writer.getDefaultWriteParam();
+            
+            // webp-imageio 库要求必须设置压缩参数
+            if (writeParam.canWriteCompressed()) {
+                writeParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+                
+                // 获取支持的压缩类型
+                String[] compressionTypes = writeParam.getCompressionTypes();
+                if (compressionTypes != null && compressionTypes.length > 0) {
+                    // 设置第一个可用的压缩类型（通常是 "Lossy" 或 "Lossless"）
+                    writeParam.setCompressionType(compressionTypes[0]);
+                    log.debug("WebP压缩类型: {}", compressionTypes[0]);
+                }
+                
+                // 设置压缩质量
+                writeParam.setCompressionQuality(webPConfig.getQuality());
+                log.debug("WebP压缩质量: {}", webPConfig.getQuality());
+            } else {
+                log.warn("WebP编码器不支持压缩参数设置");
+            }
+            
             writer.write(null, new IIOImage(image, null, null), writeParam);
+            ios.flush();
         } finally {
             writer.dispose();
         }

@@ -39,13 +39,16 @@ public class ArticleQueryHelper {
      * @param wrapper      查询包装器
      * @param authorName   作者名称（模糊搜索）
      * @param title        文章标题（模糊搜索）
+     * @param categoryId   分类ID（精确匹配）
      * @param categoryName 分类名称（模糊搜索）
+     * @param tagId        标签ID（精确匹配）
      * @param tagName      标签名称（模糊搜索）
      * @return true-条件应用成功，false-无匹配结果应返回空页
      */
     public boolean applySearchConditions(LambdaQueryWrapper<BlogArticle> wrapper,
                                          String authorName, String title,
-                                         String categoryName, String tagName) {
+                                         Long categoryId, String categoryName,
+                                         Long tagId, String tagName) {
         // 作者名称模糊搜索
         if (!applyAuthorCondition(wrapper, authorName)) {
             return false;
@@ -54,13 +57,13 @@ public class ArticleQueryHelper {
         // 标题模糊搜索
         applyTitleCondition(wrapper, title);
 
-        // 分类名称模糊搜索
-        if (!applyCategoryCondition(wrapper, categoryName)) {
+        // 分类搜索（优先使用ID，其次使用名称）
+        if (!applyCategoryCondition(wrapper, categoryId, categoryName)) {
             return false;
         }
 
-        // 标签名称模糊搜索
-        if (!applyTagCondition(wrapper, tagName)) {
+        // 标签搜索（优先使用ID，其次使用名称）
+        if (!applyTagCondition(wrapper, tagId, tagName)) {
             return false;
         }
 
@@ -105,11 +108,20 @@ public class ArticleQueryHelper {
     }
 
     /**
-     * 应用分类搜索条件
+     * 应用分类搜索条件（优先使用ID，其次使用名称）
      *
+     * @param categoryId   分类ID（精确匹配）
+     * @param categoryName 分类名称（模糊搜索）
      * @return true-成功，false-无匹配结果
      */
-    private boolean applyCategoryCondition(LambdaQueryWrapper<BlogArticle> wrapper, String categoryName) {
+    private boolean applyCategoryCondition(LambdaQueryWrapper<BlogArticle> wrapper, Long categoryId, String categoryName) {
+        // 优先使用分类ID进行精确匹配
+        if (categoryId != null) {
+            wrapper.eq(BlogArticle::getCategoryId, categoryId);
+            return true;
+        }
+        
+        // 如果没有ID，使用名称进行模糊搜索
         if (categoryName == null || categoryName.isEmpty()) {
             return true;
         }
@@ -133,29 +145,38 @@ public class ArticleQueryHelper {
     }
 
     /**
-     * 应用标签搜索条件
+     * 应用标签搜索条件（优先使用ID，其次使用名称）
      * <p>
      * 使用分页限制数量避免大IN查询影响性能
      *
+     * @param tagId   标签ID（精确匹配）
+     * @param tagName 标签名称（模糊搜索）
      * @return true-成功，false-无匹配结果
      */
-    private boolean applyTagCondition(LambdaQueryWrapper<BlogArticle> wrapper, String tagName) {
-        if (tagName == null || tagName.isEmpty()) {
+    private boolean applyTagCondition(LambdaQueryWrapper<BlogArticle> wrapper, Long tagId, String tagName) {
+        Set<Long> tagIds;
+        
+        // 优先使用标签ID进行精确匹配
+        if (tagId != null) {
+            tagIds = Set.of(tagId);
+        } else if (tagName != null && !tagName.isEmpty()) {
+            // 如果没有ID，使用名称进行模糊搜索
+            // 使用 MyBatis-Plus 分页查询匹配的标签
+            Page<BlogTag> tagPage = new Page<>(1, QUERY_LIMIT, false);
+            LambdaQueryWrapper<BlogTag> tagQueryWrapper = new LambdaQueryWrapper<>();
+            tagQueryWrapper.like(BlogTag::getTagName, tagName);
+            tagPage = tagMapper.selectPage(tagPage, tagQueryWrapper);
+
+            tagIds = tagPage.getRecords().stream()
+                    .map(BlogTag::getId)
+                    .collect(Collectors.toSet());
+
+            if (tagIds.isEmpty()) {
+                return false;
+            }
+        } else {
+            // 既没有ID也没有名称，不应用标签过滤
             return true;
-        }
-
-        // 使用 MyBatis-Plus 分页查询匹配的标签
-        Page<BlogTag> tagPage = new Page<>(1, QUERY_LIMIT, false);
-        LambdaQueryWrapper<BlogTag> tagQueryWrapper = new LambdaQueryWrapper<>();
-        tagQueryWrapper.like(BlogTag::getTagName, tagName);
-        tagPage = tagMapper.selectPage(tagPage, tagQueryWrapper);
-
-        Set<Long> tagIds = tagPage.getRecords().stream()
-                .map(BlogTag::getId)
-                .collect(Collectors.toSet());
-
-        if (tagIds.isEmpty()) {
-            return false;
         }
 
         // 使用 MyBatis-Plus 分页查询包含这些标签的文章
