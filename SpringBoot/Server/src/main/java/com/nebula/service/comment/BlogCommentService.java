@@ -2,6 +2,8 @@ package com.nebula.service.comment;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nebula.dto.CommentDTO;
+import com.nebula.vo.BatchAuditResultVO;
+import com.nebula.vo.BatchDeleteResultVO;
 import com.nebula.vo.CommentAdminVO;
 import com.nebula.vo.CommentClientVO;
 
@@ -96,15 +98,17 @@ public interface BlogCommentService {
      *
      * @param commentIds  评论ID列表
      * @param auditStatus 审核状态 1-通过 2-拒绝
+     * @return 批量审核结果
      */
-    void batchAuditComments(List<Long> commentIds, Integer auditStatus);
+    BatchAuditResultVO batchAuditComments(List<Long> commentIds, Integer auditStatus);
 
     /**
      * 批量删除评论
      *
      * @param commentIds 评论ID列表
+     * @return 批量删除结果
      */
-    void batchDeleteComments(List<Long> commentIds);
+    BatchDeleteResultVO batchDeleteComments(List<Long> commentIds);
 
     /**
      * 获取待审核评论数量

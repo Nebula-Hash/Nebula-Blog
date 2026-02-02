@@ -253,12 +253,33 @@ public class BlogCommentServiceImpl implements BlogCommentService {
 
         validateAuditStatus(auditStatus);
 
-        Integer oldStatus = comment.getAuditStatus();
-        comment.setAuditStatus(auditStatus);
-        commentMapper.updateById(comment);
+        Integer currentStatus = comment.getAuditStatus();
 
-        // 审核通过且原状态为待审核时，文章评论数+1
-        if (AuditStatusEnum.isApproved(auditStatus) && AuditStatusEnum.isPending(oldStatus)) {
+        // 检查是否已经是目标状态（避免重复审核）
+        if (currentStatus.equals(auditStatus)) {
+            throw new BusinessException(CommentConstants.ERR_COMMENT_ALREADY_AUDITED);
+        }
+
+        // 只允许审核待审核状态的评论
+        if (!AuditStatusEnum.isPending(currentStatus)) {
+            throw new BusinessException(CommentConstants.ERR_ONLY_AUDIT_PENDING);
+        }
+
+        // 使用条件更新确保原子性
+        LambdaUpdateWrapper<BlogComment> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(BlogComment::getId, commentId)
+                .eq(BlogComment::getAuditStatus, AuditStatusEnum.PENDING.getCode())
+                .set(BlogComment::getAuditStatus, auditStatus);
+
+        int updateCount = commentMapper.update(null, updateWrapper);
+
+        // 如果更新失败，说明状态已被其他操作修改
+        if (updateCount == 0) {
+            throw new BusinessException(CommentConstants.ERR_COMMENT_ALREADY_AUDITED);
+        }
+
+        // 审核通过时，文章评论数+1
+        if (AuditStatusEnum.isApproved(auditStatus)) {
             countHelper.incrementCommentCount(comment.getArticleId(), 1);
         }
     }
@@ -287,6 +308,9 @@ public class BlogCommentServiceImpl implements BlogCommentService {
             deleteCount += 1;
         }
 
+        // 删除当前评论的点赞记录
+        deleteCommentLikes(commentId);
+
         // 删除当前评论
         commentMapper.deleteById(commentId);
 
@@ -299,28 +323,42 @@ public class BlogCommentServiceImpl implements BlogCommentService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void batchAuditComments(List<Long> commentIds, Integer auditStatus) {
+    public BatchAuditResultVO batchAuditComments(List<Long> commentIds, Integer auditStatus) {
         if (CollectionUtils.isEmpty(commentIds)) {
             throw new BusinessException(CommentConstants.ERR_COMMENT_IDS_EMPTY);
         }
         validateAuditStatus(auditStatus);
 
-        // 查询待审核的评论
-        LambdaQueryWrapper<BlogComment> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(BlogComment::getId, commentIds)
-                .eq(BlogComment::getAuditStatus, AuditStatusEnum.PENDING.getCode());
-        List<BlogComment> pendingComments = commentMapper.selectList(queryWrapper);
+        int totalCount = commentIds.size();
 
-        // 批量更新审核状态
+        // 使用条件更新确保原子性：只更新待审核状态的评论
         LambdaUpdateWrapper<BlogComment> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.in(BlogComment::getId, commentIds)
+                .eq(BlogComment::getAuditStatus, AuditStatusEnum.PENDING.getCode())
                 .set(BlogComment::getAuditStatus, auditStatus);
-        commentMapper.update(null, updateWrapper);
 
-        // 审核通过时更新文章评论数
-        if (AuditStatusEnum.isApproved(auditStatus)) {
-            countHelper.batchIncrementCommentCount(pendingComments);
+        int successCount = commentMapper.update(null, updateWrapper);
+        int skippedCount = totalCount - successCount;
+
+        // 如果没有更新任何记录，说明所有评论都不是待审核状态
+        if (successCount == 0) {
+            throw new BusinessException(CommentConstants.ERR_ONLY_AUDIT_PENDING);
         }
+
+        // 审核通过时，查询实际更新成功的评论并更新文章评论数
+        if (AuditStatusEnum.isApproved(auditStatus)) {
+            // 查询刚刚更新成功的评论（状态已变为通过）
+            LambdaQueryWrapper<BlogComment> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(BlogComment::getId, commentIds)
+                    .eq(BlogComment::getAuditStatus, AuditStatusEnum.APPROVED.getCode());
+            List<BlogComment> approvedComments = commentMapper.selectList(queryWrapper);
+
+            // 批量更新文章评论数
+            countHelper.batchIncrementCommentCount(approvedComments);
+        }
+
+        String message = String.format("成功审核 %d 条评论，跳过 %d 条（非待审核状态）", successCount, skippedCount);
+        return BatchAuditResultVO.success(successCount, skippedCount, totalCount, message);
     }
 
     /**
@@ -328,21 +366,71 @@ public class BlogCommentServiceImpl implements BlogCommentService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void batchDeleteComments(List<Long> commentIds) {
+    public BatchDeleteResultVO batchDeleteComments(List<Long> commentIds) {
         if (CollectionUtils.isEmpty(commentIds)) {
             throw new BusinessException(CommentConstants.ERR_COMMENT_IDS_EMPTY);
         }
 
-        for (Long commentId : commentIds) {
-            try {
-                deleteComment(commentId);
-            } catch (BusinessException e) {
-                // 评论不存在时跳过
-                if (!CommentConstants.ERR_COMMENT_NOT_FOUND.equals(e.getMessage())) {
-                    throw e;
-                }
-            }
+        // 1. 查询所有要删除的评论
+        LambdaQueryWrapper<BlogComment> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(BlogComment::getId, commentIds);
+        List<BlogComment> commentsToDelete = commentMapper.selectList(queryWrapper);
+
+        int notFoundCount = commentIds.size() - commentsToDelete.size();
+
+        if (commentsToDelete.isEmpty()) {
+            String message = String.format("所有评论均不存在，跳过 %d 条", notFoundCount);
+            return BatchDeleteResultVO.success(0, 0, notFoundCount, message);
         }
+
+        // 2. 找出所有根评论ID，查询它们的子评论
+        List<Long> rootCommentIds = commentsToDelete.stream()
+                .filter(c -> c.getRootId() == null)
+                .map(BlogComment::getId)
+                .collect(Collectors.toList());
+
+        List<BlogComment> childComments = Collections.emptyList();
+        if (!rootCommentIds.isEmpty()) {
+            LambdaQueryWrapper<BlogComment> childWrapper = new LambdaQueryWrapper<>();
+            childWrapper.in(BlogComment::getRootId, rootCommentIds);
+            childComments = commentMapper.selectList(childWrapper);
+        }
+
+        int rootCount = commentsToDelete.size();
+        int childCount = childComments.size();
+
+        // 3. 合并所有要删除的评论（包括子评论）
+        List<BlogComment> allCommentsToDelete = new ArrayList<>(commentsToDelete);
+        allCommentsToDelete.addAll(childComments);
+
+        // 4. 按文章ID分组，统计每篇文章需要减少的审核通过评论数
+        Map<Long, Long> articleDecrementMap = allCommentsToDelete.stream()
+                .filter(c -> AuditStatusEnum.isApproved(c.getAuditStatus()))
+                .collect(Collectors.groupingBy(BlogComment::getArticleId, Collectors.counting()));
+
+        // 5. 收集所有要删除的评论ID（包括子评论）
+        List<Long> allIdsToDelete = allCommentsToDelete.stream()
+                .map(BlogComment::getId)
+                .collect(Collectors.toList());
+
+        // 6. 批量删除点赞记录
+        if (!allIdsToDelete.isEmpty()) {
+            batchDeleteCommentLikes(allIdsToDelete);
+        }
+
+        // 7. 批量删除评论
+        if (!allIdsToDelete.isEmpty()) {
+            commentMapper.deleteBatchIds(allIdsToDelete);
+        }
+
+        // 8. 批量更新文章评论数
+        for (Map.Entry<Long, Long> entry : articleDecrementMap.entrySet()) {
+            countHelper.decrementCommentCount(entry.getKey(), entry.getValue().intValue());
+        }
+
+        String message = String.format("成功删除 %d 条根评论和 %d 条子评论，跳过 %d 条（不存在）",
+                rootCount, childCount, notFoundCount);
+        return BatchDeleteResultVO.success(rootCount, childCount, notFoundCount, message);
     }
 
     /**
@@ -455,12 +543,41 @@ public class BlogCommentServiceImpl implements BlogCommentService {
         // 统计审核通过的子评论数量
         int approvedCount = countHelper.countApprovedComments(childComments);
 
+        // 收集所有子评论ID
+        List<Long> childIds = childComments.stream()
+                .map(BlogComment::getId)
+                .collect(Collectors.toList());
+
+        // 批量删除子评论的点赞记录
+        batchDeleteCommentLikes(childIds);
+
         // 删除所有子评论
         LambdaUpdateWrapper<BlogComment> deleteWrapper = new LambdaUpdateWrapper<>();
         deleteWrapper.eq(BlogComment::getRootId, rootCommentId);
         commentMapper.delete(deleteWrapper);
 
         return approvedCount;
+    }
+
+    /**
+     * 删除单个评论的点赞记录
+     */
+    private void deleteCommentLikes(Long commentId) {
+        LambdaQueryWrapper<BlogCommentLike> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(BlogCommentLike::getCommentId, commentId);
+        commentLikeMapper.delete(wrapper);
+    }
+
+    /**
+     * 批量删除评论的点赞记录
+     */
+    private void batchDeleteCommentLikes(List<Long> commentIds) {
+        if (commentIds == null || commentIds.isEmpty()) {
+            return;
+        }
+        LambdaQueryWrapper<BlogCommentLike> wrapper = new LambdaQueryWrapper<>();
+        wrapper.in(BlogCommentLike::getCommentId, commentIds);
+        commentLikeMapper.delete(wrapper);
     }
 
     /**

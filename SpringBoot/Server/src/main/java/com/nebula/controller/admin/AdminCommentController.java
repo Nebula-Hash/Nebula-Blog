@@ -6,6 +6,8 @@ import com.nebula.constant.CommonConstants;
 import com.nebula.controller.config.AdminController;
 import com.nebula.result.Result;
 import com.nebula.service.comment.BlogCommentService;
+import com.nebula.vo.BatchAuditResultVO;
+import com.nebula.vo.BatchDeleteResultVO;
 import com.nebula.vo.CommentAdminVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -84,11 +86,11 @@ public class AdminCommentController {
      * @return 操作结果
      */
     @PutMapping("/audit/batch")
-    public Result<String> batchAuditComments(
+    public Result<BatchAuditResultVO> batchAuditComments(
             @RequestBody List<Long> ids,
             @RequestParam Integer auditStatus) {
-        commentService.batchAuditComments(ids, auditStatus);
-        return Result.success(CommentConstants.MSG_BATCH_AUDIT_SUCCESS);
+        BatchAuditResultVO result = commentService.batchAuditComments(ids, auditStatus);
+        return Result.success(result);
     }
 
     /**
@@ -98,9 +100,9 @@ public class AdminCommentController {
      * @return 操作结果
      */
     @DeleteMapping("/batch")
-    public Result<String> batchDeleteComments(@RequestBody List<Long> ids) {
-        commentService.batchDeleteComments(ids);
-        return Result.success(CommentConstants.MSG_BATCH_DELETE_SUCCESS);
+    public Result<BatchDeleteResultVO> batchDeleteComments(@RequestBody List<Long> ids) {
+        BatchDeleteResultVO result = commentService.batchDeleteComments(ids);
+        return Result.success(result);
     }
 
     /**

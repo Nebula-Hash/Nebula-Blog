@@ -91,6 +91,20 @@ export const TOP_STATUS = {
     NO: 0
 }
 
+// ==================== 评论审核状态 ====================
+export const COMMENT_AUDIT_STATUS = {
+    PENDING: 0,      // 待审核
+    APPROVED: 1,     // 审核通过
+    REJECTED: 2      // 审核拒绝
+}
+
+// ==================== 评论审核状态映射 ====================
+export const COMMENT_AUDIT_STATUS_MAP = {
+    [COMMENT_AUDIT_STATUS.PENDING]: { label: '待审核', type: 'warning' },
+    [COMMENT_AUDIT_STATUS.APPROVED]: { label: '审核通过', type: 'success' },
+    [COMMENT_AUDIT_STATUS.REJECTED]: { label: '审核拒绝', type: 'error' }
+}
+
 // ==================== HTTP 状态码 ====================
 export const HTTP_STATUS = {
     SUCCESS: 200,
@@ -155,6 +169,8 @@ export default {
     USER_STATUS,
     ARTICLE_STATUS,
     TOP_STATUS,
+    COMMENT_AUDIT_STATUS,
+    COMMENT_AUDIT_STATUS_MAP,
     HTTP_STATUS,
     BUSINESS_CODE,
     ROUTES,

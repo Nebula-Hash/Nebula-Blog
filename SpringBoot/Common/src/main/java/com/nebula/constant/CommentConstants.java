@@ -34,6 +34,21 @@ public final class CommentConstants {
      */
     public static final String MSG_BATCH_DELETE_SUCCESS = "批量删除成功";
 
+    /**
+     * 发布评论成功
+     */
+    public static final String MSG_PUBLISH_SUCCESS = "评论发布成功";
+
+    /**
+     * 点赞成功
+     */
+    public static final String MSG_LIKE_SUCCESS = "操作成功";
+
+    /**
+     * 取消点赞成功
+     */
+    public static final String MSG_UNLIKE_SUCCESS = "操作成功";
+
     // ==================== 错误消息 ====================
 
     /**
@@ -70,6 +85,16 @@ public final class CommentConstants {
      * 无权删除该评论
      */
     public static final String ERR_NO_PERMISSION_DELETE = "只能删除自己的评论";
+
+    /**
+     * 评论已被审核，无法重复审核
+     */
+    public static final String ERR_COMMENT_ALREADY_AUDITED = "评论已被审核，无法重复审核";
+
+    /**
+     * 只能审核待审核状态的评论
+     */
+    public static final String ERR_ONLY_AUDIT_PENDING = "只能审核待审核状态的评论";
 
     // ==================== 业务常量 ====================
 
