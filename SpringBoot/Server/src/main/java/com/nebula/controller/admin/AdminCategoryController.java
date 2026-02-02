@@ -4,7 +4,7 @@ import com.nebula.controller.config.AdminController;
 import com.nebula.dto.CategoryDTO;
 import com.nebula.result.Result;
 import com.nebula.service.category.BlogCategoryService;
-import com.nebula.vo.CategoryAdminVO;
+import com.nebula.vo.admin.CategoryAdminVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

@@ -7,7 +7,7 @@ import com.nebula.entity.*;
 import com.nebula.mapper.*;
 import com.nebula.vo.ArticleListVO;
 import com.nebula.vo.ArticleVO;
-import com.nebula.vo.TagClientVO;
+import com.nebula.vo.client.TagClientVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;

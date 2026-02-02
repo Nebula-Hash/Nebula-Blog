@@ -6,7 +6,7 @@ import com.nebula.dto.UserDTO;
 import com.nebula.entity.SysUser;
 import com.nebula.result.Result;
 import com.nebula.service.authority.SysUserService;
-import com.nebula.vo.UserAdminVO;
+import com.nebula.vo.admin.UserAdminVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

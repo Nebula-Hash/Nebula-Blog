@@ -6,7 +6,7 @@ import com.nebula.dto.BannerDTO;
 import com.nebula.result.Result;
 import com.nebula.service.banner.BlogBannerService;
 import com.nebula.upload.FileUploadUtil;
-import com.nebula.vo.BannerAdminVO;
+import com.nebula.vo.admin.BannerAdminVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

@@ -7,7 +7,7 @@ import com.nebula.controller.config.ClientController;
 import com.nebula.dto.CommentDTO;
 import com.nebula.result.Result;
 import com.nebula.service.comment.BlogCommentService;
-import com.nebula.vo.CommentClientVO;
+import com.nebula.vo.client.CommentClientVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

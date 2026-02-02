@@ -1,4 +1,4 @@
-package com.nebula.vo;
+package com.nebula.vo.admin;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

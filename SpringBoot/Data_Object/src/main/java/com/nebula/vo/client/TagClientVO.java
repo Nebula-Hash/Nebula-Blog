@@ -1,17 +1,15 @@
-package com.nebula.vo;
+package com.nebula.vo.client;
 
 import lombok.Data;
 
-import java.time.LocalDateTime;
-
 /**
- * 标签VO（管理端）
+ * 标签VO（客户端）
  *
  * @author Nebula-Hash
  * @date 2026/1/26
  */
 @Data
-public class TagAdminVO {
+public class TagClientVO {
 
     /**
      * 标签ID
@@ -24,17 +22,7 @@ public class TagAdminVO {
     private String tagName;
 
     /**
-     * 排序
-     */
-    private Integer sort;
-
-    /**
      * 文章数量
      */
     private Long articleCount;
-
-    /**
-     * 更新时间
-     */
-    private LocalDateTime updateTime;
 }

@@ -4,7 +4,7 @@ import com.nebula.controller.config.AdminController;
 import com.nebula.dto.TagDTO;
 import com.nebula.result.Result;
 import com.nebula.service.tag.BlogTagService;
-import com.nebula.vo.TagAdminVO;
+import com.nebula.vo.admin.TagAdminVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

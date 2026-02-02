@@ -1,4 +1,4 @@
-package com.nebula.vo;
+package com.nebula.vo.client;
 
 import lombok.Data;
 

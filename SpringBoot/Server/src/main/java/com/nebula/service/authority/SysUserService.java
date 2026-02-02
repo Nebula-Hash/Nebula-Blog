@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.nebula.dto.UserDTO;
 import com.nebula.entity.SysUser;
-import com.nebula.vo.UserAdminVO;
+import com.nebula.vo.admin.UserAdminVO;
 
 /**
  * 用户服务接口

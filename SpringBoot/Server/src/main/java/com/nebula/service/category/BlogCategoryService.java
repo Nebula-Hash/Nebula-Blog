@@ -1,8 +1,8 @@
 package com.nebula.service.category;
 
 import com.nebula.dto.CategoryDTO;
-import com.nebula.vo.CategoryAdminVO;
-import com.nebula.vo.CategoryClientVO;
+import com.nebula.vo.admin.CategoryAdminVO;
+import com.nebula.vo.client.CategoryClientVO;
 
 import java.util.List;
 

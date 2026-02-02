@@ -1,52 +1,42 @@
-package com.nebula.vo;
+package com.nebula.vo.admin;
 
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 /**
- * 用户管理视图对象（列表/详情）
+ * 管理端轮播图VO
  *
  * @author Nebula-Hash
- * @date 2026/1/29
+ * @date 2026/1/23
  */
 @Data
-public class UserAdminVO {
+public class BannerAdminVO {
 
     /**
-     * 用户ID
+     * 轮播图ID
      */
     private Long id;
 
     /**
-     * 用户名
+     * 标题
      */
-    private String username;
+    private String title;
 
     /**
-     * 昵称
+     * 图片URL
      */
-    private String nickname;
+    private String imageUrl;
 
     /**
-     * 邮箱
+     * 链接URL
      */
-    private String email;
+    private String linkUrl;
 
     /**
-     * 头像
+     * 排序
      */
-    private String avatar;
-
-    /**
-     * 个人简介
-     */
-    private String intro;
-
-    /**
-     * 角色标识
-     */
-    private String roleKey;
+    private Integer sort;
 
     /**
      * 状态 0-禁用 1-启用

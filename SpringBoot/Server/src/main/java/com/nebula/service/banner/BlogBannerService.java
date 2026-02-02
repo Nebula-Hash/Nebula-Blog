@@ -2,8 +2,8 @@ package com.nebula.service.banner;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nebula.dto.BannerDTO;
-import com.nebula.vo.BannerAdminVO;
-import com.nebula.vo.BannerClientVO;
+import com.nebula.vo.admin.BannerAdminVO;
+import com.nebula.vo.client.BannerClientVO;
 
 import java.util.List;
 

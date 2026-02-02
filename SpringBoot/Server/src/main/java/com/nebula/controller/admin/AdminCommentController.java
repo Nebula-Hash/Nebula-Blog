@@ -6,9 +6,9 @@ import com.nebula.constant.CommonConstants;
 import com.nebula.controller.config.AdminController;
 import com.nebula.result.Result;
 import com.nebula.service.comment.BlogCommentService;
-import com.nebula.vo.BatchAuditResultVO;
-import com.nebula.vo.BatchDeleteResultVO;
-import com.nebula.vo.CommentAdminVO;
+import com.nebula.vo.admin.BatchAuditResultVO;
+import com.nebula.vo.admin.BatchDeleteResultVO;
+import com.nebula.vo.admin.CommentAdminVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

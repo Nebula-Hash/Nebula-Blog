@@ -2,10 +2,10 @@ package com.nebula.service.comment;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nebula.dto.CommentDTO;
-import com.nebula.vo.BatchAuditResultVO;
-import com.nebula.vo.BatchDeleteResultVO;
-import com.nebula.vo.CommentAdminVO;
-import com.nebula.vo.CommentClientVO;
+import com.nebula.vo.admin.BatchAuditResultVO;
+import com.nebula.vo.admin.BatchDeleteResultVO;
+import com.nebula.vo.admin.CommentAdminVO;
+import com.nebula.vo.client.CommentClientVO;
 
 import java.util.List;
 

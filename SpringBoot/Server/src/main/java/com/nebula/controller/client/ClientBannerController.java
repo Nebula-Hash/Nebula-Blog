@@ -3,7 +3,7 @@ package com.nebula.controller.client;
 import com.nebula.controller.config.ClientController;
 import com.nebula.result.Result;
 import com.nebula.service.banner.BlogBannerService;
-import com.nebula.vo.BannerClientVO;
+import com.nebula.vo.client.BannerClientVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

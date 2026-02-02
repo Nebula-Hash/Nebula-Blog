@@ -1,8 +1,8 @@
 package com.nebula.service.tag;
 
 import com.nebula.dto.TagDTO;
-import com.nebula.vo.TagAdminVO;
-import com.nebula.vo.TagClientVO;
+import com.nebula.vo.admin.TagAdminVO;
+import com.nebula.vo.client.TagClientVO;
 
 import java.util.List;
 

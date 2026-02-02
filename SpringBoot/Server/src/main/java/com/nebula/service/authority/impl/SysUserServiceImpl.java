@@ -9,7 +9,7 @@ import com.nebula.enumeration.StatusEnum;
 import com.nebula.mapper.SysUserMapper;
 import com.nebula.service.authority.SysUserService;
 import com.nebula.utils.PasswordUtils;
-import com.nebula.vo.UserAdminVO;
+import com.nebula.vo.admin.UserAdminVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
