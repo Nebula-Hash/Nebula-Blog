@@ -20,6 +20,8 @@ import com.nebula.service.comment.BlogCommentService;
 import com.nebula.service.comment.converter.CommentConverter;
 import com.nebula.service.comment.helper.CommentCountHelper;
 import com.nebula.service.comment.helper.CommentQueryHelper;
+import com.nebula.vo.admin.BatchAuditResultVO;
+import com.nebula.vo.admin.BatchDeleteResultVO;
 import com.nebula.vo.admin.CommentAdminVO;
 import com.nebula.vo.client.CommentClientVO;
 import lombok.RequiredArgsConstructor;
@@ -30,10 +32,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.HtmlUtils;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
