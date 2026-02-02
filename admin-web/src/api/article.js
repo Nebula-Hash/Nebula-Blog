@@ -19,6 +19,20 @@ export const getArticleDetail = (id) => {
   })
 }
 
+// 上传文章封面图
+export const uploadCoverImage = (file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request({
+    url: '/article/upload/cover',
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
 // 发布文章
 export const publishArticle = (data) => {
   return request({

@@ -63,6 +63,9 @@ public class BlogArticleServiceImpl implements BlogArticleService {
     private final MarkdownHelper markdownHelper;
     private final HotArticleScoreHelper hotArticleScoreHelper;
 
+    // 文件上传工具
+    private final com.nebula.upload.FileUploadUtil fileUploadUtil;
+
     // ==================== 文章CRUD ====================
 
     @Override
@@ -77,6 +80,14 @@ public class BlogArticleServiceImpl implements BlogArticleService {
         BlogArticle article = new BlogArticle();
         BeanUtils.copyProperties(articleDTO, article);
         article.setAuthorId(userId);
+        
+        // 处理封面图：如果是临时文件，转为正式文件
+        String coverImage = articleDTO.getCoverImage();
+        if (org.springframework.util.StringUtils.hasText(coverImage) && fileUploadUtil.isTempFile(coverImage)) {
+            coverImage = fileUploadUtil.moveToFormal(coverImage);
+            article.setCoverImage(coverImage);
+        }
+        
         // 生成 HTML 内容
         article.setHtmlContent(markdownHelper.toHtml(articleDTO.getContent()));
         article.setViewCount(CountConstants.INIT_VALUE);
@@ -103,8 +114,32 @@ public class BlogArticleServiceImpl implements BlogArticleService {
         // 校验分类是否存在
         validateCategory(articleDTO.getCategoryId());
 
+        // 保存旧的封面图URL
+        String oldCoverImage = article.getCoverImage();
+        String newCoverImage = articleDTO.getCoverImage();
+
         // 更新文章
         BeanUtils.copyProperties(articleDTO, article);
+        
+        // 处理封面图变更
+        if (org.springframework.util.StringUtils.hasText(newCoverImage) && !newCoverImage.equals(oldCoverImage)) {
+            // 如果新封面图是临时文件，说明用户更换了封面图
+            if (fileUploadUtil.isTempFile(newCoverImage)) {
+                // 新封面图转正
+                newCoverImage = fileUploadUtil.moveToFormal(newCoverImage);
+                article.setCoverImage(newCoverImage);
+
+                // 旧封面图移至临时目录等待清理
+                if (org.springframework.util.StringUtils.hasText(oldCoverImage)) {
+                    try {
+                        fileUploadUtil.moveToTemp(oldCoverImage);
+                    } catch (Exception e) {
+                        // 移动失败不影响更新操作
+                    }
+                }
+            }
+        }
+        
         // 重新生成 HTML 内容
         article.setHtmlContent(markdownHelper.toHtml(articleDTO.getContent()));
         articleMapper.updateById(article);
@@ -140,6 +175,15 @@ public class BlogArticleServiceImpl implements BlogArticleService {
         LambdaQueryWrapper<BlogArticleCollect> collectWrapper = new LambdaQueryWrapper<>();
         collectWrapper.eq(BlogArticleCollect::getArticleId, id);
         articleCollectMapper.delete(collectWrapper);
+
+        // 将封面图移至临时目录，等待定时任务清理
+        if (org.springframework.util.StringUtils.hasText(article.getCoverImage())) {
+            try {
+                fileUploadUtil.moveToTemp(article.getCoverImage());
+            } catch (Exception e) {
+                // 移动文件失败不影响删除操作
+            }
+        }
 
         // 删除文章（逻辑删除）
         articleMapper.deleteById(id);

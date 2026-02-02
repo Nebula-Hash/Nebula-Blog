@@ -329,27 +329,93 @@ export const createUserColumns = (options = {}) => {
  * @returns {Array} 列配置数组
  */
 export const createArticleColumns = (options = {}) => {
-    const { onEdit, onDelete } = options
+    const { onEdit, onDelete, onView } = options
 
-    return [
+    const columns = [
         createIdColumn(),
-        createTextColumn('标题', 'title', { ellipsis: true }),
+        // 封面图列
+        {
+            title: '封面',
+            key: 'coverImage',
+            width: 100,
+            render: (row) => {
+                if (row.coverImage) {
+                    return h('img', {
+                        src: row.coverImage,
+                        alt: '封面',
+                        style: {
+                            width: '60px',
+                            height: '40px',
+                            objectFit: 'cover',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                        },
+                        onClick: () => {
+                            if (onView) onView(row.coverImage)
+                        }
+                    })
+                }
+                return h('span', { style: { color: '#999' } }, '-')
+            }
+        },
+        createTextColumn('标题', 'title', { ellipsis: true, width: 200 }),
         createTagColumn('分类', 'categoryName', {
             width: 120,
             getType: () => 'success',
             getText: (row) => row.categoryName || '-'
         }),
-        createTextColumn('作者', 'authorName', { width: 120 }),
-        createTextColumn('浏览量', 'viewCount', { width: 100 }),
-        createTextColumn('点赞数', 'likeCount', { width: 100 }),
+        // 标签列
+        {
+            title: '标签',
+            key: 'tags',
+            width: 200,
+            ellipsis: { tooltip: true },
+            render: (row) => {
+                if (!row.tags || row.tags.length === 0) {
+                    return h('span', { style: { color: '#999' } }, '-')
+                }
+                return h(
+                    NSpace,
+                    { size: 4 },
+                    {
+                        default: () =>
+                            row.tags.slice(0, 3).map((tag) =>
+                                h(
+                                    NTag,
+                                    { size: 'small', type: 'info' },
+                                    { default: () => tag.tagName }
+                                )
+                            )
+                    }
+                )
+            }
+        },
+        createTextColumn('作者', 'authorNickname', { width: 120 }),
+        createTextColumn('浏览', 'viewCount', { width: 80 }),
+        createTextColumn('点赞', 'likeCount', { width: 80 }),
+        // 置顶状态列
+        {
+            title: '置顶',
+            key: 'isTop',
+            width: 80,
+            render: (row) =>
+                h(
+                    NTag,
+                    { type: row.isTop === 1 ? 'warning' : 'default', size: 'small' },
+                    { default: () => (row.isTop === 1 ? '是' : '否') }
+                )
+        },
         createArticleStatusColumn(),
         createTimeColumn(),
         createActionColumn({
             onEdit,
             onDelete,
-            deleteConfirmText: '确定要删除这篇文章吗？'
+            deleteConfirmText: '确定要删除这篇文章吗？',
+            width: 150
         })
     ]
+
+    return columns
 }
 
 export default {
