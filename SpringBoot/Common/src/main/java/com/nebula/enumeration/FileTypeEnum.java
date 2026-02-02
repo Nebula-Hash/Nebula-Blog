@@ -19,6 +19,11 @@ public enum FileTypeEnum {
     IMAGE("image/", "图片", 5L),
 
     /**
+     * WebP图片
+     */
+    WEBP("image/webp", "WebP图片", 5L),
+
+    /**
      * 纯文本类型
      */
     TEXT("text/", "文本", 2L),

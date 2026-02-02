@@ -5,6 +5,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.nebula.exception.BusinessException;
 import com.nebula.properties.UploadProperties;
+import com.nebula.utils.WebPImageConversion;
 import com.nebula.upload.UploadStrategy;
 import io.minio.*;
 import io.minio.messages.Item;
@@ -34,27 +35,66 @@ public class MinioUploadStrategyImpl implements UploadStrategy {
 
     private final MinioClient minioClient;
     private final UploadProperties uploadProperties;
+    private final WebPImageConversion imageConversionService;
 
     @Override
     public String uploadFile(MultipartFile file, String path) {
         try {
-            // 安全获取文件后缀
-            String suffix = getFileSuffix(file.getOriginalFilename());
+            // 判断是否需要转换为WebP
+            boolean shouldConvert = imageConversionService.shouldConvertToWebP(file);
+
+            String suffix;
+            InputStream inputStream;
+            long fileSize;
+            String contentType;
+
+            if (shouldConvert) {
+                // 转换为WebP
+                log.info("转换图片为WebP格式: {}", file.getOriginalFilename());
+                InputStream webpStream = imageConversionService.convertToWebPStream(file);
+                
+                if (webpStream != null) {
+                    // 转换成功，使用WebP
+                    inputStream = webpStream;
+                    suffix = imageConversionService.getWebPExtension();
+                    fileSize = imageConversionService.estimateWebPSize(file.getSize());
+                    contentType = "image/webp";
+                } else {
+                    // 转换失败，使用原图
+                    log.warn("WebP转换失败，保留原图格式: {}", file.getOriginalFilename());
+                    suffix = getFileSuffix(file.getOriginalFilename());
+                    inputStream = file.getInputStream();
+                    fileSize = file.getSize();
+                    contentType = file.getContentType();
+                }
+            } else {
+                // 保持原格式
+                suffix = getFileSuffix(file.getOriginalFilename());
+                inputStream = file.getInputStream();
+                fileSize = file.getSize();
+                contentType = file.getContentType();
+            }
+
             // 生成新文件名：日期/UUID.后缀
             String fileName = DateUtil.today() + "/" + IdUtil.fastSimpleUUID() + suffix;
             // 拼接完整路径
             String objectName = path + "/" + fileName;
 
             // 上传文件
-            try (InputStream inputStream = file.getInputStream()) {
+            try {
                 minioClient.putObject(
                         PutObjectArgs.builder()
                                 .bucket(uploadProperties.getMinio().getBucketName())
                                 .object(objectName)
-                                .stream(inputStream, file.getSize(), -1)
-                                .contentType(file.getContentType())
+                                .stream(inputStream, fileSize, -1)
+                                .contentType(contentType)
                                 .build()
                 );
+                
+                log.info("文件上传成功: {} -> {}, 大小: {}KB", 
+                    file.getOriginalFilename(), objectName, fileSize / 1024);
+            } finally {
+                inputStream.close();
             }
 
             // 返回文件访问路径

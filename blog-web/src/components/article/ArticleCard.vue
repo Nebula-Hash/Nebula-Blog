@@ -2,7 +2,7 @@
   <n-card hoverable class="article-card" @click="handleClick">
     <div class="article-content">
       <LazyImage v-if="article.coverImage" :src="article.coverImage" :alt="article.title" class="cover-image"
-        width="200" height="150" />
+        :support-webp="true" width="200" height="150" />
       <div class="article-info">
         <h3 class="article-title">{{ article.title }}</h3>
         <p class="article-summary">{{ article.summary }}</p>

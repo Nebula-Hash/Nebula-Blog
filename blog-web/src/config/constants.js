@@ -104,6 +104,18 @@ export const DEFAULTS = {
     DEFAULT_ERROR_MESSAGE: '操作失败，请稍后重试'
 }
 
+// ==================== WebP 配置 ====================
+export const WEBP_CONFIG = {
+    // 是否启用WebP支持
+    ENABLED: true,
+    // 是否自动检测浏览器支持
+    AUTO_DETECT: true,
+    // 预估压缩率
+    COMPRESSION_RATE: 0.6,
+    // 支持的原始格式
+    SUPPORTED_FORMATS: ['jpg', 'jpeg', 'png', 'bmp', 'gif']
+}
+
 export default {
     TOKEN_CONFIG,
     CACHE_CONFIG,
@@ -113,5 +125,6 @@ export default {
     HTTP_CONFIG,
     HTTP_STATUS,
     BUSINESS_CODE,
-    DEFAULTS
+    DEFAULTS,
+    WEBP_CONFIG
 }

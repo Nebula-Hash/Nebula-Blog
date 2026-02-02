@@ -89,14 +89,26 @@ supportsWebP.value = checkWebPSupport()
 
 // WebP 图片源
 const webpSrc = computed(() => {
-  if (!supportsWebP.value || !props.src) return null
+  if (!supportsWebP.value || !props.src || !props.supportWebp) return null
 
   // 如果原图已经是 WebP，直接返回
   if (props.src.endsWith('.webp')) return props.src
 
-  // 尝试生成 WebP 路径（假设服务器支持）
+  // 对于新上传的图片（包含日期格式），已经是WebP格式，直接使用
+  // 后端已经自动转换，URL中的扩展名就是.webp
+  if (/\/\d{4}-\d{2}-\d{2}/.test(props.src)) {
+    // 新上传的图片，后端已处理为WebP
+    return props.src
+  }
+
+  // 对于历史图片（不包含日期格式），尝试加载WebP版本
+  // 这部分用于未来的历史数据迁移
   const ext = props.src.split('.').pop()
-  return props.src.replace(`.${ext}`, '.webp')
+  if (ext && ext.length <= 4) {
+    return props.src.replace(`.${ext}`, '.webp')
+  }
+
+  return null
 })
 
 // 占位符样式
@@ -150,7 +162,15 @@ const handleLoad = (event) => {
 // 图片加载失败
 const handleError = (event) => {
   error.value = true
-  console.warn(`[LazyImage] 图片加载失败: ${props.src}`)
+
+  // 只在非WebP fallback的情况下记录警告
+  // 如果是WebP加载失败，picture标签会自动fallback到原图，这是正常行为
+  const isWebPFallback = webpSrc.value && props.src !== webpSrc.value
+
+  if (!isWebPFallback) {
+    console.warn(`[LazyImage] 图片加载失败: ${props.src}`)
+  }
+
   emit('error', event)
 }
 

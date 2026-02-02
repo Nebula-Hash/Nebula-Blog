@@ -6,8 +6,13 @@
             <transition-group :name="slideDirection" tag="div" class="carousel-slides">
                 <div v-for="(banner, index) in banners" v-show="index === currentIndex" :key="banner.id"
                     class="carousel-slide" @click="handleBannerClick(banner)">
-                    <!-- 图片 -->
-                    <img :src="banner.imageUrl" :alt="banner.title" class="banner-image" />
+                    <!-- 图片 - 使用picture标签支持WebP -->
+                    <picture>
+                        <source v-if="banner.imageUrl.endsWith('.webp')" :srcset="banner.imageUrl" type="image/webp" />
+                        <source v-else-if="supportsWebP && /\/\d{4}-\d{2}-\d{2}/.test(banner.imageUrl)"
+                            :srcset="banner.imageUrl" type="image/webp" />
+                        <img :src="banner.imageUrl" :alt="banner.title" class="banner-image" />
+                    </picture>
 
                     <!-- 渐变遮罩层 -->
                     <div class="banner-overlay"></div>
@@ -58,6 +63,20 @@ import { createErrorHandler } from '@/utils/errorHandler'
 
 const router = useRouter()
 const errorHandler = createErrorHandler('BannerCarousel')
+
+// WebP支持检测
+const supportsWebP = ref(false)
+
+// 检测浏览器是否支持WebP
+const checkWebPSupport = () => {
+    const canvas = document.createElement('canvas')
+    if (canvas.getContext && canvas.getContext('2d')) {
+        return canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0
+    }
+    return false
+}
+
+supportsWebP.value = checkWebPSupport()
 
 // 状态管理
 const banners = ref([])

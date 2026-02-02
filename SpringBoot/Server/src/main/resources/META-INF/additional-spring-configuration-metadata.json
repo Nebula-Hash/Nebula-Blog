@@ -72,6 +72,48 @@
       "type": "java.lang.String",
       "description": "API 版本号.",
       "defaultValue": "1.0.0"
+    },
+    {
+      "name": "webp.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否启用WebP自动转换.",
+      "defaultValue": true
+    },
+    {
+      "name": "webp.quality",
+      "type": "java.lang.Float",
+      "description": "WebP压缩质量 (0.0-1.0)，0.85为推荐值.",
+      "defaultValue": 0.85
+    },
+    {
+      "name": "webp.max-width",
+      "type": "java.lang.Integer",
+      "description": "图片最大宽度（像素），超过此尺寸会自动缩放.",
+      "defaultValue": 2048
+    },
+    {
+      "name": "webp.max-height",
+      "type": "java.lang.Integer",
+      "description": "图片最大高度（像素），超过此尺寸会自动缩放.",
+      "defaultValue": 2048
+    },
+    {
+      "name": "webp.keep-original",
+      "type": "java.lang.Boolean",
+      "description": "是否保留原图（false推荐，节省存储空间）.",
+      "defaultValue": false
+    },
+    {
+      "name": "webp.failure-strategy",
+      "type": "java.lang.String",
+      "description": "转换失败时的处理策略.",
+      "defaultValue": "KEEP_ORIGINAL"
+    },
+    {
+      "name": "webp.enable-stats",
+      "type": "java.lang.Boolean",
+      "description": "是否记录转换统计信息.",
+      "defaultValue": true
     }
   ],
   "hints": [
@@ -85,6 +127,19 @@
         {
           "value": "oss",
           "description": "使用阿里云 OSS 对象存储."
+        }
+      ]
+    },
+    {
+      "name": "webp.failure-strategy",
+      "values": [
+        {
+          "value": "KEEP_ORIGINAL",
+          "description": "转换失败时保留原图."
+        },
+        {
+          "value": "THROW_EXCEPTION",
+          "description": "转换失败时抛出异常."
         }
       ]
     }
