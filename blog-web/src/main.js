@@ -3,7 +3,7 @@ import { createPinia } from 'pinia'
 import router from './router'
 
 import App from './App.vue'
-import './style.css'
+import './css/style.css'
 
 // 导入 Naive UI
 import naive from 'naive-ui'

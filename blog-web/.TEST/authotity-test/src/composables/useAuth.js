@@ -3,13 +3,11 @@
  * 为组件提供统一的认证功能接口
  */
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import * as authService from '@/services/authService'
 import { useUserStore } from '@/stores/user'
 import { showSuccess, showError } from '@/utils/common'
 
 export function useAuth() {
-    const router = useRouter()
     const userStore = useUserStore()
 
     const loading = ref(false)
@@ -19,7 +17,7 @@ export function useAuth() {
      * 登录
      * @param {string} username - 用户名
      * @param {string} password - 密码
-     * @returns {Promise<boolean>} 是否成功
+     * @returns {Promise<{success: boolean, data?: any}>} 登录结果
      */
     const login = async (username, password) => {
         loading.value = true
@@ -29,16 +27,16 @@ export function useAuth() {
             const result = await authService.login(username, password)
             if (result.success) {
                 showSuccess('登录成功')
-                return true
+                return { success: true, data: result.data }
             } else {
                 error.value = result.error || '登录失败'
                 showError(error.value)
-                return false
+                return { success: false }
             }
         } catch (err) {
             error.value = err.message || '登录失败'
             showError(error.value)
-            return false
+            return { success: false }
         } finally {
             loading.value = false
         }
@@ -47,7 +45,7 @@ export function useAuth() {
     /**
      * 注册
      * @param {Object} registerData - 注册数据
-     * @returns {Promise<boolean>} 是否成功
+     * @returns {Promise<{success: boolean, data?: any}>} 注册结果
      */
     const register = async (registerData) => {
         loading.value = true
@@ -57,16 +55,16 @@ export function useAuth() {
             const result = await authService.register(registerData)
             if (result.success) {
                 showSuccess('注册成功')
-                return true
+                return { success: true, data: result.data }
             } else {
                 error.value = result.error || '注册失败'
                 showError(error.value)
-                return false
+                return { success: false }
             }
         } catch (err) {
             error.value = err.message || '注册失败'
             showError(error.value)
-            return false
+            return { success: false }
         } finally {
             loading.value = false
         }
@@ -80,14 +78,14 @@ export function useAuth() {
         loading.value = true
 
         try {
-            await authService.logout()
-            showSuccess('已退出登录')
-            router.push('/')
+            const result = await authService.logout()
+            if (result.success) {
+                showSuccess('已退出登录')
+            }
         } catch (err) {
-            console.error('登出失败:', err)
-            // 即使失败也清除本地状态
-            userStore.clearAuth()
-            router.push('/')
+            // 登出服务已经处理了所有情况，这里不应该有错误
+            console.error('[useAuth] 登出异常:', err)
+            showSuccess('已退出登录')
         } finally {
             loading.value = false
         }

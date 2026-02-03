@@ -152,15 +152,16 @@ export function clearUserInfoCache() {
 
 /**
  * 登出
- * @returns {Promise<void>}
+ * @returns {Promise<{success: boolean, error?: string}>}
  */
 export async function logout() {
     try {
-        // 调用登出接口
+        // 调用登出接口（使用 silent 模式，不显示错误提示）
         await authApi.logout()
+        console.log('[AuthService] 登出接口调用成功')
     } catch (error) {
-        console.error('[AuthService] 登出接口调用失败:', error)
-        // 即使接口失败也继续清除本地状态
+        console.warn('[AuthService] 登出接口调用失败（将继续清除本地状态）:', error.message)
+        // 即使接口失败也继续清除本地状态，不抛出错误
     } finally {
         // 清除缓存
         clearUserInfoCache()
@@ -172,6 +173,8 @@ export async function logout() {
         const userStore = useUserStore()
         userStore.clearAuth()
     }
+
+    return { success: true }
 }
 
 /**

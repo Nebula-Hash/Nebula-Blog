@@ -82,13 +82,14 @@ export const passwordRules = [
 
 /**
  * 确认密码验证规则
- * @param {Object} formData - 表单数据对象
+ * @param {Function} getPassword - 获取密码的函数
  * @returns {Array} 验证规则数组
  */
-export const confirmPasswordRules = (formData) => [
+export const confirmPasswordRules = (getPassword) => [
     required('请再次输入密码'),
     custom((rule, value) => {
-        if (value !== formData.password) {
+        const password = typeof getPassword === 'function' ? getPassword() : getPassword
+        if (value !== password) {
             return new Error('两次密码不一致')
         }
         return true

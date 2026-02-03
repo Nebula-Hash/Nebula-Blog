@@ -26,11 +26,12 @@ export const getUserInfo = () => {
   })
 }
 
-// 用户登出
+// 用户登出（静默模式，即使失败也不显示错误）
 export const logout = () => {
   return request({
     url: '/auth/logout',
-    method: 'post'
+    method: 'post',
+    silent: true  // 静默模式，不显示错误提示
   })
 }
 

@@ -1,99 +1,75 @@
 /**
  * Token管理服务
  * 统一管理Token的存储、获取、刷新和清除
+ * 注意：此服务现在委托给 Pinia store 管理状态
  */
-import { getItem, setItem, removeItem } from '@/utils/storage'
+import { useUserStore } from '@/stores/user'
 import axios from 'axios'
-import { TOKEN_CONFIG, HTTP_CONFIG } from '@/config/constants'
+import { HTTP_CONFIG } from '@/config/constants'
 
 /**
  * Token服务配置
  */
 const config = {
-    keyPrefix: '',
     baseURL: HTTP_CONFIG.CLIENT_BASE_URL
 }
 
 /**
- * 获取Token存储键名
- */
-const getTokenKey = () => `${config.keyPrefix}token`
-
-/**
- * 获取Token过期时间存储键名
- */
-const getTokenExpireKey = () => `${config.keyPrefix}token_expire`
-
-/**
- * 获取Token
+ * 获取 Token
  * @returns {string|null} Token值
  */
 export function getToken() {
-    return getItem(getTokenKey(), null)
+    const userStore = useUserStore()
+    return userStore.getToken()
 }
 
 /**
- * 设置Token
+ * 设置 Token
  * @param {string} token - Token值
  * @param {number} timeout - 过期时间（秒）
  */
 export function setToken(token, timeout) {
-    setItem(getTokenKey(), token)
-
-    if (timeout && timeout > 0) {
-        const expireTime = Date.now() + timeout * 1000
-        setItem(getTokenExpireKey(), expireTime)
-    }
+    const userStore = useUserStore()
+    userStore.setToken(token, timeout)
 }
 
 /**
- * 获取Token过期时间
+ * 获取 Token 过期时间
  * @returns {number} 过期时间戳
  */
 export function getTokenExpireTime() {
-    return getItem(getTokenExpireKey(), 0)
+    const userStore = useUserStore()
+    return userStore.tokenExpireTime
 }
 
 /**
- * 检查Token是否过期
+ * 检查 Token 是否过期
  * @returns {boolean} 是否过期
  */
 export function isTokenExpired() {
-    const token = getToken()
-    const expireTime = getTokenExpireTime()
-
-    if (!token || !expireTime) {
-        return true
-    }
-
-    return Date.now() > expireTime
+    const userStore = useUserStore()
+    return userStore.isTokenExpired
 }
 
 /**
- * 检查Token是否即将过期（5分钟内）
+ * 检查 Token 是否即将过期（5分钟内）
  * @returns {boolean} 是否即将过期
  */
 export function isTokenExpiring() {
-    const token = getToken()
-    const expireTime = getTokenExpireTime()
-
-    if (!token || !expireTime) {
-        return false
-    }
-
-    return Date.now() + TOKEN_CONFIG.REFRESH_THRESHOLD > expireTime && Date.now() < expireTime
+    const userStore = useUserStore()
+    return userStore.isTokenExpiring
 }
 
 /**
- * 清除Token
+ * 清除 Token
  */
 export function clearToken() {
-    removeItem(getTokenKey())
-    removeItem(getTokenExpireKey())
+    const userStore = useUserStore()
+    userStore.clearToken()
 }
 
 /**
- * 刷新Token
+ * 刷新 Token
  * 创建独立的axios实例，避免被拦截器处理
  * @returns {Promise<void>}
  */
@@ -140,3 +116,4 @@ export default {
     clearToken,
     refreshToken
 }
+
