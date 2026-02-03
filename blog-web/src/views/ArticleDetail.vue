@@ -27,21 +27,19 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useUserStore } from '@/stores/user'
 import { useArticleDetail, useArticleInteraction } from '@/composables/useArticle'
 import { useAbortController } from '@/composables/useAbortController'
 import { asyncWrapper } from '@/utils/errorHandler'
-import { getCommentList, publishComment, toggleLikeComment } from '@/api/comment'
+import { getCommentList } from '@/api/comment'
 import ArticleHeader from '@/components/article/ArticleHeader.vue'
 import ArticleTags from '@/components/article/ArticleTags.vue'
 import ArticleCommentSection from '@/components/article/ArticleCommentSection.vue'
 import MarkdownRenderer from '@/components/article/MarkdownRenderer.vue'
-import { showSuccess, checkLogin, validateNotEmpty } from '@/utils/common'
+import { showWarning } from '@/utils/common'
 import { PAGINATION_CONFIG } from '@/config/constants'
 import { NCard, NDivider, NSpin } from 'naive-ui'
 
 const route = useRoute()
-const userStore = useUserStore()
 
 // 使用文章详情组合式函数
 const { loading, article, loadArticle } = useArticleDetail()
@@ -53,7 +51,6 @@ const { liking, collecting, toggleLike, toggleCollect } = useArticleInteraction(
 const { createSignal } = useAbortController()
 
 const comments = ref([])
-const commentLoading = ref(false)
 
 const loadComments = async () => {
   return asyncWrapper(
@@ -70,62 +67,23 @@ const loadComments = async () => {
 }
 
 const handleLike = async () => {
-  await toggleLike(route.params.id, article)
+  showWarning('点赞功能需要登录，请前往权限测试项目体验')
 }
 
 const handleCollect = async () => {
-  await toggleCollect(route.params.id, article)
+  showWarning('收藏功能需要登录，请前往权限测试项目体验')
 }
 
 const handlePublishComment = async (content) => {
-  if (!checkLogin(userStore)) return
-  if (!validateNotEmpty(content, '请输入评论内容')) return
-
-  commentLoading.value = true
-  await asyncWrapper(
-    async () => {
-      await publishComment({
-        articleId: route.params.id,
-        content
-      })
-      showSuccess('评论成功')
-      await loadComments()
-    },
-    { operation: '发表评论' }
-  )
-  commentLoading.value = false
+  showWarning('评论功能需要登录，请前往权限测试项目体验')
 }
 
 const handleReply = async (replyData) => {
-  if (!checkLogin(userStore)) return
-  if (!validateNotEmpty(replyData.content, '请输入回复内容')) return
-
-  await asyncWrapper(
-    async () => {
-      await publishComment({
-        articleId: route.params.id,
-        parentId: replyData.parentId,
-        replyUserId: replyData.replyUserId,
-        content: replyData.content
-      })
-      showSuccess('回复成功')
-      await loadComments()
-    },
-    { operation: '发表回复' }
-  )
+  showWarning('回复功能需要登录，请前往权限测试项目体验')
 }
 
 const handleCommentLike = async (commentId) => {
-  if (!checkLogin(userStore)) return
-
-  await asyncWrapper(
-    async () => {
-      await toggleLikeComment(commentId)
-      showSuccess('点赞成功')
-      await loadComments()
-    },
-    { operation: '点赞评论' }
-  )
+  showWarning('点赞功能需要登录，请前往权限测试项目体验')
 }
 
 onMounted(() => {

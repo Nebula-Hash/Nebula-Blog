@@ -1,4 +1,4 @@
-// 通信请求与响应封装（含无感刷新Token机制）
+// 通信请求与响应封装（简化版 - 无认证功能）
 //
 // 错误处理说明：
 // 1. 默认情况下，拦截器不会显示错误提示，由业务层使用 errorHandler.js 统一处理
@@ -6,15 +6,11 @@
 // 3. 使用 silent: true 可完全静默处理错误（拦截器和业务层都不显示）
 
 import axios from 'axios'
-import * as tokenService from '@/services/tokenService'
-import { useUserStore } from '@/stores/user'
-import { showError, showWarning } from '@/utils/common'
+import { showError } from '@/utils/common'
 import {
   HTTP_CONFIG,
-  TOKEN_CONFIG,
-  CACHE_CONFIG,
-  BUSINESS_CODE,
-  HTTP_STATUS
+  HTTP_STATUS,
+  CACHE_CONFIG
 } from '@/config/constants'
 
 const request = axios.create({
@@ -22,23 +18,13 @@ const request = axios.create({
   timeout: HTTP_CONFIG.TIMEOUT
 })
 
-// 创建独立的axios实例用于刷新Token，避免被拦截器处理
-const refreshRequest = axios.create({
-  baseURL: HTTP_CONFIG.CLIENT_BASE_URL,
-  timeout: HTTP_CONFIG.TIMEOUT
-})
-
-// 无感刷新相关状态
-let isRefreshing = false
-let refreshSubscribers = []
-
 // 错误去重机制：防止短时间内相同错误重复弹窗
 const errorMessageCache = new Map()
 
 /**
  * 显示错误消息（带去重）
  */
-function showErrorMessage(message, type = 'error') {
+function showErrorMessage(message) {
   const now = Date.now()
   const cached = errorMessageCache.get(message)
 
@@ -48,13 +34,7 @@ function showErrorMessage(message, type = 'error') {
   }
 
   errorMessageCache.set(message, now)
-
-  // 使用 common.js 的封装函数
-  if (type === 'warning') {
-    showWarning(message)
-  } else {
-    showError(message)
-  }
+  showError(message)
 
   // 清理过期缓存
   setTimeout(() => {
@@ -62,56 +42,9 @@ function showErrorMessage(message, type = 'error') {
   }, CACHE_CONFIG.ERROR_MESSAGE_TTL)
 }
 
-/**
- * 订阅Token刷新完成事件
- * @returns {Function} 清理函数
- */
-const subscribeTokenRefresh = (cb) => {
-  refreshSubscribers.push(cb)
-
-  // 添加超时清理机制，防止内存泄漏
-  const timeoutId = setTimeout(() => {
-    const index = refreshSubscribers.indexOf(cb)
-    if (index > -1) {
-      refreshSubscribers.splice(index, 1)
-      console.warn('[Request] Token刷新订阅超时，已清理')
-    }
-  }, TOKEN_CONFIG.REFRESH_TIMEOUT)
-
-  // 返回清理函数
-  return () => {
-    clearTimeout(timeoutId)
-    const index = refreshSubscribers.indexOf(cb)
-    if (index > -1) {
-      refreshSubscribers.splice(index, 1)
-    }
-  }
-}
-
-/**
- * Token刷新完成，通知所有等待的请求
- */
-const onTokenRefreshed = (newToken) => {
-  refreshSubscribers.forEach(cb => cb(newToken))
-  refreshSubscribers = []
-}
-
-/**
- * Token刷新失败，清空等待队列
- */
-const onRefreshFailed = () => {
-  refreshSubscribers.forEach(cb => cb(null))
-  refreshSubscribers = []
-}
-
 // 请求拦截器
 request.interceptors.request.use(
   config => {
-    const token = tokenService.getToken()
-    if (token) {
-      config.headers['Authorization'] = token
-    }
-
     // 支持 AbortController signal
     if (config.signal) {
       config.cancelToken = new axios.CancelToken((cancel) => {
@@ -132,18 +65,14 @@ request.interceptors.request.use(
 request.interceptors.response.use(
   response => {
     const res = response.data
-    if (res.code === BUSINESS_CODE.SUCCESS) {
+    const SUCCESS_CODE = 200
+
+    if (res.code === SUCCESS_CODE) {
       return res
     } else {
-      // Token无效或过期
-      if (res.code === BUSINESS_CODE.UNAUTHORIZED) {
-        return handleTokenExpired(response.config)
-      } else {
-        // 业务错误处理（只在非静默模式且未禁用拦截器提示时弹窗）
-        // showErrorInInterceptor 默认为 false，避免与业务层错误处理重复
-        if (!response.config.silent && response.config.showErrorInInterceptor) {
-          handleBusinessError(res)
-        }
+      // 业务错误处理（只在非静默模式且未禁用拦截器提示时弹窗）
+      if (!response.config.silent && response.config.showErrorInInterceptor) {
+        handleBusinessError(res)
       }
       // 将完整的响应信息附加到错误对象上，方便业务层使用
       const error = new Error(res.message || '请求失败')
@@ -158,125 +87,23 @@ request.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    // HTTP状态码401 - Token验证失败
-    if (error.response?.status === HTTP_STATUS.UNAUTHORIZED) {
-      return handleTokenExpired(error.config)
-    } else {
-      // 网络错误处理（只在非静默模式且未禁用拦截器提示时弹窗）
-      // showErrorInInterceptor 默认为 false，避免与业务层错误处理重复
-      if (!error.config?.silent && error.config?.showErrorInInterceptor) {
-        handleNetworkError(error)
-      }
+    // 网络错误处理（只在非静默模式且未禁用拦截器提示时弹窗）
+    if (!error.config?.silent && error.config?.showErrorInInterceptor) {
+      handleNetworkError(error)
     }
     return Promise.reject(error)
   }
 )
 
 /**
- * 处理Token过期，尝试无感刷新
- */
-async function handleTokenExpired(originalConfig) {
-  // 防止刷新接口本身失败导致无限循环
-  if (originalConfig.url.includes('/auth/refresh')) {
-    silentLogout(true)
-    return Promise.reject(new Error('Token刷新失败'))
-  }
-
-  // 检查是否有Token，如果没有Token说明是未登录用户，静默失败
-  const token = tokenService.getToken()
-  if (!token) {
-    // 未登录用户，静默失败，不提示"登录已过期"
-    return Promise.reject(new Error('未登录'))
-  }
-
-  if (!isRefreshing) {
-    isRefreshing = true
-
-    try {
-      // 使用独立的axios实例刷新Token，避免被拦截器处理
-      const refreshPromise = refreshRequest.post('/auth/refresh', null, {
-        headers: { 'Authorization': token }
-      })
-
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('刷新超时')), TOKEN_CONFIG.REFRESH_TIMEOUT)
-      )
-
-      const res = await Promise.race([refreshPromise, timeoutPromise])
-
-      if (res.data.code === BUSINESS_CODE.SUCCESS) {
-        const newToken = res.data.data.token
-        const timeout = res.data.data.tokenTimeout
-
-        // 更新Token
-        tokenService.setToken(newToken, timeout)
-        onTokenRefreshed(newToken)
-
-        // 用新Token重试原请求
-        originalConfig.headers['Authorization'] = newToken
-        return request(originalConfig)
-      } else {
-        throw new Error(res.data.message || 'Token刷新失败')
-      }
-    } catch (error) {
-      console.error('[Request] Token刷新失败:', error)
-      onRefreshFailed()
-      silentLogout(true)
-      return Promise.reject(error)
-    } finally {
-      isRefreshing = false
-    }
-  } else {
-    // 队列已满，拒绝请求
-    if (refreshSubscribers.length >= TOKEN_CONFIG.MAX_QUEUE_SIZE) {
-      return Promise.reject(new Error('请求队列已满，请稍后重试'))
-    }
-
-    // 等待刷新完成
-    return new Promise((resolve, reject) => {
-      const cleanup = subscribeTokenRefresh((newToken) => {
-        if (newToken) {
-          originalConfig.headers['Authorization'] = newToken
-          resolve(request(originalConfig))
-        } else {
-          reject(new Error('Token刷新失败'))
-        }
-      })
-
-      // 设置超时，超时后自动清理
-      setTimeout(() => {
-        cleanup()
-        reject(new Error('等待刷新超时'))
-      }, TOKEN_CONFIG.REFRESH_TIMEOUT)
-    })
-  }
-}
-
-/**
  * 处理业务错误
  */
 function handleBusinessError(res) {
-  const code = res.code
   const message = res.message || '请求失败'
+  const status = res.code
 
   // 特殊错误码处理
-  switch (code) {
-    case BUSINESS_CODE.WRONG_CREDENTIALS:
-      showErrorMessage('用户名或密码错误')
-      break
-    case BUSINESS_CODE.ACCOUNT_LOCKED:
-      // 账号锁定 - 尝试从消息中提取剩余时间
-      const lockMessage = message.includes('分钟')
-        ? message
-        : '账号已被锁定，请稍后再试'
-      showErrorMessage(lockMessage)
-      break
-    case BUSINESS_CODE.USERNAME_EXISTS:
-      showErrorMessage('用户名已存在')
-      break
-    case BUSINESS_CODE.REGISTER_TOO_FREQUENT:
-      showErrorMessage('注册过于频繁，请稍后再试')
-      break
+  switch (status) {
     case HTTP_STATUS.FORBIDDEN:
       showErrorMessage('权限不足，无法访问')
       break
@@ -322,18 +149,6 @@ function handleNetworkError(error) {
   } else {
     // 其他错误
     showErrorMessage(error.message || '请求失败')
-  }
-}
-
-/**
- * 静默登出（客户端不强制跳转，只清除状态）
- * @param {boolean} showMessage - 是否显示提示消息（默认true）
- */
-function silentLogout(showMessage = true) {
-  const userStore = useUserStore()
-  userStore.clearAuth()
-  if (showMessage) {
-    showErrorMessage('登录已过期，请重新登录', 'warning')
   }
 }
 

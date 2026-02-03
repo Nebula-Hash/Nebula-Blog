@@ -41,14 +41,18 @@
           </n-button>
         </n-space>
 
-        <n-space class="user-actions" v-if="isLoggedIn">
-          <n-dropdown :options="userOptions" @select="handleUserAction">
-            <n-avatar round :size="40" :src="userInfo?.avatar" />
-          </n-dropdown>
-        </n-space>
-        <n-space v-else>
-          <n-button @click="showLoginModal = true">登录</n-button>
-          <n-button type="primary" @click="showRegisterModal = true">注册</n-button>
+        <!-- 用户区域占位 - 认证功能已迁移到测试项目 -->
+        <n-space class="user-actions">
+          <n-tooltip placement="bottom">
+            <template #trigger>
+              <n-button text disabled class="placeholder-button">
+                <template #icon>
+                  <n-icon :component="PersonCircleOutline" size="24" />
+                </template>
+              </n-button>
+            </template>
+            登录功能已迁移至权限测试项目
+          </n-tooltip>
         </n-space>
       </div>
     </n-layout-header>
@@ -63,23 +67,13 @@
   </n-layout>
 
   <!-- 分类抽屉 -->
-  <n-drawer 
-    v-model:show="showCategoryDrawer" 
-    width="400" 
-    placement="right"
-    :trap-focus="true"
-    :block-scroll="true"
-    @after-enter="handleCategoryDrawerOpen"
-  >
+  <n-drawer v-model:show="showCategoryDrawer" width="400" placement="right" :trap-focus="true" :block-scroll="true"
+    @after-enter="handleCategoryDrawerOpen">
     <n-drawer-content title="文章分类">
-      <n-list hoverable clickable>
-        <n-list-item 
-          v-for="cat in categories" 
-          :key="cat.id" 
-          @click="goToCategory(cat.id)"
-          tabindex="0"
-          @keyup.enter="goToCategory(cat.id)"
-        >
+      <n-spin v-if="loadingCategories" style="width: 100%; padding: 40px 0" />
+      <n-list v-else hoverable clickable>
+        <n-list-item v-for="cat in categories" :key="cat.id" @click="goToCategory(cat.id)" tabindex="0"
+          @keyup.enter="goToCategory(cat.id)">
           <template #suffix>
             <n-tag :bordered="false">{{ cat.articleCount }}</n-tag>
           </template>
@@ -90,51 +84,28 @@
   </n-drawer>
 
   <!-- 标签抽屉 -->
-  <n-drawer 
-    v-model:show="showTagDrawer" 
-    width="400" 
-    placement="right"
-    :trap-focus="true"
-    :block-scroll="true"
-    @after-enter="handleTagDrawerOpen"
-  >
+  <n-drawer v-model:show="showTagDrawer" width="400" placement="right" :trap-focus="true" :block-scroll="true"
+    @after-enter="handleTagDrawerOpen">
     <n-drawer-content title="文章标签">
-      <n-space>
-        <n-tag 
-          v-for="tag in tags" 
-          :key="tag.id" 
-          :bordered="false" 
-          round 
-          style="cursor: pointer"
-          tabindex="0"
-          @click="goToTag(tag.id)"
-          @keyup.enter="goToTag(tag.id)"
-        >
+      <n-spin v-if="loadingTags" style="width: 100%; padding: 40px 0" />
+      <n-space v-else>
+        <n-tag v-for="tag in tags" :key="tag.id" :bordered="false" round style="cursor: pointer" tabindex="0"
+          @click="goToTag(tag.id)" @keyup.enter="goToTag(tag.id)">
           {{ tag.tagName }} ({{ tag.articleCount }})
         </n-tag>
       </n-space>
     </n-drawer-content>
   </n-drawer>
-
-  <!-- 登录模态框 -->
-  <LoginModal v-model="showLoginModal" @switch-to-register="switchToRegister" />
-
-  <!-- 注册模态框 -->
-  <RegisterModal v-model="showRegisterModal" @switch-to-login="switchToLogin" />
 </template>
 
 <script setup>
-import { ref, onMounted, h, nextTick } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuth } from '@/composables/useAuth'
-import { useTokenRefresh } from '@/composables/useTokenRefresh'
 import { useAbortController } from '@/composables/useAbortController'
 import { useThemeStore } from '@/stores/theme'
 import { asyncWrapper } from '@/utils/errorHandler'
 import { getCategoryList } from '@/api/category'
 import { getTagList } from '@/api/tag'
-import LoginModal from '@/components/login/LoginModal.vue'
-import RegisterModal from '@/components/login/RegisterModal.vue'
 import {
   NLayout,
   NLayoutHeader,
@@ -144,18 +115,18 @@ import {
   NSpace,
   NInput,
   NIcon,
-  NAvatar,
   NDropdown,
   NDrawer,
   NDrawerContent,
   NList,
   NListItem,
-  NTag
+  NTag,
+  NTooltip,
+  NSpin
 } from 'naive-ui'
 import {
   SearchOutline,
-  PersonOutline,
-  LogOutOutline,
+  PersonCircleOutline,
   BookOutline,
   PricetagOutline,
   GridOutline,
@@ -165,11 +136,7 @@ import {
 } from '@vicons/ionicons5'
 
 const router = useRouter()
-const { isLoggedIn, userInfo, logout } = useAuth()
 const themeStore = useThemeStore()
-
-// 启动Token自动刷新
-useTokenRefresh()
 
 // 使用请求取消控制器
 const { createSignal } = useAbortController()
@@ -177,24 +144,11 @@ const { createSignal } = useAbortController()
 const searchKeyword = ref('')
 const showCategoryDrawer = ref(false)
 const showTagDrawer = ref(false)
-const showLoginModal = ref(false)
-const showRegisterModal = ref(false)
 
 const categories = ref([])
 const tags = ref([])
-
-const userOptions = [
-  {
-    label: '个人中心',
-    key: 'profile',
-    icon: () => h(NIcon, null, { default: () => h(PersonOutline) })
-  },
-  {
-    label: '退出登录',
-    key: 'logout',
-    icon: () => h(NIcon, null, { default: () => h(LogOutOutline) })
-  }
-]
+const loadingCategories = ref(false)
+const loadingTags = ref(false)
 
 const handleSearch = () => {
   if (searchKeyword.value.trim()) {
@@ -215,18 +169,9 @@ const goToTag = (id) => {
   router.push(`/tag/${id}`)
 }
 
-const handleUserAction = (key) => {
-  if (key === 'logout') {
-    logout()
-  } else if (key === 'profile') {
-    router.push('/profile')
-  }
-}
-
 // 抽屉打开后的焦点管理
 const handleCategoryDrawerOpen = () => {
   nextTick(() => {
-    // 抽屉打开后，焦点会自动管理，不需要手动设置
     console.log('[MainLayout] 分类抽屉已打开')
   })
 }
@@ -237,34 +182,28 @@ const handleTagDrawerOpen = () => {
   })
 }
 
-const switchToRegister = () => {
-  showLoginModal.value = false
-  showRegisterModal.value = true
-}
-
-const switchToLogin = () => {
-  showRegisterModal.value = false
-  showLoginModal.value = true
-}
-
 const loadCategories = async () => {
-  return asyncWrapper(
+  loadingCategories.value = true
+  await asyncWrapper(
     async () => {
       const res = await getCategoryList({ signal: createSignal() })
       categories.value = res.data
     },
     { operation: '加载分类', silent: true }
   )
+  loadingCategories.value = false
 }
 
 const loadTags = async () => {
-  return asyncWrapper(
+  loadingTags.value = true
+  await asyncWrapper(
     async () => {
       const res = await getTagList({ signal: createSignal() })
       tags.value = res.data
     },
     { operation: '加载标签', silent: true }
   )
+  loadingTags.value = false
 }
 
 onMounted(() => {
@@ -337,6 +276,18 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.user-actions {
+  min-width: 100px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.placeholder-button {
+  color: var(--text-tertiary);
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .content {

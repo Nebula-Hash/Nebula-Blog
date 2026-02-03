@@ -85,20 +85,6 @@ export const showWarning = (content, duration = MESSAGE_CONFIG.WARNING_DURATION)
 }
 
 /**
- * 检查用户是否登录，未登录则提示
- * @param {Object} userStore - 用户状态store
- * @param {string} content - 提示消息，默认"请先登录"
- * @returns {boolean} 是否已登录
- */
-export const checkLogin = (userStore, content = '请先登录') => {
-    if (!userStore.token) {
-        showWarning(content)
-        return false
-    }
-    return true
-}
-
-/**
  * 验证输入内容是否为空
  * @param {string} value - 输入值
  * @param {string} content - 提示消息

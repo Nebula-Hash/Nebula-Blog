@@ -1,8 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import * as tokenService from '@/services/tokenService'
-import * as authService from '@/services/authService'
-import { useUserStore } from '@/stores/user'
-import { showWarning, showError } from '@/utils/common'
 
 const routes = [
   {
@@ -68,45 +64,9 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach(async (to, from, next) => {
-  const userStore = useUserStore()
-
   // 设置页面标题
   if (to.meta.title) {
     document.title = `${to.meta.title} - 技术博客`
-  }
-
-  // 不需要认证的页面
-  if (!to.meta.requiresAuth) {
-    next()
-    return
-  }
-
-  // 需要认证的页面
-  if (!tokenService.getToken()) {
-    showWarning('请先登录')
-    next('/')
-    return
-  }
-
-  // Token已过期
-  if (tokenService.isTokenExpired()) {
-    userStore.clearAuth()
-    showWarning('登录已过期，请重新登录')
-    next('/')
-    return
-  }
-
-  // 检查用户信息
-  if (!userStore.userInfo) {
-    try {
-      await authService.getCurrentUser()
-    } catch (error) {
-      console.error('[Router] 获取用户信息失败:', error)
-      userStore.clearAuth()
-      showError('获取用户信息失败，请重新登录')
-      next('/')
-      return
-    }
   }
 
   next()

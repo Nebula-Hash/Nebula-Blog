@@ -5,8 +5,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useArticleStore } from '@/stores/article'
-import { useUserStore } from '@/stores/user'
-import { showSuccess, showWarning, checkLogin } from '@/utils/common'
+import { showWarning } from '@/utils/common'
 import { createErrorHandler } from '@/utils/errorHandler'
 
 /**
@@ -132,75 +131,29 @@ export function useArticleDetail(options = {}) {
 }
 
 /**
- * 文章交互操作（点赞、收藏）
+ * 文章交互操作（点赞、收藏）- 已禁用，需要登录功能
  * @returns {Object}
  */
 export function useArticleInteraction() {
     const articleStore = useArticleStore()
-    const userStore = useUserStore()
-    const errorHandler = createErrorHandler('ArticleInteraction')
 
     const liking = ref(false)
     const collecting = ref(false)
 
     /**
-     * 点赞文章
-     * @param {number|string} articleId - 文章ID
-     * @param {Object} articleRef - 文章对象的响应式引用（可选，用于乐观更新）
+     * 点赞文章 - 已禁用
      */
     const toggleLike = async (articleId, articleRef = null) => {
-        if (!checkLogin(userStore)) return false
-
-        if (liking.value) return false
-
-        liking.value = true
-        try {
-            await articleStore.toggleLike(articleId)
-
-            // 如果提供了文章引用，更新UI
-            if (articleRef && articleRef.value) {
-                articleRef.value.isLiked = !articleRef.value.isLiked
-                articleRef.value.likeCount += articleRef.value.isLiked ? 1 : -1
-            }
-
-            showSuccess(articleRef?.value?.isLiked ? '点赞成功' : '取消点赞')
-            return true
-        } catch (error) {
-            errorHandler.handleAction(error, '点赞')
-            return false
-        } finally {
-            liking.value = false
-        }
+        showWarning('点赞功能需要登录，请前往权限测试项目体验')
+        return false
     }
 
     /**
-     * 收藏文章
-     * @param {number|string} articleId - 文章ID
-     * @param {Object} articleRef - 文章对象的响应式引用（可选，用于乐观更新）
+     * 收藏文章 - 已禁用
      */
     const toggleCollect = async (articleId, articleRef = null) => {
-        if (!checkLogin(userStore)) return false
-
-        if (collecting.value) return false
-
-        collecting.value = true
-        try {
-            await articleStore.toggleFavorite(articleId)
-
-            // 如果提供了文章引用，更新UI
-            if (articleRef && articleRef.value) {
-                articleRef.value.isCollected = !articleRef.value.isCollected
-                articleRef.value.collectCount += articleRef.value.isCollected ? 1 : -1
-            }
-
-            showSuccess(articleRef?.value?.isCollected ? '收藏成功' : '取消收藏')
-            return true
-        } catch (error) {
-            errorHandler.handleAction(error, '收藏')
-            return false
-        } finally {
-            collecting.value = false
-        }
+        showWarning('收藏功能需要登录，请前往权限测试项目体验')
+        return false
     }
 
     return {

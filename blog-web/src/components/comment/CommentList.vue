@@ -44,7 +44,6 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { NText, NSpin, NEmpty, useMessage, useDialog } from 'naive-ui'
 import { useCommentStore } from '@/stores/comment'
-import { useUserStore } from '@/stores/user'
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
 import { useDebounce } from '@/composables/useDebounce'
 import { asyncWrapper } from '@/utils/errorHandler'
@@ -62,7 +61,6 @@ const props = defineProps({
 const message = useMessage()
 const dialog = useDialog()
 const commentStore = useCommentStore()
-const userStore = useUserStore()
 
 const publishInputRef = ref(null)
 const publishing = ref(false)
@@ -73,7 +71,7 @@ const likedComments = computed(() => commentStore.likedComments)
 const loading = computed(() => commentStore.loading[props.articleId] || false)
 const total = computed(() => commentStore.getCommentTotal(props.articleId))
 const hasMore = computed(() => commentStore.hasMoreComments(props.articleId))
-const currentUserId = computed(() => userStore.userInfo?.id || null)
+const currentUserId = computed(() => null) // 未登录状态
 
 // 无限滚动
 const { targetRef: loadMoreTrigger } = useInfiniteScroll(
@@ -96,54 +94,14 @@ const { targetRef: loadMoreTrigger } = useInfiniteScroll(
   }
 )
 
-// 发布评论
+// 发布评论 - 已禁用
 const handlePublish = async (content) => {
-  if (!userStore.isLoggedIn) {
-    message.warning('请先登录')
-    return
-  }
-
-  publishing.value = true
-  await asyncWrapper(
-    async () => {
-      await commentStore.publishComment({
-        articleId: props.articleId,
-        content
-      })
-
-      message.success('评论发布成功')
-      if (publishInputRef.value) {
-        publishInputRef.value.clear()
-      }
-    },
-    { operation: '发布评论' }
-  )
-  publishing.value = false
+  message.warning('评论功能需要登录，请前往权限测试项目体验')
 }
 
-// 回复评论（使用防抖）
+// 回复评论 - 已禁用
 const handleReply = useDebounce(async (replyData) => {
-  if (!userStore.isLoggedIn) {
-    message.warning('请先登录')
-    return
-  }
-
-  const { content, parentId, replyUserId } = replyData
-  if (!content) return
-
-  await asyncWrapper(
-    async () => {
-      await commentStore.publishComment({
-        articleId: props.articleId,
-        content,
-        parentId,
-        replyUserId
-      })
-
-      message.success('回复成功')
-    },
-    { operation: '回复评论' }
-  )
+  message.warning('回复功能需要登录，请前往权限测试项目体验')
 }, 500)
 
 // 加载更多回复
@@ -156,38 +114,14 @@ const handleLoadMoreReplies = async ({ rootId, currentPage }) => {
   )
 }
 
-// 点赞评论（使用防抖）
+// 点赞评论 - 已禁用
 const handleLike = useDebounce(async (commentId) => {
-  if (!userStore.isLoggedIn) {
-    message.warning('请先登录')
-    return
-  }
-
-  await asyncWrapper(
-    async () => {
-      await commentStore.toggleLike(commentId, props.articleId)
-    },
-    { operation: '点赞评论' }
-  )
+  message.warning('点赞功能需要登录，请前往权限测试项目体验')
 }, 300)
 
-// 删除评论
+// 删除评论 - 已禁用
 const handleDelete = async (commentId) => {
-  dialog.warning({
-    title: '确认删除',
-    content: '确定要删除这条评论吗？删除后无法恢复。',
-    positiveText: '删除',
-    negativeText: '取消',
-    onPositiveClick: async () => {
-      await asyncWrapper(
-        async () => {
-          await commentStore.deleteComment(commentId, props.articleId)
-          message.success('删除成功')
-        },
-        { operation: '删除评论' }
-      )
-    }
-  })
+  message.warning('删除功能需要登录，请前往权限测试项目体验')
 }
 
 // 初始化加载评论
