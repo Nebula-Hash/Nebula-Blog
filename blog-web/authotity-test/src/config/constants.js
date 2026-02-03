@@ -8,6 +8,26 @@ export const TOKEN_CONFIG = {
     MAX_QUEUE_SIZE: 50
 }
 
+// ==================== HTTP 配置 ====================
+export const HTTP_CONFIG = {
+    // 请求超时时间（10秒）
+    TIMEOUT: 10000,
+    // 客户端 API 基础路径
+    CLIENT_BASE_URL: '/api/client'
+}
+
+// ==================== HTTP 状态码 ====================
+export const HTTP_STATUS = {
+    OK: 200,
+    UNAUTHORIZED: 401,
+    FORBIDDEN: 403,
+    NOT_FOUND: 404,
+    INTERNAL_SERVER_ERROR: 500,
+    BAD_GATEWAY: 502,
+    SERVICE_UNAVAILABLE: 503,
+    GATEWAY_TIMEOUT: 504
+}
+
 // ==================== 缓存配置 ====================
 export const CACHE_CONFIG = {
     // 用户信息缓存时长（5分钟）
@@ -48,7 +68,9 @@ export const BUSINESS_CODE = {
 
 export default {
     TOKEN_CONFIG,
+    HTTP_CONFIG,
+    HTTP_STATUS,
     CACHE_CONFIG,
     VALIDATION_CONFIG,
-    BUSINESS_CODE,
+    BUSINESS_CODE
 }

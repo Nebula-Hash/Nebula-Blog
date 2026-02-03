@@ -12,26 +12,10 @@ import { showError, showWarning } from '@/utils/common'
 import {
     TOKEN_CONFIG,
     CACHE_CONFIG,
-    BUSINESS_CODE
+    BUSINESS_CODE,
+    HTTP_CONFIG,
+    HTTP_STATUS
 } from '@/config/constants'
-
-// HTTP 配置
-const HTTP_CONFIG = {
-    TIMEOUT: 10000,
-    CLIENT_BASE_URL: '/api/client'
-}
-
-// HTTP 状态码
-const HTTP_STATUS = {
-    OK: 200,
-    UNAUTHORIZED: 401,
-    FORBIDDEN: 403,
-    NOT_FOUND: 404,
-    INTERNAL_SERVER_ERROR: 500,
-    BAD_GATEWAY: 502,
-    SERVICE_UNAVAILABLE: 503,
-    GATEWAY_TIMEOUT: 504
-}
 
 const request = axios.create({
     baseURL: HTTP_CONFIG.CLIENT_BASE_URL,
