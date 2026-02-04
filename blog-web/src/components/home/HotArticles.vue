@@ -31,14 +31,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useArticleNavigation } from '@/composables/useArticle'
-import { ArticleQueryService } from '@/services/articleService'
+import { useArticleNavigation } from '@/composables/business/useArticle'
+import { useCacheStore } from '@/stores'
 import { NCard, NList, NListItem, NTag, NSpace, NText, NEllipsis, NIcon, NSpin, NEmpty } from 'naive-ui'
 import { FlameOutline } from '@vicons/ionicons5'
 import { PAGINATION_CONFIG } from '@/config/constants'
-import { createErrorHandler } from '@/utils/errorHandler'
 
-const errorHandler = createErrorHandler('HotArticles')
+const cacheStore = useCacheStore()
 const { goToDetail } = useArticleNavigation()
 
 const loading = ref(false)
@@ -48,10 +47,9 @@ const hotArticles = ref([])
 const loadHotArticles = async () => {
     loading.value = true
     try {
-        const data = await ArticleQueryService.getHotArticles(PAGINATION_CONFIG.HOT_ARTICLES_SIZE)
-        hotArticles.value = data
+        hotArticles.value = await cacheStore.fetchHotArticles(PAGINATION_CONFIG.HOT_ARTICLES_SIZE)
     } catch (error) {
-        errorHandler.handleLoad(error, '热门文章', true) // 静默失败
+        console.error('[HotArticles] 加载热门文章失败:', error)
     } finally {
         loading.value = false
     }

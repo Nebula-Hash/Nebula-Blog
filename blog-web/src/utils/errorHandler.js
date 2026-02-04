@@ -2,7 +2,7 @@
  * 统一错误处理工具
  * 提供一致的错误处理和用户反馈
  */
-import { showError, showWarning } from '@/utils/common'
+import { showError } from '@/utils/common'
 import axios from 'axios'
 
 /**
@@ -157,18 +157,6 @@ export const createErrorHandler = (componentName) => {
     }
 }
 
-/**
- * 创建带错误处理的请求函数
- * @param {Function} requestFn - 请求函数
- * @param {Object} options - 配置选项
- * @returns {Function} 包装后的请求函数
- */
-export const withErrorHandler = (requestFn, options = {}) => {
-    return async (...args) => {
-        return asyncWrapper(() => requestFn(...args), options)
-    }
-}
-
 export default {
     handleApiError,
     handleLoadError,
@@ -176,6 +164,5 @@ export default {
     handleDeleteError,
     asyncWrapper,
     createErrorHandler,
-    withErrorHandler,
     isCancelError
 }

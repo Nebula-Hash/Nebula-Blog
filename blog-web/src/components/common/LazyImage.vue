@@ -22,7 +22,7 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { NSpin } from 'naive-ui'
-import { useLazyLoad } from '@/composables/useLazyLoad'
+import { useLazyLoad } from '@/composables/helper/useLazyLoad'
 
 const props = defineProps({
   src: {

@@ -72,7 +72,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useArticleList, useArticleNavigation } from '@/composables/useArticle'
+import { useArticleList, useArticleNavigation } from '@/composables/business/useArticle'
 import ArticleCard from '@/components/article/ArticleCard.vue'
 import {
   NCard,

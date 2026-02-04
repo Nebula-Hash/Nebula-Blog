@@ -4,7 +4,7 @@
  */
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useArticleStore } from '@/stores/article'
+import { useArticleStore } from '@/stores'
 import { showWarning } from '@/utils/common'
 import { createErrorHandler } from '@/utils/errorHandler'
 

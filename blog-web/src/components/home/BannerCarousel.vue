@@ -50,11 +50,10 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { NIcon, NSpin, NEmpty } from 'naive-ui'
 import { ChevronBackOutline, ChevronForwardOutline } from '@vicons/ionicons5'
-import { getBannerList } from '@/api/banner'
-import { createErrorHandler } from '@/utils/errorHandler'
+import { useCacheStore } from '@/stores'
 
 const router = useRouter()
-const errorHandler = createErrorHandler('BannerCarousel')
+const cacheStore = useCacheStore()
 
 // WebP支持检测
 const supportsWebP = ref(false)
@@ -86,15 +85,12 @@ const AUTO_PLAY_INTERVAL = 5000 // 自动播放间隔（毫秒）
 const fetchBanners = async () => {
     try {
         loading.value = true
-        const response = await getBannerList()
-        if (response.code === 200 && response.data) {
-            banners.value = response.data
-            if (banners.value.length > 0) {
-                startAutoPlay()
-            }
+        banners.value = await cacheStore.fetchBannerList()
+        if (banners.value.length > 0) {
+            startAutoPlay()
         }
     } catch (error) {
-        errorHandler.handleLoad(error, '轮播图', true) // 静默失败，不影响页面其他内容
+        console.error('[BannerCarousel] 加载轮播图失败:', error)
     } finally {
         loading.value = false
     }

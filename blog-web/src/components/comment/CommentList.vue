@@ -43,9 +43,9 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { NText, NSpin, NEmpty, useMessage, useDialog } from 'naive-ui'
-import { useCommentStore } from '@/stores/comment'
-import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
-import { useDebounce } from '@/composables/useDebounce'
+import { useCommentStore } from '@/stores'
+import { useInfiniteScroll } from '@/composables/helper/useInfiniteScroll'
+import { useDebounce } from '@/composables/helper/useDebounce'
 import { asyncWrapper } from '@/utils/errorHandler'
 import CommentInput from './CommentInput.vue'
 import CommentTree from './CommentTree.vue'

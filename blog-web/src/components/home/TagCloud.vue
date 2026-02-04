@@ -21,13 +21,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getTagList } from '@/api/tag'
+import { useCacheStore } from '@/stores'
 import { NCard, NTag, NSpace, NIcon, NSpin, NEmpty } from 'naive-ui'
 import { PricetagsOutline } from '@vicons/ionicons5'
-import { createErrorHandler } from '@/utils/errorHandler'
 
 const router = useRouter()
-const errorHandler = createErrorHandler('TagCloud')
+const cacheStore = useCacheStore()
 
 const loading = ref(false)
 const tags = ref([])
@@ -41,12 +40,9 @@ const displayTags = computed(() => tags.value.slice(0, 10))
 const loadTags = async () => {
     loading.value = true
     try {
-        const res = await getTagList()
-        if (res.code === 200 && res.data) {
-            tags.value = res.data
-        }
+        tags.value = await cacheStore.fetchTagList()
     } catch (error) {
-        errorHandler.handleLoad(error, '标签列表', true) // 静默失败
+        console.error('[TagCloud] 加载标签列表失败:', error)
     } finally {
         loading.value = false
     }

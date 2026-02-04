@@ -28,13 +28,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useArticleNavigation } from '@/composables/useArticle'
-import { ArticleQueryService } from '@/services/articleService'
+import { useArticleNavigation } from '@/composables/business/useArticle'
+import { useCacheStore } from '@/stores'
 import { NCard, NList, NListItem, NTag, NSpace, NIcon, NSpin } from 'naive-ui'
 import { EyeOutline, BookmarkOutline } from '@vicons/ionicons5'
-import { createErrorHandler } from '@/utils/errorHandler'
 
-const errorHandler = createErrorHandler('RecommendArticles')
+const cacheStore = useCacheStore()
 const { goToDetail } = useArticleNavigation()
 
 const loading = ref(false)
@@ -44,10 +43,9 @@ const recommendArticles = ref([])
 const loadRecommendArticles = async () => {
     loading.value = true
     try {
-        const data = await ArticleQueryService.getRecommendArticles(3)
-        recommendArticles.value = data
+        recommendArticles.value = await cacheStore.fetchRecommendArticles(3)
     } catch (error) {
-        errorHandler.handleLoad(error, '推荐文章', true) // 静默失败，不影响用户体验
+        console.error('[RecommendArticles] 加载推荐文章失败:', error)
     } finally {
         loading.value = false
     }

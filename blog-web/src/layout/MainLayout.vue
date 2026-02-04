@@ -101,11 +101,7 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAbortController } from '@/composables/useAbortController'
-import { useThemeStore } from '@/stores/theme'
-import { asyncWrapper } from '@/utils/errorHandler'
-import { getCategoryList } from '@/api/category'
-import { getTagList } from '@/api/tag'
+import { useThemeStore, useCacheStore } from '@/stores'
 import {
   NLayout,
   NLayoutHeader,
@@ -137,9 +133,7 @@ import {
 
 const router = useRouter()
 const themeStore = useThemeStore()
-
-// 使用请求取消控制器
-const { createSignal } = useAbortController()
+const cacheStore = useCacheStore()
 
 const searchKeyword = ref('')
 const showCategoryDrawer = ref(false)
@@ -184,26 +178,24 @@ const handleTagDrawerOpen = () => {
 
 const loadCategories = async () => {
   loadingCategories.value = true
-  await asyncWrapper(
-    async () => {
-      const res = await getCategoryList({ signal: createSignal() })
-      categories.value = res.data
-    },
-    { operation: '加载分类', silent: true }
-  )
-  loadingCategories.value = false
+  try {
+    categories.value = await cacheStore.fetchCategoryList()
+  } catch (error) {
+    console.error('[MainLayout] 加载分类失败:', error)
+  } finally {
+    loadingCategories.value = false
+  }
 }
 
 const loadTags = async () => {
   loadingTags.value = true
-  await asyncWrapper(
-    async () => {
-      const res = await getTagList({ signal: createSignal() })
-      tags.value = res.data
-    },
-    { operation: '加载标签', silent: true }
-  )
-  loadingTags.value = false
+  try {
+    tags.value = await cacheStore.fetchTagList()
+  } catch (error) {
+    console.error('[MainLayout] 加载标签失败:', error)
+  } finally {
+    loadingTags.value = false
+  }
 }
 
 onMounted(() => {

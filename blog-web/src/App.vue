@@ -13,7 +13,7 @@
 <script setup>
 import { computed } from 'vue'
 import { NConfigProvider, NMessageProvider, NDialogProvider, NNotificationProvider } from 'naive-ui'
-import { useThemeStore } from '@/stores/theme'
+import { useThemeStore } from '@/stores'
 
 const themeStore = useThemeStore()
 

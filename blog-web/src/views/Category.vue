@@ -4,122 +4,81 @@
       <n-spin :show="loading">
         <n-list v-if="!loading && articles.length > 0">
           <n-list-item v-for="article in articles" :key="article.id">
-            <ArticleCard :article="article" @click="goToArticle(article.id)" />
+            <ArticleCard :article="article" @click="goToDetail(article.id)" />
           </n-list-item>
         </n-list>
         <n-empty v-else-if="!loading && articles.length === 0" description="该分类下暂无文章" />
       </n-spin>
 
-      <n-pagination v-if="total > pageSize" v-model:page="currentPage" :page-count="totalPages" :page-size="pageSize"
-        :item-count="total" show-size-picker :page-sizes="[10, 20, 30, 50]"
-        style="margin-top: 20px; justify-content: center" @update:page="handlePageChange"
-        @update:page-size="handlePageSizeChange" />
+      <n-pagination v-if="totalPages > 1" v-model:page="currentPage" :page-count="totalPages"
+        style="margin-top: 20px; justify-content: center" @update:page="handlePageChange" />
     </n-card>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { getArticleList } from '@/api/article'
-import { getCategoryDetail } from '@/api/category'
+import { useRoute } from 'vue-router'
+import { useArticleList, useArticleNavigation } from '@/composables/business/useArticle'
+import { useCacheStore } from '@/stores'
 import ArticleCard from '@/components/article/ArticleCard.vue'
 import { NCard, NList, NListItem, NEmpty, NSpin, NPagination } from 'naive-ui'
 import { PAGINATION_CONFIG } from '@/config/constants'
-import { createErrorHandler } from '@/utils/errorHandler'
-import { showError } from '@/utils/common'
 
 const route = useRoute()
-const router = useRouter()
-const errorHandler = createErrorHandler('Category')
+const cacheStore = useCacheStore()
 
-const loading = ref(false)
-const articles = ref([])
+// 使用文章列表组合式函数
+const {
+  loading,
+  articles,
+  currentPage,
+  totalPages,
+  loadArticles,
+  changePage
+} = useArticleList({
+  pageSize: PAGINATION_CONFIG.DEFAULT_PAGE_SIZE
+})
+
+// 使用文章导航组合式函数
+const { goToDetail } = useArticleNavigation()
+
 const categoryName = ref('')
-const currentPage = ref(1)
-const pageSize = ref(PAGINATION_CONFIG.DEFAULT_PAGE_SIZE)
-const total = ref(0)
-const totalPages = ref(0)
 
 /**
  * 获取分类名称
  */
 const fetchCategoryName = async (categoryId) => {
   try {
-    const res = await getCategoryDetail(categoryId)
-    if (res.code === 200 && res.data) {
-      categoryName.value = res.data.categoryName
-    } else {
-      categoryName.value = '未知分类'
-    }
+    const categories = await cacheStore.fetchCategoryList()
+    const category = categories.find(c => c.id === parseInt(categoryId))
+    categoryName.value = category ? category.categoryName : '未知分类'
   } catch (error) {
-    errorHandler.handleLoad(error, '分类名称', true)
+    console.error('[Category] 获取分类名称失败:', error)
     categoryName.value = '未知分类'
   }
 }
 
 /**
- * 加载文章列表
+ * 加载分类文章
  */
-const loadArticles = async () => {
+const loadCategoryArticles = async () => {
   const categoryId = route.params.id
-  if (!categoryId) {
-    showError('分类ID不能为空')
-    return
-  }
+  if (!categoryId) return
 
-  loading.value = true
-  try {
-    // 并行获取分类名称和文章列表
-    const [articlesRes] = await Promise.all([
-      getArticleList({
-        current: currentPage.value,
-        size: pageSize.value,
-        categoryId
-      }),
-      categoryName.value ? Promise.resolve() : fetchCategoryName(categoryId)
-    ])
-
-    if (articlesRes.code === 200 && articlesRes.data) {
-      articles.value = articlesRes.data.records || []
-      total.value = articlesRes.data.total || 0
-      totalPages.value = articlesRes.data.pages || 0
-    } else {
-      showError(articlesRes.message || '加载文章列表失败')
-      articles.value = []
-    }
-  } catch (error) {
-    errorHandler.handleLoad(error, '文章列表')
-    articles.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
-/**
- * 跳转到文章详情
- */
-const goToArticle = (id) => {
-  router.push(`/article/${id}`)
+  // 并行获取分类名称和文章列表
+  await Promise.all([
+    loadArticles({ categoryId }),
+    categoryName.value ? Promise.resolve() : fetchCategoryName(categoryId)
+  ])
 }
 
 /**
  * 页码变化处理
  */
-const handlePageChange = (page) => {
-  currentPage.value = page
-  loadArticles()
-  // 滚动到顶部
+const handlePageChange = async (page) => {
+  await changePage(page, { categoryId: route.params.id })
   window.scrollTo({ top: 0, behavior: 'smooth' })
-}
-
-/**
- * 每页数量变化处理
- */
-const handlePageSizeChange = (size) => {
-  pageSize.value = size
-  currentPage.value = 1
-  loadArticles()
 }
 
 // 监听路由参数变化
@@ -127,12 +86,12 @@ watch(() => route.params.id, (newId, oldId) => {
   if (newId && newId !== oldId) {
     currentPage.value = 1
     categoryName.value = ''
-    loadArticles()
+    loadCategoryArticles()
   }
 }, { immediate: false })
 
 onMounted(() => {
-  loadArticles()
+  loadCategoryArticles()
 })
 </script>
 

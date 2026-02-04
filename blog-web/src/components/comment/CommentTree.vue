@@ -27,7 +27,7 @@
 import { ref, computed } from 'vue'
 import { NButton, NIcon } from 'naive-ui'
 import { ChevronDownOutline } from '@vicons/ionicons5'
-import { useCommentStore } from '@/stores/comment'
+import { useCommentStore } from '@/stores'
 import CommentItem from './CommentItem.vue'
 
 const props = defineProps({

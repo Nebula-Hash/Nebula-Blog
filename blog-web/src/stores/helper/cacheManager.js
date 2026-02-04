@@ -2,7 +2,7 @@
  * 通用缓存管理器
  * 提供统一的缓存管理功能，支持过期时间、容量限制等
  */
-import { getItem, setItem } from './storage'
+import { getItem, setItem } from '../../utils/storage'
 
 /**
  * 创建缓存管理器

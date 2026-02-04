@@ -6,10 +6,12 @@ import {
     likeArticle,
     collectArticle
 } from '@/api/article'
-import { createCacheManager } from '@/utils/cacheManager'
-import { getItem, setItem } from '@/utils/storage'
+import { createCacheManager } from '../helper/cacheManager'
+import { useGlobalStore } from '../general/global'
 
 export const useArticleStore = defineStore('article', () => {
+    const globalStore = useGlobalStore()
+
     // 创建缓存管理器
     const listCacheManager = createCacheManager({
         storageKey: 'articleListCache',
@@ -93,9 +95,6 @@ export const useArticleStore = defineStore('article', () => {
 
             // 发送请求
             await likeArticle(articleId)
-
-            // 保存点赞状态
-            saveLikedArticles()
         } catch (error) {
             // 回滚状态
             likedArticles.value[articleId] = originalState
@@ -108,6 +107,7 @@ export const useArticleStore = defineStore('article', () => {
                 detailCacheManager.set(articleId, cached)
             }
 
+            globalStore.setError(error)
             console.error('[ArticleStore] 点赞操作失败:', error)
             throw error
         }
@@ -133,9 +133,6 @@ export const useArticleStore = defineStore('article', () => {
 
             // 发送请求
             await collectArticle(articleId)
-
-            // 保存收藏状态
-            saveFavoriteArticles()
         } catch (error) {
             // 回滚状态
             favoriteArticles.value[articleId] = originalState
@@ -148,6 +145,7 @@ export const useArticleStore = defineStore('article', () => {
                 detailCacheManager.set(articleId, cached)
             }
 
+            globalStore.setError(error)
             console.error('[ArticleStore] 收藏操作失败:', error)
             throw error
         }
@@ -166,20 +164,6 @@ export const useArticleStore = defineStore('article', () => {
     const isArticleFavorited = computed(() => (articleId) => {
         return !!favoriteArticles.value[articleId]
     })
-
-    /**
-     * 保存点赞状态到本地存储
-     */
-    function saveLikedArticles() {
-        setItem('likedArticles', likedArticles.value)
-    }
-
-    /**
-     * 保存收藏状态到本地存储
-     */
-    function saveFavoriteArticles() {
-        setItem('favoriteArticles', favoriteArticles.value)
-    }
 
     /**
      * 清除所有缓存
@@ -208,13 +192,9 @@ export const useArticleStore = defineStore('article', () => {
     }
 
     /**
-     * 初始化 - 从localStorage恢复状态
+     * 初始化 - 清除过期缓存
      */
     function initialize() {
-        likedArticles.value = getItem('likedArticles', {})
-        favoriteArticles.value = getItem('favoriteArticles', {})
-
-        // 清除过期缓存
         clearExpiredCache()
     }
 
@@ -239,5 +219,11 @@ export const useArticleStore = defineStore('article', () => {
         clearExpiredCache,
         getCacheStats,
         initialize
+    }
+}, {
+    // 使用 Pinia 持久化插件
+    persist: {
+        key: 'article-store',
+        paths: ['likedArticles', 'favoriteArticles']
     }
 })

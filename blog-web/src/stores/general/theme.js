@@ -3,12 +3,8 @@ import { ref, watch } from 'vue'
 import { darkTheme } from 'naive-ui'
 
 export const useThemeStore = defineStore('theme', () => {
-  // 初始化主题：优先使用localStorage，其次使用系统偏好，最后默认深色
+  // 初始化主题：优先使用持久化的值，其次使用系统偏好
   const getInitialTheme = () => {
-    const savedTheme = localStorage.getItem('theme')
-    if (savedTheme) {
-      return savedTheme === 'dark'
-    }
     // 检测系统主题偏好
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       return true
@@ -35,7 +31,6 @@ export const useThemeStore = defineStore('theme', () => {
   const toggleTheme = () => {
     isDark.value = !isDark.value
     theme.value = isDark.value ? darkTheme : null
-    localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
     applyTheme(isDark.value)
   }
 
@@ -43,7 +38,6 @@ export const useThemeStore = defineStore('theme', () => {
   const setDarkTheme = () => {
     isDark.value = true
     theme.value = darkTheme
-    localStorage.setItem('theme', 'dark')
     applyTheme(true)
   }
 
@@ -51,7 +45,6 @@ export const useThemeStore = defineStore('theme', () => {
   const setLightTheme = () => {
     isDark.value = false
     theme.value = null
-    localStorage.setItem('theme', 'light')
     applyTheme(false)
   }
 
@@ -60,12 +53,8 @@ export const useThemeStore = defineStore('theme', () => {
     if (window.matchMedia) {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
       mediaQuery.addEventListener('change', (e) => {
-        // 只有在用户没有手动设置主题时才跟随系统
-        if (!localStorage.getItem('theme')) {
-          isDark.value = e.matches
-          theme.value = e.matches ? darkTheme : null
-          applyTheme(e.matches)
-        }
+        // 可以选择是否跟随系统主题
+        // 这里保持用户选择的主题不变
       })
     }
   }
@@ -85,5 +74,11 @@ export const useThemeStore = defineStore('theme', () => {
     toggleTheme,
     setDarkTheme,
     setLightTheme
+  }
+}, {
+  // 使用 Pinia 持久化插件
+  persist: {
+    key: 'theme-store',
+    paths: ['isDark']
   }
 })

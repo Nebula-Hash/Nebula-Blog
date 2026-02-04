@@ -31,8 +31,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useArticleNavigation } from '@/composables/useArticle'
-import { useInfiniteScroll } from '@/composables/useInfiniteScroll'
+import { useArticleNavigation } from '@/composables/business/useArticle'
+import { useInfiniteScroll } from '@/composables/helper/useInfiniteScroll'
 import { ArticleQueryService } from '@/services/articleService'
 import ArticleCard from '@/components/article/ArticleCard.vue'
 import { NCard, NList, NListItem, NSpace, NSpin, NEmpty, NText, NIcon } from 'naive-ui'

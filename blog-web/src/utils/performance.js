@@ -2,7 +2,6 @@
  * 性能优化工具
  * 提供防抖、节流等性能优化函数
  */
-import { ref, watch } from 'vue'
 
 /**
  * 防抖函数
@@ -63,26 +62,6 @@ export const throttle = (fn, delay = 300) => {
 }
 
 /**
- * Vue 3 组合式 API 专用防抖函数
- * 用于监听 ref 变化并执行防抖回调
- * 
- * @param {Function} callback - 回调函数
- * @param {number} delay - 延迟时间（毫秒）
- * @returns {Function} 防抖后的函数
- * 
- * @example
- * const searchKeyword = ref('')
- * const debouncedSearch = useDebouncedRef(() => {
- *   console.log('搜索:', searchKeyword.value)
- * }, 500)
- * 
- * watch(searchKeyword, debouncedSearch)
- */
-export const useDebouncedRef = (callback, delay = 300) => {
-    return debounce(callback, delay)
-}
-
-/**
  * 创建防抖的搜索函数
  * 专门用于搜索场景，提供更好的用户体验
  * 
@@ -112,71 +91,6 @@ export const createDebouncedSearch = (searchFn, options = {}) => {
     }, delay)
 
     return debouncedFn
-}
-
-/**
- * 创建节流的滚动处理函数
- * 专门用于滚动事件，提供更好的性能
- * 
- * @param {Function} scrollFn - 滚动处理函数
- * @param {number} delay - 延迟时间（毫秒），默认 300
- * @returns {Function} 节流后的滚动处理函数
- * 
- * @example
- * const handleScroll = createThrottledScroll(() => {
- *   console.log('滚动位置:', window.scrollY)
- * }, 300)
- * 
- * window.addEventListener('scroll', handleScroll)
- */
-export const createThrottledScroll = (scrollFn, delay = 300) => {
-    return throttle(scrollFn, delay)
-}
-
-/**
- * 请求动画帧节流
- * 使用 requestAnimationFrame 实现的节流，适用于动画和滚动场景
- * 
- * @param {Function} fn - 要节流的函数
- * @returns {Function} 节流后的函数
- * 
- * @example
- * const rafThrottledFn = rafThrottle(() => {
- *   console.log('RAF 节流')
- * })
- * 
- * window.addEventListener('scroll', rafThrottledFn)
- */
-export const rafThrottle = (fn) => {
-    let rafId = null
-
-    return function (...args) {
-        if (rafId) {
-            return
-        }
-
-        rafId = requestAnimationFrame(() => {
-            fn.apply(this, args)
-            rafId = null
-        })
-    }
-}
-
-/**
- * 取消防抖/节流
- * 用于清理防抖或节流函数的定时器
- * 
- * @param {Function} debouncedOrThrottledFn - 防抖或节流后的函数
- * 
- * @example
- * const debouncedFn = debounce(() => {}, 500)
- * // ... 使用 debouncedFn
- * cancel(debouncedFn) // 取消待执行的函数
- */
-export const cancel = (debouncedOrThrottledFn) => {
-    if (debouncedOrThrottledFn && typeof debouncedOrThrottledFn.cancel === 'function') {
-        debouncedOrThrottledFn.cancel()
-    }
 }
 
 /**
@@ -223,57 +137,139 @@ export class PerformanceMonitor {
 
     /**
      * 获取页面加载性能
-     * @returns {Object} 性能指标
+     * 使用 Navigation Timing API Level 2，降级到 Level 1
+     * @returns {Object|null} 性能指标
      */
     getPageLoadMetrics() {
-        if (!window.performance || !window.performance.timing) {
+        if (!window.performance) {
             return null
         }
 
-        const timing = window.performance.timing
-        const navigation = window.performance.navigation
+        // 优先使用 Navigation Timing API Level 2
+        const navigationEntry = performance.getEntriesByType('navigation')[0]
 
-        return {
-            // DNS 查询时间
-            dns: timing.domainLookupEnd - timing.domainLookupStart,
-            // TCP 连接时间
-            tcp: timing.connectEnd - timing.connectStart,
-            // 请求时间
-            request: timing.responseStart - timing.requestStart,
-            // 响应时间
-            response: timing.responseEnd - timing.responseStart,
-            // DOM 解析时间
-            domParse: timing.domInteractive - timing.domLoading,
-            // DOM 内容加载完成时间
-            domContentLoaded: timing.domContentLoadedEventEnd - timing.domContentLoadedEventStart,
-            // 页面完全加载时间
-            load: timing.loadEventEnd - timing.loadEventStart,
-            // 总时间（从开始到页面完全加载）
-            total: timing.loadEventEnd - timing.navigationStart,
-            // 重定向次数
-            redirectCount: navigation.redirectCount,
-            // 导航类型（0: 正常导航, 1: 重新加载, 2: 前进/后退）
-            navigationType: navigation.type
+        if (navigationEntry) {
+            // Navigation Timing API Level 2
+            return {
+                // DNS 查询时间
+                dns: navigationEntry.domainLookupEnd - navigationEntry.domainLookupStart,
+                // TCP 连接时间
+                tcp: navigationEntry.connectEnd - navigationEntry.connectStart,
+                // SSL/TLS 握手时间
+                ssl: navigationEntry.secureConnectionStart > 0
+                    ? navigationEntry.connectEnd - navigationEntry.secureConnectionStart
+                    : 0,
+                // 请求时间
+                request: navigationEntry.responseStart - navigationEntry.requestStart,
+                // 响应时间
+                response: navigationEntry.responseEnd - navigationEntry.responseStart,
+                // DOM 解析时间
+                domParse: navigationEntry.domInteractive - navigationEntry.domLoading,
+                // DOM 内容加载完成时间
+                domContentLoaded: navigationEntry.domContentLoadedEventEnd - navigationEntry.domContentLoadedEventStart,
+                // 页面完全加载时间
+                load: navigationEntry.loadEventEnd - navigationEntry.loadEventStart,
+                // 总时间（从开始到页面完全加载）
+                total: navigationEntry.loadEventEnd - navigationEntry.fetchStart,
+                // 重定向时间
+                redirect: navigationEntry.redirectEnd - navigationEntry.redirectStart,
+                // 重定向次数
+                redirectCount: navigationEntry.redirectCount || 0,
+                // 导航类型
+                navigationType: navigationEntry.type,
+                // 传输大小
+                transferSize: navigationEntry.transferSize || 0,
+                // 编码大小
+                encodedBodySize: navigationEntry.encodedBodySize || 0,
+                // 解码大小
+                decodedBodySize: navigationEntry.decodedBodySize || 0
+            }
         }
+
+        // 降级到 Navigation Timing API Level 1（已废弃但仍可用）
+        if (window.performance.timing) {
+            const timing = window.performance.timing
+            const navigation = window.performance.navigation
+
+            return {
+                // DNS 查询时间
+                dns: timing.domainLookupEnd - timing.domainLookupStart,
+                // TCP 连接时间
+                tcp: timing.connectEnd - timing.connectStart,
+                // SSL/TLS 握手时间
+                ssl: timing.secureConnectionStart > 0
+                    ? timing.connectEnd - timing.secureConnectionStart
+                    : 0,
+                // 请求时间
+                request: timing.responseStart - timing.requestStart,
+                // 响应时间
+                response: timing.responseEnd - timing.responseStart,
+                // DOM 解析时间
+                domParse: timing.domInteractive - timing.domLoading,
+                // DOM 内容加载完成时间
+                domContentLoaded: timing.domContentLoadedEventEnd - timing.domContentLoadedEventStart,
+                // 页面完全加载时间
+                load: timing.loadEventEnd - timing.loadEventStart,
+                // 总时间（从开始到页面完全加载）
+                total: timing.loadEventEnd - timing.navigationStart,
+                // 重定向时间
+                redirect: timing.redirectEnd - timing.redirectStart,
+                // 重定向次数
+                redirectCount: navigation ? navigation.redirectCount : 0,
+                // 导航类型（0: 正常导航, 1: 重新加载, 2: 前进/后退）
+                navigationType: navigation ? navigation.type : 0,
+                // Level 1 不支持传输大小
+                transferSize: 0,
+                encodedBodySize: 0,
+                decodedBodySize: 0
+            }
+        }
+
+        return null
     }
 
     /**
      * 获取资源加载性能
+     * @param {Object} options - 筛选选项
+     * @param {string} options.type - 资源类型（script, stylesheet, img等）
+     * @param {number} options.minDuration - 最小持续时间（毫秒）
      * @returns {Array} 资源性能列表
      */
-    getResourceMetrics() {
+    getResourceMetrics(options = {}) {
         if (!window.performance || !window.performance.getEntriesByType) {
             return []
         }
 
+        const { type = null, minDuration = 0 } = options
+
         const resources = window.performance.getEntriesByType('resource')
-        return resources.map(resource => ({
-            name: resource.name,
-            type: resource.initiatorType,
-            duration: resource.duration,
-            size: resource.transferSize || 0,
-            startTime: resource.startTime
-        }))
+
+        return resources
+            .filter(resource => {
+                // 按类型筛选
+                if (type && resource.initiatorType !== type) {
+                    return false
+                }
+                // 按最小持续时间筛选
+                if (minDuration > 0 && resource.duration < minDuration) {
+                    return false
+                }
+                return true
+            })
+            .map(resource => ({
+                name: resource.name,
+                type: resource.initiatorType,
+                duration: resource.duration,
+                // 传输大小（字节）
+                transferSize: resource.transferSize || 0,
+                // 编码大小（字节）
+                encodedBodySize: resource.encodedBodySize || 0,
+                // 解码大小（字节）
+                decodedBodySize: resource.decodedBodySize || 0,
+                startTime: resource.startTime,
+                // 是否使用缓存
+                cached: resource.transferSize === 0 && resource.decodedBodySize > 0
+            }))
     }
 
     /**
@@ -382,6 +378,104 @@ export class PerformanceMonitor {
         this.observers.forEach(observer => observer.disconnect())
         this.observers = []
     }
+
+    /**
+     * 获取核心 Web Vitals 指标
+     * 返回一个 Promise，在所有指标收集完成后 resolve
+     * @param {number} timeout - 超时时间（毫秒），默认 10000
+     * @returns {Promise<Object>} 核心指标对象
+     */
+    getCoreWebVitals(timeout = 10000) {
+        return new Promise((resolve) => {
+            const metrics = {
+                FCP: null,
+                LCP: null,
+                FID: null,
+                CLS: null
+            }
+
+            let resolveTimer = null
+
+            const checkComplete = () => {
+                // 如果所有指标都已收集，立即 resolve
+                if (metrics.FCP !== null && metrics.LCP !== null &&
+                    metrics.FID !== null && metrics.CLS !== null) {
+                    if (resolveTimer) clearTimeout(resolveTimer)
+                    resolve(metrics)
+                }
+            }
+
+            // FCP
+            this.observeFCP((value) => {
+                metrics.FCP = value
+                checkComplete()
+            })
+
+            // LCP
+            this.observeLCP((value) => {
+                metrics.LCP = value
+                checkComplete()
+            })
+
+            // FID
+            this.observeFID((value) => {
+                metrics.FID = value
+                checkComplete()
+            })
+
+            // CLS
+            this.observeCLS((value) => {
+                metrics.CLS = value
+                // CLS 会持续更新，不触发 checkComplete
+            })
+
+            // 超时后返回已收集的指标
+            resolveTimer = setTimeout(() => {
+                resolve(metrics)
+            }, timeout)
+        })
+    }
+
+    /**
+     * 获取性能评分
+     * 基于 Lighthouse 的评分标准
+     * @returns {Object} 性能评分对象
+     */
+    getPerformanceScore() {
+        const pageLoad = this.getPageLoadMetrics()
+        if (!pageLoad) return null
+
+        // Lighthouse 评分标准
+        const scores = {
+            FCP: this.calculateScore(pageLoad.total, 1800, 3000), // FCP < 1.8s 为好
+            LCP: this.calculateScore(pageLoad.total, 2500, 4000), // LCP < 2.5s 为好
+            TTI: this.calculateScore(pageLoad.total, 3800, 7300), // TTI < 3.8s 为好
+            overall: 0
+        }
+
+        // 计算总分（简化版）
+        scores.overall = Math.round(
+            (scores.FCP + scores.LCP + scores.TTI) / 3
+        )
+
+        return scores
+    }
+
+    /**
+     * 计算性能评分
+     * @param {number} value - 实际值
+     * @param {number} good - 良好阈值
+     * @param {number} poor - 较差阈值
+     * @returns {number} 评分（0-100）
+     */
+    calculateScore(value, good, poor) {
+        if (value <= good) return 100
+        if (value >= poor) return 0
+
+        // 线性插值
+        const ratio = (value - good) / (poor - good)
+        return Math.round(100 - (ratio * 100))
+    }
 }
 
 /**
@@ -395,11 +489,7 @@ export const createPerformanceMonitor = () => {
 export default {
     debounce,
     throttle,
-    useDebouncedRef,
     createDebouncedSearch,
-    createThrottledScroll,
-    rafThrottle,
-    cancel,
     PerformanceMonitor,
     createPerformanceMonitor
 }

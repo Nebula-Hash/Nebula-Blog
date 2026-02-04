@@ -25,18 +25,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useArticleDetail, useArticleInteraction } from '@/composables/useArticle'
-import { useAbortController } from '@/composables/useAbortController'
-import { asyncWrapper } from '@/utils/errorHandler'
-import { getCommentList } from '@/api/comment'
+import { useArticleDetail, useArticleInteraction } from '@/composables/business/useArticle'
+import { useCommentStore } from '@/stores'
 import ArticleHeader from '@/components/article/ArticleHeader.vue'
 import ArticleTags from '@/components/article/ArticleTags.vue'
 import ArticleCommentSection from '@/components/article/ArticleCommentSection.vue'
 import MarkdownRenderer from '@/components/article/MarkdownRenderer.vue'
 import { showWarning } from '@/utils/common'
-import { PAGINATION_CONFIG } from '@/config/constants'
 import { NCard, NDivider, NSpin } from 'naive-ui'
 
 const route = useRoute()
@@ -47,23 +44,19 @@ const { loading, article, loadArticle } = useArticleDetail()
 // 使用文章交互组合式函数
 const { liking, collecting, toggleLike, toggleCollect } = useArticleInteraction()
 
-// 使用请求取消控制器
-const { createSignal } = useAbortController()
+// 使用评论 Store
+const commentStore = useCommentStore()
 
-const comments = ref([])
+// 从 store 获取评论
+const comments = computed(() => commentStore.getArticleComments(route.params.id))
+const commentLoading = computed(() => commentStore.loading[route.params.id] || false)
 
 const loadComments = async () => {
-  return asyncWrapper(
-    async () => {
-      const res = await getCommentList(route.params.id, {
-        current: 1,
-        size: PAGINATION_CONFIG.COMMENT_PAGE_SIZE,
-        signal: createSignal()
-      })
-      comments.value = res.data.records
-    },
-    { operation: '加载评论', silent: false }
-  )
+  try {
+    await commentStore.loadComments(route.params.id)
+  } catch (error) {
+    console.error('[ArticleDetail] 加载评论失败:', error)
+  }
 }
 
 const handleLike = async () => {

@@ -9,7 +9,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useThrottle } from '@/composables/useThrottle'
+import { useThrottle } from '@/composables/helper/useThrottle'
 
 const props = defineProps({
   target: {
