@@ -217,7 +217,7 @@ onUnmounted(() => {
     width: 100%;
     max-width: 1000px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 var(--spacing-lg);
     position: relative;
 }
 
@@ -226,9 +226,15 @@ onUnmounted(() => {
     width: 100%;
     aspect-ratio: 21 / 9;
     overflow: hidden;
-    border-radius: 16px;
-    background: #141517;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-2xl);
+    background: var(--surface-primary);
+    box-shadow: var(--shadow-2xl);
+    border: 1px solid var(--border-secondary);
+    transition: all var(--transition-base);
+}
+
+.carousel-container:hover {
+    box-shadow: 0 16px 48px var(--shadow-color);
 }
 
 /* 轮播图片 */
@@ -260,10 +266,10 @@ onUnmounted(() => {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 20%;
+    height: 30%;
     background: linear-gradient(to top,
-            rgba(9, 10, 11, 0.95) 0%,
-            rgba(9, 10, 11, 0.7) 40%,
+            rgba(0, 0, 0, 0.9) 0%,
+            rgba(0, 0, 0, 0.6) 50%,
             transparent 100%);
     pointer-events: none;
 }
@@ -274,18 +280,23 @@ onUnmounted(() => {
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 40px 60px;
+    padding: var(--spacing-2xl) var(--spacing-3xl);
     z-index: 2;
 }
 
 .banner-title {
     margin: 0;
-    font-size: 36px;
-    font-weight: 700;
-    color: #ffffff;
-    line-height: 1.3;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-bold);
+    color: white;
+    line-height: var(--line-height-tight);
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
     max-width: 80%;
+    transition: transform var(--transition-base);
+}
+
+.carousel-slide:hover .banner-title {
+    transform: translateY(-4px);
 }
 
 /* 导航箭头 */
@@ -295,24 +306,25 @@ onUnmounted(() => {
     transform: translateY(-50%);
     width: 48px;
     height: 48px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(10px);
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: var(--backdrop-blur);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #ffffff;
+    color: white;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    transition: all var(--transition-fast);
     z-index: 10;
     opacity: 0;
 }
 
 .carousel-arrow:hover {
-    background: rgba(42, 219, 92, 0.9);
-    border-color: rgba(42, 219, 92, 1);
+    background: var(--color-primary);
+    border-color: var(--color-primary);
     transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 8px 24px var(--color-primary-alpha-30);
 }
 
 .carousel-arrow-left {
@@ -330,22 +342,22 @@ onUnmounted(() => {
 /* 指示器 */
 .carousel-indicators {
     position: absolute;
-    bottom: 24px;
+    bottom: var(--spacing-lg);
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 10px;
+    gap: var(--spacing-sm);
     z-index: 10;
 }
 
 .indicator-dot {
     width: 10px;
     height: 10px;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     background: rgba(255, 255, 255, 0.4);
     border: none;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all var(--transition-fast);
     padding: 0;
 }
 
@@ -356,14 +368,15 @@ onUnmounted(() => {
 
 .indicator-dot.active {
     width: 32px;
-    border-radius: 5px;
-    background: #2ADB5C;
+    border-radius: var(--radius-sm);
+    background: var(--color-primary);
+    box-shadow: 0 0 12px var(--color-primary-alpha-30);
 }
 
 /* 切换动画 - 向左滑动（新图从右进入） */
 .slide-left-enter-active,
 .slide-left-leave-active {
-    transition: all 0.5s ease-out;
+    transition: all var(--transition-slower) var(--ease-out);
 }
 
 .slide-left-enter-from {
@@ -379,7 +392,7 @@ onUnmounted(() => {
 /* 切换动画 - 向右滑动（新图从左进入） */
 .slide-right-enter-active,
 .slide-right-leave-active {
-    transition: all 0.5s ease-out;
+    transition: all var(--transition-slower) var(--ease-out);
 }
 
 .slide-right-enter-from {
@@ -396,34 +409,35 @@ onUnmounted(() => {
 @media (max-width: 1200px) {
     .banner-carousel {
         max-width: 1200px;
-        padding: 0 16px;
+        padding: 0 var(--spacing-md);
     }
 
     .banner-title {
-        font-size: 30px;
+        font-size: var(--font-size-3xl);
     }
 
     .banner-info {
-        padding: 30px 40px;
+        padding: var(--spacing-xl) var(--spacing-2xl);
     }
 }
 
 @media (max-width: 768px) {
     .banner-carousel {
-        padding: 0 12px;
+        padding: 0 var(--spacing-sm);
     }
 
     .carousel-container {
         aspect-ratio: 4 / 3;
+        border-radius: var(--radius-xl);
     }
 
     .banner-title {
-        font-size: 24px;
+        font-size: var(--font-size-2xl);
         max-width: 90%;
     }
 
     .banner-info {
-        padding: 20px 24px;
+        padding: var(--spacing-lg) var(--spacing-xl);
     }
 
     .carousel-arrow {
@@ -433,15 +447,15 @@ onUnmounted(() => {
     }
 
     .carousel-arrow-left {
-        left: 16px;
+        left: var(--spacing-md);
     }
 
     .carousel-arrow-right {
-        right: 16px;
+        right: var(--spacing-md);
     }
 
     .carousel-indicators {
-        bottom: 16px;
+        bottom: var(--spacing-md);
     }
 
     .indicator-dot {
@@ -456,20 +470,20 @@ onUnmounted(() => {
 
 @media (max-width: 480px) {
     .banner-carousel {
-        padding: 0 8px;
+        padding: 0 var(--spacing-xs);
     }
 
     .carousel-container {
         aspect-ratio: 1 / 1;
-        border-radius: 12px;
+        border-radius: var(--radius-lg);
     }
 
     .banner-title {
-        font-size: 20px;
+        font-size: var(--font-size-xl);
     }
 
     .banner-info {
-        padding: 16px 20px;
+        padding: var(--spacing-md) var(--spacing-lg);
     }
 
     .carousel-arrow {

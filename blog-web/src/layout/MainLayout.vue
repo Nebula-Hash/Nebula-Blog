@@ -4,8 +4,8 @@
       <div class="header-content">
         <div class="logo" @click="router.push('/')">
           <n-space :size="8" align="center">
-            <n-icon :component="BookOutline" size="32" color="#2ADB5C" />
-            <h2 style="color: #2ADB5C; margin: 0; font-weight: 600; font-size: 24px;">技术博客</h2>
+            <n-icon :component="BookOutline" size="32" color="#3D7EAE" />
+            <h2 style="color: #3D7EAE; margin: 0; font-weight: 600; font-size: 24px;">技术博客</h2>
           </n-space>
         </div>
 
@@ -33,12 +33,7 @@
               <n-icon :component="SearchOutline" @click="handleSearch" style="cursor: pointer" />
             </template>
           </n-input>
-          <n-button text @click="themeStore.toggleTheme" class="nav-button theme-toggle"
-            :title="themeStore.isDark ? '切换到浅色模式' : '切换到深色模式'">
-            <template #icon>
-              <n-icon :component="themeStore.isDark ? SunnyOutline : MoonOutline" size="20" class="theme-icon" />
-            </template>
-          </n-button>
+          <ThemeToggle />
         </n-space>
 
         <!-- 用户区域占位 - 认证功能已迁移到测试项目 -->
@@ -102,6 +97,7 @@
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useThemeStore, useCacheStore } from '@/stores'
+import ThemeToggle from '@/components/common/ThemeToggle.vue'
 import {
   NLayout,
   NLayoutHeader,
@@ -126,9 +122,7 @@ import {
   BookOutline,
   PricetagOutline,
   GridOutline,
-  HomeOutline,
-  MoonOutline,
-  SunnyOutline
+  HomeOutline
 } from '@vicons/ionicons5'
 
 const router = useRouter()
@@ -215,7 +209,7 @@ onMounted(() => {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 2px 12px var(--shadow-color);
-  border-bottom: 1px solid rgba(42, 219, 92, 0.1);
+  border-bottom: 1px solid var(--border-secondary);
   transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -243,8 +237,8 @@ onMounted(() => {
 }
 
 .nav-button:hover {
-  color: #2ADB5C;
-  background-color: rgba(42, 219, 92, 0.1);
+  color: #3D7EAE;
+  background-color: rgba(61, 126, 174, 0.1);
 }
 
 .theme-toggle {
@@ -262,6 +256,8 @@ onMounted(() => {
 .theme-toggle:active .theme-icon {
   transform: rotate(20deg) scale(0.95);
 }
+
+/* 移除旧的主题切换样式，因为已使用新组件 */
 
 .nav-menu {
   flex: 1;
@@ -297,7 +293,7 @@ onMounted(() => {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   color: var(--text-tertiary);
-  border-top: 1px solid rgba(42, 219, 92, 0.1);
+  border-top: 1px solid var(--border-secondary);
   transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
     color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

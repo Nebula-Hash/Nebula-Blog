@@ -3,7 +3,7 @@
     <n-card class="search-card">
       <template #header>
         <n-space :size="12" align="center">
-          <n-icon :component="SearchOutline" size="24" :color="'#2ADB5C'" />
+          <n-icon :component="SearchOutline" size="24" color="#3D7EAE" />
           <span style="font-weight: 600; font-size: 18px;">搜索文章</span>
         </n-space>
       </template>
@@ -158,9 +158,9 @@ onMounted(() => {
 
 .search-card,
 .result-card {
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(42, 219, 92, 0.1);
-  background: #141517;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-secondary);
+  background: var(--surface-primary);
 }
 </style>

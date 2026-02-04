@@ -2,8 +2,8 @@
     <n-card class="tag-card">
         <template #header>
             <n-space :size="8" align="center">
-                <n-icon :component="PricetagsOutline" size="20" :color="'#2ADB5C'" />
-                <span style="font-weight: 600; font-size: 16px; color: rgba(255, 255, 255, 0.9);">标签</span>
+                <n-icon :component="PricetagsOutline" size="20" color="#3D7EAE" />
+                <span style="font-weight: 600; font-size: 16px; color: var(--text-primary);">标签</span>
             </n-space>
         </template>
         <n-spin :show="loading" size="small">
@@ -62,22 +62,22 @@ onMounted(() => {
 
 <style scoped>
 .tag-card {
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s;
-    border: 1px solid rgba(42, 219, 92, 0.1);
-    background: #141517;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-base);
+    border: 1px solid var(--border-secondary);
+    background: var(--surface-primary);
 }
 
 .tag-card:hover {
-    box-shadow: 0 8px 24px rgba(42, 219, 92, 0.2);
+    box-shadow: var(--shadow-elevated);
     transform: translateY(-2px);
-    border-color: rgba(42, 219, 92, 0.3);
+    border-color: var(--color-primary-alpha-30);
 }
 
 .tag-item {
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all var(--transition-base);
 }
 
 .tag-item:hover {

@@ -1,9 +1,6 @@
 <template>
   <div class="reading-progress" :class="{ visible: progress > 0 }">
-    <div 
-      class="progress-bar" 
-      :style="{ width: `${progress}%` }"
-    />
+    <div class="progress-bar" :style="{ width: `${progress}%` }" />
   </div>
 </template>
 
@@ -23,15 +20,15 @@ const progress = ref(0)
 // 计算阅读进度
 const calculateProgress = () => {
   let scrollTop, scrollHeight, clientHeight
-  
+
   if (props.target) {
     // 如果指定了目标元素
-    const element = typeof props.target === 'string' 
+    const element = typeof props.target === 'string'
       ? document.querySelector(props.target)
       : props.target
-    
+
     if (!element) return
-    
+
     scrollTop = element.scrollTop
     scrollHeight = element.scrollHeight
     clientHeight = element.clientHeight
@@ -41,15 +38,15 @@ const calculateProgress = () => {
     scrollHeight = document.documentElement.scrollHeight
     clientHeight = document.documentElement.clientHeight
   }
-  
+
   // 计算进度百分比
   const scrollableHeight = scrollHeight - clientHeight
-  
+
   if (scrollableHeight <= 0) {
     progress.value = 0
     return
   }
-  
+
   const percentage = (scrollTop / scrollableHeight) * 100
   progress.value = Math.min(Math.max(percentage, 0), 100)
 }
@@ -65,13 +62,13 @@ const handleScroll = () => {
 onMounted(() => {
   // 初始计算
   calculateProgress()
-  
+
   // 监听滚动事件
   if (props.target) {
-    const element = typeof props.target === 'string' 
+    const element = typeof props.target === 'string'
       ? document.querySelector(props.target)
       : props.target
-    
+
     if (element) {
       element.addEventListener('scroll', handleScroll, { passive: true })
     }
@@ -83,10 +80,10 @@ onMounted(() => {
 onUnmounted(() => {
   // 移除事件监听
   if (props.target) {
-    const element = typeof props.target === 'string' 
+    const element = typeof props.target === 'string'
       ? document.querySelector(props.target)
       : props.target
-    
+
     if (element) {
       element.removeEventListener('scroll', handleScroll)
     }
@@ -115,8 +112,8 @@ onUnmounted(() => {
 
 .progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, #2ADB5C, #1ea84a);
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-dark));
   transition: width 0.1s ease-out;
-  box-shadow: 0 0 10px rgba(42, 219, 92, 0.5);
+  box-shadow: 0 0 10px var(--color-primary-alpha-30);
 }
 </style>

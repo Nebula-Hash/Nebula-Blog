@@ -1,93 +1,52 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/**
+ * 主样式文件
+ * 导入所有CSS模块，构建完整的样式系统
+ */
 
-/* CSS变量定义 - 深色主题 */
-:root.dark-theme {
-  --bg-primary: #090a0b;
-  --bg-secondary: #141517;
-  --bg-tertiary: #1f1f1f;
-  --bg-elevated: #0d0e0f;
-  --text-primary: rgba(255, 255, 255, 0.9);
-  --text-secondary: rgba(255, 255, 255, 0.82);
-  --text-tertiary: rgba(255, 255, 255, 0.52);
-  --border-color: rgba(255, 255, 255, 0.12);
-  --divider-color: rgba(255, 255, 255, 0.09);
-  --shadow-color: rgba(0, 0, 0, 0.3);
-  --scrollbar-track: #141517;
-  --scrollbar-thumb: #2adb5c;
-  --scrollbar-thumb-hover: #1fc049;
-}
+/* ========== 核心样式 ========== */
+@import "./variables.css";
+@import "./reset.css";
+@import "./animations.css";
+@import "./utilities.css";
+@import "./components.css";
 
-/* CSS变量定义 - 浅色主题 */
-:root.light-theme {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f5f5f5;
-  --bg-tertiary: #fafafa;
-  --bg-elevated: #ffffff;
-  --text-primary: rgba(0, 0, 0, 0.88);
-  --text-secondary: rgba(0, 0, 0, 0.65);
-  --text-tertiary: rgba(0, 0, 0, 0.45);
-  --border-color: rgba(0, 0, 0, 0.12);
-  --divider-color: rgba(0, 0, 0, 0.06);
-  --shadow-color: rgba(0, 0, 0, 0.08);
-  --scrollbar-track: #f0f0f0;
-  --scrollbar-thumb: #2adb5c;
-  --scrollbar-thumb-hover: #1fc049;
-}
-
-body {
-  margin: 0;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-    "Segoe UI Symbol", "Noto Color Emoji";
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  min-width: 320px;
-  min-height: 100vh;
-  transition:
-    background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
+/* ========== 全局样式 ========== */
 #app {
   width: 100%;
   min-height: 100vh;
   background: var(--bg-primary);
-  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color var(--transition-base);
 }
 
-/* 滚动条样式 */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* ========== 页面容器 ========== */
+.page-container {
+  width: 100%;
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: var(--spacing-xl) var(--spacing-lg);
 }
 
-::-webkit-scrollbar-track {
-  background: var(--scrollbar-track);
-  transition: background-color 0.3s ease;
+/* ========== 内容区域 ========== */
+.content-area {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
 }
 
-::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
+/* ========== 响应式布局 ========== */
+@media (max-width: 1024px) {
+  .page-container {
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--scrollbar-thumb-hover);
+@media (max-width: 768px) {
+  .page-container {
+    padding: var(--spacing-md) var(--spacing-sm);
+  }
 }
 
-/* 选中文本样式 */
-::selection {
-  background-color: rgba(42, 219, 92, 0.3);
-  color: var(--text-primary);
-}
-
-::-moz-selection {
-  background-color: rgba(42, 219, 92, 0.3);
-  color: var(--text-primary);
+@media (max-width: 480px) {
+  .page-container {
+    padding: var(--spacing-sm);
+  }
 }

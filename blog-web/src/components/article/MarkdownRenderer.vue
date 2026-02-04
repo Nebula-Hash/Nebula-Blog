@@ -48,14 +48,14 @@ const md = new MarkdownIt({
 })
 
 // 自定义链接渲染规则（添加安全属性）
-const defaultLinkRender = md.renderer.rules.link_open || function(tokens, idx, options, env, self) {
+const defaultLinkRender = md.renderer.rules.link_open || function (tokens, idx, options, env, self) {
   return self.renderToken(tokens, idx, options)
 }
 
 md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
   const token = tokens[idx]
   const hrefIndex = token.attrIndex('href')
-  
+
   if (hrefIndex >= 0) {
     const href = token.attrs[hrefIndex][1]
     // 外部链接添加安全属性
@@ -64,14 +64,14 @@ md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
       token.attrPush(['rel', 'noopener noreferrer'])
     }
   }
-  
+
   return defaultLinkRender(tokens, idx, options, env, self)
 }
 
 // 渲染 Markdown
 const renderedHtml = computed(() => {
   if (!props.content) return ''
-  
+
   try {
     return md.render(props.content)
   } catch (error) {
@@ -85,7 +85,7 @@ const renderedHtml = computed(() => {
 .markdown-renderer {
   line-height: 1.8;
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--text-primary);
   word-wrap: break-word;
 }
 
@@ -99,18 +99,18 @@ const renderedHtml = computed(() => {
   margin: 24px 0 16px;
   font-weight: 600;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--text-primary);
 }
 
 .markdown-renderer :deep(h1) {
   font-size: 32px;
-  border-bottom: 2px solid rgba(42, 219, 92, 0.3);
+  border-bottom: 2px solid var(--color-primary-alpha-30);
   padding-bottom: 8px;
 }
 
 .markdown-renderer :deep(h2) {
   font-size: 28px;
-  border-bottom: 1px solid rgba(42, 219, 92, 0.2);
+  border-bottom: 1px solid var(--color-primary-alpha-20);
   padding-bottom: 6px;
 }
 
@@ -130,14 +130,14 @@ const renderedHtml = computed(() => {
 
 /* 链接样式 */
 .markdown-renderer :deep(a) {
-  color: #2ADB5C;
+  color: var(--color-primary);
   text-decoration: none;
   border-bottom: 1px solid transparent;
   transition: all 0.3s;
 }
 
 .markdown-renderer :deep(a:hover) {
-  border-bottom-color: #2ADB5C;
+  border-bottom-color: var(--color-primary);
 }
 
 /* 列表样式 */
@@ -156,10 +156,10 @@ const renderedHtml = computed(() => {
 .markdown-renderer :deep(blockquote) {
   margin: 16px 0;
   padding: 12px 20px;
-  border-left: 4px solid #2ADB5C;
-  background: rgba(42, 219, 92, 0.05);
-  border-radius: 4px;
-  color: rgba(255, 255, 255, 0.75);
+  border-left: 4px solid var(--color-primary);
+  background: var(--color-primary-alpha-10);
+  border-radius: var(--radius-xs);
+  color: var(--text-secondary);
 }
 
 .markdown-renderer :deep(blockquote p) {
@@ -168,32 +168,32 @@ const renderedHtml = computed(() => {
 
 /* 代码块样式 */
 .markdown-renderer :deep(pre) {
-  margin: 20px 0;
-  padding: 16px;
-  background: #1F1F1F;
-  border-radius: 8px;
+  margin: var(--spacing-lg) 0;
+  padding: var(--spacing-md);
+  background: var(--surface-tertiary);
+  border-radius: var(--radius-md);
   overflow-x: auto;
-  border-left: 3px solid #2ADB5C;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-left: 3px solid var(--color-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .markdown-renderer :deep(pre code) {
   background: transparent;
   padding: 0;
   border-radius: 0;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #e6e6e6;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+  color: var(--text-primary);
 }
 
 /* 行内代码样式 */
 .markdown-renderer :deep(code) {
-  background: #1F1F1F;
+  background: var(--surface-tertiary);
   padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 14px;
-  color: #2ADB5C;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  border-radius: var(--radius-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  font-family: var(--font-family-mono);
 }
 
 /* 表格样式 */
@@ -203,28 +203,28 @@ const renderedHtml = computed(() => {
   width: 100%;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-sm);
 }
 
 .markdown-renderer :deep(th),
 .markdown-renderer :deep(td) {
   padding: 12px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-secondary);
   text-align: left;
 }
 
 .markdown-renderer :deep(th) {
-  background: rgba(42, 219, 92, 0.1);
+  background: var(--color-primary-alpha-10);
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--text-primary);
 }
 
 .markdown-renderer :deep(tr:nth-child(even)) {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface-hover);
 }
 
 .markdown-renderer :deep(tr:hover) {
-  background: rgba(42, 219, 92, 0.05);
+  background: var(--color-primary-alpha-10);
 }
 
 /* 图片样式 */
@@ -240,23 +240,23 @@ const renderedHtml = computed(() => {
 .markdown-renderer :deep(hr) {
   margin: 24px 0;
   border: none;
-  border-top: 2px solid rgba(42, 219, 92, 0.2);
+  border-top: 2px solid var(--color-primary-alpha-20);
 }
 
 /* 强调样式 */
 .markdown-renderer :deep(strong) {
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--text-primary);
 }
 
 .markdown-renderer :deep(em) {
   font-style: italic;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--text-primary);
 }
 
 /* 删除线样式 */
 .markdown-renderer :deep(del) {
   text-decoration: line-through;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-tertiary);
 }
 </style>

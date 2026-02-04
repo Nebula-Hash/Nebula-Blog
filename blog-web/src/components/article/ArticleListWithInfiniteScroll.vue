@@ -3,7 +3,7 @@
         <n-card class="list-card">
             <template #header>
                 <n-space :size="8" align="center">
-                    <n-icon :component="DocumentTextOutline" size="20" :color="'#2ADB5C'" />
+                    <n-icon :component="DocumentTextOutline" size="20" color="#3D7EAE" />
                     <span style="font-weight: 600; font-size: 16px;">文章列表</span>
                 </n-space>
             </template>
@@ -87,9 +87,9 @@ onMounted(() => {
 }
 
 .list-card {
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(42, 219, 92, 0.1);
-    background: #141517;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-secondary);
+    background: var(--surface-primary);
 }
 </style>

@@ -75,7 +75,7 @@ const formatDate = (date) => {
     font-weight: 700;
     margin: 0 0 20px 0;
     line-height: 1.4;
-    color: rgba(255, 255, 255, 0.95);
+    color: var(--text-primary);
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
@@ -87,6 +87,6 @@ const formatDate = (date) => {
 
 .author-name {
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--text-primary);
 }
 </style>

@@ -60,34 +60,62 @@ const formatDate = (date) => {
 
 <style scoped>
 .article-card {
+  position: relative;
   cursor: pointer;
-  transition: all 0.3s;
-  border-radius: 12px;
-  background: #141517;
-  border: 1px solid rgba(42, 219, 92, 0.08);
+  background: var(--surface-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  transition: all var(--transition-base);
+}
+
+.article-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    var(--color-primary-alpha-10) 100%
+  );
+  opacity: 0;
+  transition: opacity var(--transition-base);
+  pointer-events: none;
 }
 
 .article-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(42, 219, 92, 0.2);
-  border-color: rgba(42, 219, 92, 0.3);
+  box-shadow: var(--shadow-elevated);
+  border-color: var(--color-primary-alpha-30);
+}
+
+.article-card:hover::after {
+  opacity: 1;
 }
 
 .article-content {
+  position: relative;
+  z-index: 1;
   display: flex;
-  gap: 20px;
+  gap: var(--spacing-lg);
 }
 
 .cover-image {
   width: 200px;
   height: 150px;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .cover-image :deep(.image) {
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
+  transition: transform var(--transition-slow);
+}
+
+.article-card:hover .cover-image :deep(.image) {
+  transform: scale(1.08);
 }
 
 .article-info {
@@ -95,20 +123,26 @@ const formatDate = (date) => {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  min-width: 0;
 }
 
 .article-title {
-  margin: 0 0 10px 0;
-  font-size: 20px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.95);
-  line-height: 1.4;
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  line-height: var(--line-height-tight);
+  transition: color var(--transition-fast);
+}
+
+.article-card:hover .article-title {
+  color: var(--color-primary);
 }
 
 .article-summary {
   margin: 0;
-  color: rgba(255, 255, 255, 0.65);
-  line-height: 1.6;
+  color: var(--text-secondary);
+  line-height: var(--line-height-relaxed);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -119,6 +153,20 @@ const formatDate = (date) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 10px;
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .article-content {
+    flex-direction: column;
+  }
+  
+  .cover-image {
+    width: 100%;
+    height: 180px;
+  }
 }
 </style>
