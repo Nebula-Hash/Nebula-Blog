@@ -1,6 +1,7 @@
 <template>
     <div class="article-header">
         <h1 class="article-title">{{ article.title }}</h1>
+
         <div class="article-meta">
             <n-space :size="10">
                 <n-avatar round :size="32" :src="article.authorAvatar" />
@@ -11,6 +12,7 @@
                     </n-text>
                 </div>
             </n-space>
+
             <n-space :size="15">
                 <n-button :type="article.isLiked ? 'primary' : 'default'" :loading="liking" @click="handleLike">
                     <template #icon>
@@ -27,13 +29,24 @@
                 </n-button>
             </n-space>
         </div>
+
+        <!-- 文章标签 -->
+        <div v-if="article.tags && article.tags.length > 0" class="article-tags">
+            <n-space :size="8">
+                <n-tag v-for="tag in article.tags" :key="tag.id" :bordered="false" round class="tag-item"
+                    @click="handleTagClick(tag)">
+                    {{ tag.tagName }}
+                </n-tag>
+            </n-space>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { NSpace, NAvatar, NText, NButton, NIcon } from 'naive-ui'
+import { NSpace, NAvatar, NText, NButton, NIcon, NTag } from 'naive-ui'
 import { HeartOutline, Heart, StarOutline, Star } from '@vicons/ionicons5'
 import { formatDateTime } from '@/utils/common'
+import { useRouter } from 'vue-router'
 
 const props = defineProps({
     article: {
@@ -51,6 +64,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['like', 'collect'])
+const router = useRouter()
 
 const handleLike = () => {
     emit('like')
@@ -58,6 +72,10 @@ const handleLike = () => {
 
 const handleCollect = () => {
     emit('collect')
+}
+
+const handleTagClick = (tag) => {
+    router.push(`/tag/${tag.id}`)
 }
 
 const formatDate = (date) => {
@@ -83,10 +101,27 @@ const formatDate = (date) => {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 16px;
 }
 
 .author-name {
     font-weight: 500;
     color: var(--text-primary);
+}
+
+.article-tags {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-secondary);
+}
+
+.tag-item {
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.tag-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(42, 219, 92, 0.3);
 }
 </style>

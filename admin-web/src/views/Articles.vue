@@ -43,88 +43,108 @@
     </n-card>
 
     <!-- 新增/编辑文章弹窗 -->
-    <n-modal v-model:show="showModal" preset="card" :title="modalTitle" style="width: 90%; max-width: 1200px">
-      <n-form ref="formRef" :model="formData" :rules="rules" label-placement="left" label-width="100">
-        <n-grid :cols="24" :x-gap="24">
-          <!-- 左侧：基本信息 -->
-          <n-form-item-gi :span="24" label="文章标题" path="title">
-            <n-input v-model:value="formData.title" placeholder="请输入文章标题" maxlength="100" show-count />
-          </n-form-item-gi>
+    <n-modal v-model:show="showModal" preset="card" :title="modalTitle" :style="modalStyle">
+      <n-scrollbar :style="scrollbarStyle">
+        <n-form ref="formRef" :model="formData" :rules="rules" label-placement="left" label-width="100">
+          <n-grid :cols="24" :x-gap="24">
+            <!-- 左侧：基本信息 -->
+            <n-form-item-gi :span="24" label="文章标题" path="title">
+              <n-input v-model:value="formData.title" placeholder="请输入文章标题" maxlength="100" show-count />
+            </n-form-item-gi>
 
-          <n-form-item-gi :span="24" label="文章摘要" path="summary">
-            <n-input v-model:value="formData.summary" type="textarea" placeholder="请输入文章摘要（选填，留空则自动从内容提取）" :rows="3"
-              maxlength="200" show-count />
-          </n-form-item-gi>
+            <n-form-item-gi :span="24" label="文章摘要" path="summary">
+              <n-input v-model:value="formData.summary" type="textarea" placeholder="请输入文章摘要（选填，留空则自动从内容提取）" :rows="3"
+                maxlength="200" show-count />
+            </n-form-item-gi>
 
-          <n-form-item-gi :span="12" label="文章分类" path="categoryId">
-            <n-select v-model:value="formData.categoryId" :options="categoryOptions" placeholder="请选择分类" filterable />
-          </n-form-item-gi>
+            <n-form-item-gi :span="12" label="文章分类" path="categoryId">
+              <n-select v-model:value="formData.categoryId" :options="categoryOptions" placeholder="请选择分类" filterable />
+            </n-form-item-gi>
 
-          <n-form-item-gi :span="12" label="文章标签">
-            <n-select v-model:value="formData.tagIds" :options="tagOptions" multiple placeholder="请选择标签（可多选）"
-              filterable />
-          </n-form-item-gi>
+            <n-form-item-gi :span="12" label="文章标签">
+              <n-select v-model:value="formData.tagIds" :options="tagOptions" multiple placeholder="请选择标签（可多选）"
+                filterable />
+            </n-form-item-gi>
 
-          <n-form-item-gi :span="12" label="是否置顶">
-            <n-switch v-model:value="formData.isTop" :checked-value="1" :unchecked-value="0">
-              <template #checked>是</template>
-              <template #unchecked>否</template>
-            </n-switch>
-          </n-form-item-gi>
+            <n-form-item-gi :span="12" label="是否置顶">
+              <n-switch v-model:value="formData.isTop" :checked-value="1" :unchecked-value="0">
+                <template #checked>是</template>
+                <template #unchecked>否</template>
+              </n-switch>
+            </n-form-item-gi>
 
-          <n-form-item-gi :span="12" label="发布状态">
-            <n-switch v-model:value="formData.isDraft" :checked-value="0" :unchecked-value="1">
-              <template #checked>发布</template>
-              <template #unchecked>草稿</template>
-            </n-switch>
-          </n-form-item-gi>
+            <n-form-item-gi :span="12" label="发布状态">
+              <n-switch v-model:value="formData.isDraft" :checked-value="0" :unchecked-value="1">
+                <template #checked>发布</template>
+                <template #unchecked>草稿</template>
+              </n-switch>
+            </n-form-item-gi>
 
-          <!-- 封面图上传 -->
-          <n-form-item-gi :span="24" label="封面图">
-            <n-space vertical style="width: 100%">
-              <n-upload :max="1" :custom-request="handleCoverUpload" list-type="image-card"
-                v-model:file-list="coverFileList" @remove="handleCoverRemove" :disabled="uploadLoading"
-                accept="image/*">
-                <n-button :loading="uploadLoading">
-                  <template #icon>
-                    <n-icon :component="CloudUploadOutline" />
-                  </template>
-                  {{ uploadLoading ? '上传中...' : '点击上传封面图' }}
-                </n-button>
-              </n-upload>
-              <n-text v-if="uploadLoading" type="info" style="font-size: 12px">
-                图片上传中...
-              </n-text>
-              <n-input v-model:value="formData.coverImage" placeholder="或直接输入封面图URL" clearable />
-            </n-space>
-          </n-form-item-gi>
+            <!-- 封面图上传 -->
+            <n-form-item-gi :span="24" label="封面图">
+              <n-space vertical style="width: 100%">
+                <n-upload :max="1" :custom-request="handleCoverUpload" list-type="image-card"
+                  v-model:file-list="coverFileList" @remove="handleCoverRemove" :disabled="uploadLoading"
+                  accept="image/*">
+                  <n-button :loading="uploadLoading">
+                    <template #icon>
+                      <n-icon :component="CloudUploadOutline" />
+                    </template>
+                    {{ uploadLoading ? '上传中...' : '点击上传封面图' }}
+                  </n-button>
+                </n-upload>
+                <n-text v-if="uploadLoading" type="info" style="font-size: 12px">
+                  图片上传中...
+                </n-text>
+                <n-input v-model:value="formData.coverImage" placeholder="或直接输入封面图URL" clearable />
+              </n-space>
+            </n-form-item-gi>
 
-          <!-- 文章内容 -->
-          <n-form-item-gi :span="24" label="文章内容" path="content">
-            <n-input v-model:value="formData.content" type="textarea" placeholder="请输入文章内容（支持Markdown格式）" :rows="20"
-              :autosize="{ minRows: 20, maxRows: 30 }" />
-          </n-form-item-gi>
-
-          <!-- Markdown预览提示 -->
-          <n-form-item-gi :span="24">
-            <n-alert type="info" :show-icon="false">
-              <template #header>
+            <!-- 文章内容 -->
+            <n-form-item-gi :span="24" label="文章内容" path="content">
+              <n-space vertical style="width: 100%">
+                <!-- Markdown 文件导入 -->
                 <n-space align="center">
-                  <n-icon :component="InformationCircleOutline" />
-                  <span>Markdown 编辑提示</span>
+                  <n-upload :show-file-list="false" :custom-request="handleMdFileUpload" accept=".md,.markdown"
+                    :disabled="mdUploadLoading">
+                    <n-button :loading="mdUploadLoading">
+                      <template #icon>
+                        <n-icon :component="DocumentTextOutline" />
+                      </template>
+                      {{ mdUploadLoading ? '读取中...' : '导入 Markdown 文件' }}
+                    </n-button>
+                  </n-upload>
+                  <n-text depth="3" style="font-size: 12px">
+                    支持导入 .md 或 .markdown 文件，导入后会替换当前内容
+                  </n-text>
                 </n-space>
-              </template>
-              支持标准 Markdown 语法，包括标题、列表、代码块、图片、链接等。保存后将自动渲染为 HTML 格式。
-            </n-alert>
-          </n-form-item-gi>
-        </n-grid>
-      </n-form>
+                <!-- 内容输入框 -->
+                <n-input v-model:value="formData.content" type="textarea" placeholder="请输入文章内容（支持Markdown格式）" :rows="20"
+                  :autosize="{ minRows: 20, maxRows: 30 }" />
+              </n-space>
+            </n-form-item-gi>
+
+            <!-- Markdown预览提示 -->
+            <n-form-item-gi :span="24">
+              <n-alert type="info" :show-icon="false">
+                <template #header>
+                  <n-space align="center">
+                    <n-icon :component="InformationCircleOutline" />
+                    <span>Markdown 编辑提示</span>
+                  </n-space>
+                </template>
+                支持标准 Markdown 语法，包括标题、列表、代码块、图片、链接等。保存后将自动渲染为 HTML 格式。
+              </n-alert>
+            </n-form-item-gi>
+          </n-grid>
+        </n-form>
+      </n-scrollbar>
 
       <template #footer>
         <n-space justify="end">
           <n-button @click="showModal = false">取消</n-button>
           <n-button type="primary" @click="handleSave" :loading="saveLoading">
-            {{ formData.isDraft === 1 ? '保存草稿' : '发布文章' }}
+            {{ saveButtonText }}
           </n-button>
         </n-space>
       </template>
@@ -146,7 +166,8 @@ import {
   CreateOutline,
   TrashOutline,
   CloudUploadOutline,
-  InformationCircleOutline
+  InformationCircleOutline,
+  DocumentTextOutline
 } from '@vicons/ionicons5'
 import {
   getArticleList,
@@ -171,6 +192,7 @@ const errorHandler = createErrorHandler('Articles')
 const loading = ref(false)
 const saveLoading = ref(false)
 const uploadLoading = ref(false)
+const mdUploadLoading = ref(false)
 const showModal = ref(false)
 const showImagePreview = ref(false)
 const previewImageUrl = ref('')
@@ -227,6 +249,34 @@ const topOptions = [
 const modalTitle = computed(() => {
   return formData.value.id ? '编辑文章' : '新增文章'
 })
+
+// 保存按钮文本
+const saveButtonText = computed(() => {
+  // 草稿状态：保存草稿
+  if (formData.value.isDraft === ARTICLE_STATUS.DRAFT) {
+    return '保存草稿'
+  }
+  // 编辑状态：保存修改
+  if (formData.value.id) {
+    return '保存修改'
+  }
+  // 新增状态：发布文章
+  return '发布文章'
+})
+
+// 弹窗样式 - 固定高度为屏幕高度的 90%
+const modalStyle = computed(() => ({
+  width: '90%',
+  maxWidth: '1200px',
+  height: '90vh',
+  display: 'flex',
+  flexDirection: 'column'
+}))
+
+// 滚动区域样式
+const scrollbarStyle = computed(() => ({
+  maxHeight: 'calc(90vh - 140px)' // 减去标题和底部按钮的高度
+}))
 
 // 表格列配置
 const columns = computed(() =>
@@ -414,6 +464,72 @@ const handleCoverRemove = () => {
   return true
 }
 
+// 导入 Markdown 文件
+const handleMdFileUpload = async ({ file, onFinish, onError }) => {
+  console.log('handleMdFileUpload 被调用, file:', file)
+
+  try {
+    // 获取原始 File 对象
+    const rawFile = file.file
+    console.log('原始文件对象:', rawFile)
+
+    if (!rawFile) {
+      errorHandler.handle(null, '无法获取文件，请重试')
+      onError()
+      return
+    }
+
+    // 验证文件类型
+    const fileName = rawFile.name.toLowerCase()
+    if (!fileName.endsWith('.md') && !fileName.endsWith('.markdown')) {
+      errorHandler.handle(null, '请选择 .md 或 .markdown 文件')
+      onError()
+      return
+    }
+
+    // 验证文件大小（限制 5MB）
+    const maxSize = 5 * 1024 * 1024
+    if (rawFile.size > maxSize) {
+      errorHandler.handle(null, '文件大小不能超过 5MB')
+      onError()
+      return
+    }
+
+    mdUploadLoading.value = true
+
+    // 读取文件内容
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const content = e.target.result
+        formData.value.content = content
+        showSuccess('Markdown 文件导入成功')
+        onFinish()
+      } catch (error) {
+        console.error('读取文件内容失败:', error)
+        errorHandler.handle(error, '读取文件内容失败')
+        onError()
+      } finally {
+        mdUploadLoading.value = false
+      }
+    }
+
+    reader.onerror = () => {
+      errorHandler.handle(null, '读取文件失败')
+      mdUploadLoading.value = false
+      onError()
+    }
+
+    // 以文本格式读取文件
+    reader.readAsText(rawFile, 'UTF-8')
+  } catch (error) {
+    console.error('导入 Markdown 文件失败:', error)
+    errorHandler.handle(error, '导入文件失败')
+    mdUploadLoading.value = false
+    onError()
+  }
+}
+
 // 图片预览
 const handleImagePreview = (url) => {
   previewImageUrl.value = url
@@ -426,8 +542,15 @@ const handleSave = async () => {
     await formRef.value?.validate()
     saveLoading.value = true
 
-    const action = formData.value.id ? '更新' : '发布'
-    const actionText = formData.value.isDraft === ARTICLE_STATUS.DRAFT ? '保存草稿' : action
+    // 根据状态确定操作文本
+    let actionText = ''
+    if (formData.value.isDraft === ARTICLE_STATUS.DRAFT) {
+      actionText = '保存草稿'
+    } else if (formData.value.id) {
+      actionText = '保存修改'
+    } else {
+      actionText = '发布文章'
+    }
 
     // 准备提交数据，对用户输入进行 XSS 防护
     const submitData = {
@@ -453,7 +576,15 @@ const handleSave = async () => {
       // 表单验证错误，不需要额外处理
       return
     }
-    const actionText = formData.value.isDraft === ARTICLE_STATUS.DRAFT ? '保存草稿' : '保存'
+    // 错误提示也使用相同的逻辑
+    let actionText = ''
+    if (formData.value.isDraft === ARTICLE_STATUS.DRAFT) {
+      actionText = '保存草稿'
+    } else if (formData.value.id) {
+      actionText = '保存修改'
+    } else {
+      actionText = '发布文章'
+    }
     errorHandler.handleSave(error, actionText)
   } finally {
     saveLoading.value = false
