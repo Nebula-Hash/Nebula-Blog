@@ -9,12 +9,6 @@ import { throttle } from '@/utils/performance'
  * @param {Function} fn - 要节流的函数
  * @param {number} delay - 延迟时间（毫秒），默认300ms
  * @returns {Function} 节流后的函数
- * 
- * @example
- * // 在 Vue 组件中使用
- * const throttledFn = useThrottle(() => {
- *   console.log('滚动处理')
- * }, 300)
  */
 export function useThrottle(fn, delay = 300) {
     // 使用工具函数的核心逻辑

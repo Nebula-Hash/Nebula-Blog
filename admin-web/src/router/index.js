@@ -1,8 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import * as tokenService from '@/services/tokenService'
-import * as authService from '@/services/authService'
 import { useUserStore } from '@/stores/user'
-import { showWarning, showError } from '@/utils/common'
 
 const routes = [
   {
@@ -88,30 +85,10 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // 访问其他页面，需要登录
-  if (!tokenService.getToken()) {
+  // 认证状态恢复与用户信息加载由 authService.initializeSession 统一处理
+  if (!userStore.isLoggedIn) {
     next('/login')
     return
-  }
-
-  // Token已过期
-  if (tokenService.isTokenExpired()) {
-    userStore.clearAuth()
-    showWarning('登录已过期，请重新登录')
-    next('/login')
-    return
-  }
-
-  // 检查用户信息，不存在则自动获取
-  if (!userStore.userInfo) {
-    try {
-      await authService.getCurrentUser()
-    } catch (error) {
-      console.error('[Router] 获取用户信息失败:', error)
-      userStore.clearAuth()
-      showError('获取用户信息失败，请重新登录')
-      next('/login')
-      return
-    }
   }
 
   // 注意：管理员角色检查已由后端 Sa-Token 拦截器完成

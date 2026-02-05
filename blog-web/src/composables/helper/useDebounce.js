@@ -9,12 +9,6 @@ import { debounce } from '@/utils/performance'
  * @param {Function} fn - 要防抖的函数
  * @param {number} delay - 延迟时间（毫秒），默认300ms
  * @returns {Function} 防抖后的函数
- * 
- * @example
- * // 在 Vue 组件中使用
- * const debouncedSearch = useDebounce((keyword) => {
- *   console.log('搜索:', keyword)
- * }, 500)
  */
 export function useDebounce(fn, delay = 300) {
     // 使用工具函数的核心逻辑

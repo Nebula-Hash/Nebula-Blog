@@ -147,10 +147,25 @@ export async function checkLoginStatus() {
     }
 }
 
+export async function initializeSession() {
+    const userStore = useUserStore()
+    userStore.initialize()
+
+    if (tokenService.getToken() && !tokenService.isTokenExpired() && !userStore.userInfo) {
+        try {
+            await getCurrentUser()
+        } catch (error) {
+            console.error('[AuthService] 初始化恢复用户信息失败:', error)
+            userStore.clearAuth()
+        }
+    }
+}
+
 export default {
     login,
     getCurrentUser,
     logout,
     checkLoginStatus,
+    initializeSession,
     clearUserInfoCache
 }

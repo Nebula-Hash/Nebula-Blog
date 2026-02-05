@@ -22,12 +22,6 @@ const request = axios.create({
   timeout: API_CONFIG.TIMEOUT
 })
 
-// 创建独立的axios实例用于刷新Token，避免被拦截器处理
-const refreshRequest = axios.create({
-  baseURL: API_CONFIG.BASE_URL,
-  timeout: API_CONFIG.TIMEOUT
-})
-
 // 无感刷新相关状态
 let isRefreshing = false
 let refreshSubscribers = []
@@ -160,31 +154,18 @@ async function handleTokenExpired(originalConfig) {
     isRefreshing = true
 
     try {
-      // 使用独立的axios实例刷新Token，避免被拦截器处理
-      const refreshPromise = refreshRequest.post('/auth/refresh', null, {
-        headers: { 'Authorization': token }
-      })
+      const refreshPromise = tokenService.refreshToken()
 
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('刷新超时')), TOKEN_CONFIG.REFRESH_TIMEOUT)
       )
 
-      const res = await Promise.race([refreshPromise, timeoutPromise])
+      const newToken = await Promise.race([refreshPromise, timeoutPromise])
+      onTokenRefreshed(newToken)
 
-      if (res.data.code === HTTP_STATUS.SUCCESS) {
-        const newToken = res.data.data.token
-        const timeout = res.data.data.tokenTimeout
-
-        // 更新Token
-        tokenService.setToken(newToken, timeout)
-        onTokenRefreshed(newToken)
-
-        // 用新Token重试原请求
-        originalConfig.headers['Authorization'] = newToken
-        return request(originalConfig)
-      } else {
-        throw new Error(res.data.message || 'Token刷新失败')
-      }
+      // 用新Token重试原请求
+      originalConfig.headers['Authorization'] = newToken
+      return request(originalConfig)
     } catch (error) {
       console.error('[Request] Token刷新失败:', error)
       onRefreshFailed()

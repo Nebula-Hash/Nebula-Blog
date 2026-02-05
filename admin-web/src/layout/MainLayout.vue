@@ -69,14 +69,10 @@ import {
   HomeOutline
 } from '@vicons/ionicons5'
 import { useAuth } from '@/composables/useAuth'
-import { useTokenRefresh } from '@/composables/useTokenRefresh'
 
 const router = useRouter()
 const route = useRoute()
 const { userInfo, logout } = useAuth()
-
-// 启动Token自动刷新
-useTokenRefresh()
 
 const collapsed = ref(false)
 const activeKey = ref(route.path)

@@ -113,6 +113,7 @@ export async function refreshToken() {
             const { token: newToken, tokenTimeout } = response.data.data
             setToken(newToken, tokenTimeout)
             console.log('[TokenService] Token刷新成功')
+            return newToken
         } else {
             throw new Error(response.data.message || 'Token刷新失败')
         }
