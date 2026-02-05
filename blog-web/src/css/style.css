@@ -8,7 +8,7 @@
 @import "./reset.css";
 @import "./animations.css";
 @import "./utilities.css";
-@import "./components.css";
+@import "./prose.css";
 
 /* ========== 全局样式 ========== */
 #app {

@@ -13,7 +13,7 @@
       clearable
       @keydown.ctrl.enter="handleSubmit"
     />
-    <n-space justify="end" :size="12" style="margin-top: 12px">
+    <n-space justify="end" :size="12" class="comment-actions">
       <n-button v-if="showCancel" @click="handleCancel">
         取消
       </n-button>
@@ -21,7 +21,7 @@
         {{ submitText }}
       </n-button>
     </n-space>
-    <n-text v-if="error" type="error" style="margin-top: 8px; display: block">
+    <n-text v-if="error" type="error" class="comment-error">
       {{ error }}
     </n-text>
   </div>
@@ -97,5 +97,14 @@ defineExpose({
 <style scoped>
 .comment-input {
   width: 100%;
+}
+
+.comment-actions {
+  margin-top: 12px;
+}
+
+.comment-error {
+  margin-top: 8px;
+  display: block;
 }
 </style>

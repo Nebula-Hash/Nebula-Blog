@@ -19,7 +19,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #2196f3;
+  background-color: var(--color-primary);
   -webkit-transition: 0.4s;
   transition: 0.4s;
   z-index: 0;
@@ -33,17 +33,17 @@
   width: 26px;
   left: 4px;
   bottom: 4px;
-  background-color: yellow;
+  background-color: var(--color-warning);
   -webkit-transition: 0.4s;
   transition: 0.4s;
 }
 
 #input:checked+.slider {
-  background-color: black;
+  background-color: var(--bg-tertiary);
 }
 
 #input:focus+.slider {
-  box-shadow: 0 0 1px #2196f3;
+  box-shadow: 0 0 1px var(--color-primary);
 }
 
 #input:checked+.slider .sun-moon {
@@ -58,7 +58,7 @@
 .moon-dot {
   opacity: 0;
   transition: 0.4s;
-  fill: gray;
+  fill: var(--text-tertiary);
 }
 
 #input:checked+.slider .sun-moon .moon-dot {
@@ -135,7 +135,7 @@
 
 .cloud-light {
   position: absolute;
-  fill: #eee;
+  fill: var(--surface-secondary);
   animation-name: cloud-move;
   animation-duration: 6s;
   animation-iteration-count: infinite;
@@ -143,7 +143,7 @@
 
 .cloud-dark {
   position: absolute;
-  fill: #ccc;
+  fill: var(--surface-tertiary);
   animation-name: cloud-move;
   animation-duration: 6s;
   animation-iteration-count: infinite;
@@ -271,11 +271,21 @@
     transform: scale(1);
   }
 }
+
+@keyframes rotate-center {
+  0% {
+    transform: translateX(26px) rotate(0deg);
+  }
+
+  100% {
+    transform: translateX(26px) rotate(360deg);
+  }
+}
 </style>
 
 <template>
   <label class="switch">
-    <input id="input" type="checkbox" checked="darkTheme" @change="handleToggle" />
+    <input id="input" type="checkbox" :checked="themeStore.isDark" @change="handleToggle" />
     <div class="slider round">
       <div class="sun-moon">
         <svg id="moon-dot-1" class="moon-dot" viewBox="0 0 100 100">
@@ -342,18 +352,17 @@
   </label>
 </template>
 
-
 <script setup>
 import { useThemeStore } from '@/stores'
 
 const themeStore = useThemeStore()
 
-const handleToggle = () => {
-  // 只在 light 和 dark 之间切换
-  if (themeStore.isDark) {
-    themeStore.setLightTheme()
-  } else {
+const handleToggle = (e) => {
+  const checked = e?.target?.checked
+  if (checked) {
     themeStore.setDarkTheme()
+  } else {
+    themeStore.setLightTheme()
   }
 }
 </script>

@@ -2,7 +2,7 @@
   <div class="comment-list">
     <!-- 评论总数 -->
     <div class="comment-header">
-      <n-text strong style="font-size: 18px">
+      <n-text strong class="comment-total">
         评论 {{ total }}
       </n-text>
     </div>
@@ -24,7 +24,7 @@
         @delete="handleDelete" @load-more-replies="handleLoadMoreReplies" />
 
       <!-- 空状态 -->
-      <n-empty v-else description="暂无评论，快来发表第一条评论吧！" style="margin: 40px 0" />
+      <n-empty v-else description="暂无评论，快来发表第一条评论吧！" class="comment-empty" />
 
       <!-- 加载更多触发器 -->
       <div v-if="hasMore" ref="loadMoreTrigger" class="load-more">
@@ -157,14 +157,19 @@ watch(() => props.articleId, async (newId) => {
 .comment-header {
   margin-bottom: 20px;
   padding-bottom: 12px;
-  border-bottom: 1px solid rgba(150, 150, 150, 0.2);
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.comment-total {
+  font-size: 18px;
 }
 
 .publish-comment {
   margin-bottom: 30px;
   padding: 20px;
-  background-color: rgba(150, 150, 150, 0.05);
-  border-radius: 8px;
+  background-color: var(--surface-hover);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-secondary);
 }
 
 .comments-container {
@@ -184,5 +189,9 @@ watch(() => props.articleId, async (newId) => {
   justify-content: center;
   padding: 20px;
   margin-top: 20px;
+}
+
+.comment-empty {
+  margin: 40px 0;
 }
 </style>

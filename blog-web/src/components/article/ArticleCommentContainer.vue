@@ -1,9 +1,9 @@
 <template>
-    <n-card class="comment-card">
+    <n-card class="comment-card panel-card">
         <template #header>
             <n-space :size="8" align="center">
-                <n-icon :component="ChatbubbleEllipsesOutline" size="20" color="#3D7EAE" />
-                <span style="font-weight: 600; font-size: 16px;">评论</span>
+                <n-icon :component="ChatbubbleEllipsesOutline" size="20" color="var(--color-primary)" />
+                <span class="comment-title">评论</span>
             </n-space>
         </template>
 
@@ -28,9 +28,11 @@ const props = defineProps({
 <style scoped>
 .comment-card {
     margin-top: var(--spacing-lg);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-md);
-    border: 1px solid var(--border-secondary);
-    background: var(--surface-primary);
+}
+
+.comment-title {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-primary);
 }
 </style>

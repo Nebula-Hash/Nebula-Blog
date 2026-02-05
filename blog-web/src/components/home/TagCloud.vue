@@ -1,9 +1,9 @@
 <template>
-    <n-card class="tag-card">
+    <n-card class="tag-card panel-card panel-card-hoverable">
         <template #header>
             <n-space :size="8" align="center">
-                <n-icon :component="PricetagsOutline" size="20" color="#3D7EAE" />
-                <span style="font-weight: 600; font-size: 16px; color: var(--text-primary);">标签</span>
+                <n-icon :component="PricetagsOutline" size="20" color="var(--color-primary)" />
+                <span class="tag-title">标签</span>
             </n-space>
         </template>
         <n-spin :show="loading" size="small">
@@ -61,18 +61,10 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.tag-card {
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-md);
-    transition: all var(--transition-base);
-    border: 1px solid var(--border-secondary);
-    background: var(--surface-primary);
-}
-
-.tag-card:hover {
-    box-shadow: var(--shadow-elevated);
-    transform: translateY(-2px);
-    border-color: var(--color-primary-alpha-30);
+.tag-title {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-primary);
 }
 
 .tag-item {

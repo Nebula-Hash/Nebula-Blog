@@ -5,7 +5,7 @@
       <div class="comment-content">
         <div class="comment-header">
           <n-text strong>{{ comment.nickname }}</n-text>
-          <n-text depth="3" style="font-size: 12px; margin-left: 10px">
+          <n-text depth="3" class="comment-time">
             {{ formatDate(comment.createTime) }}
           </n-text>
         </div>
@@ -17,7 +17,7 @@
         </div>
         <n-space :size="20" class="comment-actions">
           <n-button text @click="handleLike" :class="{ 'liked': isLiked }">
-            <n-icon :component="isLiked ? Heart : HeartOutline" :color="isLiked ? '#ff4d4f' : undefined" />
+            <n-icon :component="isLiked ? Heart : HeartOutline" :color="isLiked ? 'var(--color-error)' : undefined" />
             {{ comment.likeCount || 0 }}
           </n-button>
           <n-button text @click="toggleReplyInput">
@@ -139,6 +139,11 @@ const renderContent = (content) => {
   margin-bottom: 8px;
 }
 
+.comment-time {
+  font-size: 12px;
+  margin-left: 10px;
+}
+
 .comment-text {
   margin-bottom: 8px;
   line-height: 1.6;
@@ -146,10 +151,10 @@ const renderContent = (content) => {
 }
 
 .comment-text :deep(code) {
-  background-color: rgba(150, 150, 150, 0.1);
+  background-color: var(--surface-hover);
   padding: 2px 6px;
-  border-radius: 3px;
-  font-family: 'Courier New', monospace;
+  border-radius: var(--radius-xs);
+  font-family: var(--font-family-mono);
   font-size: 0.9em;
 }
 
@@ -158,13 +163,13 @@ const renderContent = (content) => {
 }
 
 .comment-actions .n-button.liked {
-  color: #ff4d4f;
+  color: var(--color-error);
 }
 
 .reply-input-wrapper {
   margin-top: 12px;
   padding: 12px;
-  background-color: rgba(150, 150, 150, 0.05);
-  border-radius: 8px;
+  background-color: var(--surface-hover);
+  border-radius: var(--radius-md);
 }
 </style>

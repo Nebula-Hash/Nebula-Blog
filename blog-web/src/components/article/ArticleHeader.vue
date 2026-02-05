@@ -7,7 +7,7 @@
                 <n-avatar round :size="32" :src="article.authorAvatar" />
                 <div>
                     <div class="author-name">{{ article.authorNickname }}</div>
-                    <n-text depth="3" style="font-size: 12px">
+                    <n-text depth="3" class="article-meta-text">
                         {{ formatDate(article.createTime) }} · {{ article.viewCount }} 阅读
                     </n-text>
                 </div>
@@ -109,6 +109,10 @@ const formatDate = (date) => {
     color: var(--text-primary);
 }
 
+.article-meta-text {
+    font-size: 12px;
+}
+
 .article-tags {
     margin-top: 16px;
     padding-top: 16px;
@@ -122,6 +126,6 @@ const formatDate = (date) => {
 
 .tag-item:hover {
     transform: translateY(-2px);
-    box-shadow: 0 2px 8px rgba(42, 219, 92, 0.3);
+    box-shadow: 0 2px 8px var(--color-primary-alpha-30);
 }
 </style>

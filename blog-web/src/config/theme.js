@@ -3,76 +3,84 @@
  * 统一管理 Naive UI 主题和 CSS 变量
  */
 
-// 品牌色配置
-export const BRAND_COLORS = {
-    primary: '#002FA7',
-    primaryHover: '#1A49B5',
-    primaryPressed: '#002577',
-    primarySuppl: '#2A5F8F',
-    primaryLight: '#3d7eae',
-    primaryDark: '#2a5f8f'
+const getCssVar = (name, fallback) => {
+    if (typeof window === 'undefined') return fallback
+    const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+    return value || fallback
 }
 
-// 功能色配置
-export const FUNCTIONAL_COLORS = {
-    success: '#52C41A',
-    warning: '#FAAD14',
-    error: '#F5222D',
-    info: '#1890FF'
-}
+const readCssThemeTokens = (isDark) => {
+    const primary = getCssVar('--color-primary', '#2563eb')
+    const primaryLight = getCssVar('--color-primary-light', '#60a5fa')
+    const primaryDark = getCssVar('--color-primary-dark', '#1d4ed8')
+    const primaryAlpha20 = getCssVar('--color-primary-alpha-20', 'rgba(37, 99, 235, 0.2)')
 
-// 深色主题配置
-export const DARK_THEME_COLORS = {
-    bodyColor: '#0A0B0D',
-    cardColor: '#12141A',
-    modalColor: '#12141A',
-    popoverColor: '#1A1D26',
-    tableColor: '#12141A',
-    inputColor: '#1A1D26',
-    codeColor: '#1A1D26',
+    const bgPrimary = getCssVar('--bg-primary', isDark ? '#070a12' : '#f7f9fc')
+    const bgSecondary = getCssVar('--bg-secondary', isDark ? '#0b1020' : '#eef2f7')
+    const surfacePrimary = getCssVar('--surface-primary', isDark ? '#0d162b' : '#ffffff')
+    const surfaceSecondary = getCssVar('--surface-secondary', isDark ? '#101e3a' : '#f4f7fb')
+    const surfaceHover = getCssVar('--surface-hover', isDark ? 'rgba(0, 229, 255, 0.06)' : 'rgba(37, 99, 235, 0.06)')
+    const surfaceActive = getCssVar('--surface-active', isDark ? 'rgba(0, 229, 255, 0.1)' : 'rgba(37, 99, 235, 0.1)')
 
-    textColor1: 'rgba(255, 255, 255, 0.92)',
-    textColor2: 'rgba(255, 255, 255, 0.75)',
-    textColor3: 'rgba(255, 255, 255, 0.55)',
+    const textPrimary = getCssVar('--text-primary', isDark ? 'rgba(233, 244, 255, 0.94)' : 'rgba(15, 23, 42, 0.92)')
+    const textSecondary = getCssVar('--text-secondary', isDark ? 'rgba(233, 244, 255, 0.76)' : 'rgba(15, 23, 42, 0.68)')
+    const textTertiary = getCssVar('--text-tertiary', isDark ? 'rgba(233, 244, 255, 0.56)' : 'rgba(15, 23, 42, 0.48)')
 
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    dividerColor: 'rgba(255, 255, 255, 0.09)',
-    placeholderColor: 'rgba(255, 255, 255, 0.35)',
-    iconColor: 'rgba(255, 255, 255, 0.75)',
+    const borderPrimary = getCssVar('--border-primary', isDark ? 'rgba(120, 200, 255, 0.18)' : 'rgba(15, 23, 42, 0.16)')
+    const borderSecondary = getCssVar('--border-secondary', isDark ? 'rgba(120, 200, 255, 0.12)' : 'rgba(15, 23, 42, 0.1)')
+    const dividerPrimary = getCssVar('--divider-primary', isDark ? 'rgba(120, 200, 255, 0.12)' : 'rgba(15, 23, 42, 0.12)')
+    const placeholderColor = getCssVar('--placeholder-color', isDark ? 'rgba(233, 244, 255, 0.38)' : 'rgba(15, 23, 42, 0.4)')
+    const iconPrimary = getCssVar('--icon-primary', isDark ? 'rgba(233, 244, 255, 0.78)' : 'rgba(15, 23, 42, 0.68)')
 
-    hoverColor: 'rgba(255, 255, 255, 0.06)',
-    pressedColor: 'rgba(255, 255, 255, 0.08)',
+    const shadowPrimary = getCssVar('--shadow-primary', isDark ? '0 6px 18px rgba(0, 0, 0, 0.45)' : '0 2px 10px rgba(15, 23, 42, 0.08)')
+    const shadowElevated = getCssVar('--shadow-elevated', isDark ? '0 14px 44px rgba(0, 0, 0, 0.55)' : '0 10px 30px rgba(15, 23, 42, 0.12)')
 
-    boxShadow1: '0 2px 8px rgba(0, 0, 0, 0.3)',
-    boxShadow2: '0 4px 16px rgba(0, 0, 0, 0.4)',
-    boxShadow3: '0 8px 24px rgba(0, 0, 0, 0.5)'
-}
+    const success = getCssVar('--color-success', '#52C41A')
+    const warning = getCssVar('--color-warning', '#FAAD14')
+    const error = getCssVar('--color-error', '#F5222D')
+    const info = getCssVar('--color-info', '#1890FF')
 
-// 浅色主题配置
-export const LIGHT_THEME_COLORS = {
-    bodyColor: '#FFFFFF',
-    cardColor: '#FFFFFF',
-    modalColor: '#FFFFFF',
-    popoverColor: '#FFFFFF',
-    tableColor: '#FFFFFF',
-    inputColor: '#FFFFFF',
-    codeColor: '#F8F9FA',
+    return {
+        primary,
+        primaryHover: primaryDark,
+        primaryPressed: primaryDark,
+        primarySuppl: primaryLight,
+        primaryLight,
+        primaryDark,
+        primaryAlpha20,
 
-    textColor1: 'rgba(0, 0, 0, 0.88)',
-    textColor2: 'rgba(0, 0, 0, 0.65)',
-    textColor3: 'rgba(0, 0, 0, 0.45)',
+        success,
+        warning,
+        error,
+        info,
 
-    borderColor: 'rgba(0, 0, 0, 0.12)',
-    dividerColor: 'rgba(0, 0, 0, 0.09)',
-    placeholderColor: 'rgba(0, 0, 0, 0.35)',
-    iconColor: 'rgba(0, 0, 0, 0.65)',
+        bodyColor: bgPrimary,
+        cardColor: surfacePrimary,
+        modalColor: surfacePrimary,
+        popoverColor: surfaceSecondary,
+        tableColor: surfacePrimary,
+        inputColor: surfaceSecondary,
+        codeColor: bgSecondary,
 
-    hoverColor: 'rgba(0, 0, 0, 0.04)',
-    pressedColor: 'rgba(0, 0, 0, 0.06)',
+        textColor1: textPrimary,
+        textColor2: textSecondary,
+        textColor3: textTertiary,
 
-    boxShadow1: '0 2px 8px rgba(0, 0, 0, 0.08)',
-    boxShadow2: '0 4px 16px rgba(0, 0, 0, 0.12)',
-    boxShadow3: '0 8px 24px rgba(0, 0, 0, 0.16)'
+        borderColor: borderPrimary,
+        dividerColor: dividerPrimary,
+        placeholderColor,
+        iconColor: iconPrimary,
+
+        hoverColor: surfaceHover,
+        pressedColor: surfaceActive,
+
+        boxShadow1: shadowPrimary,
+        boxShadow2: shadowElevated,
+        boxShadow3: shadowElevated,
+
+        borderSecondary,
+        bgSecondary
+    }
 }
 
 // 字体配置
@@ -100,12 +108,10 @@ export const BORDER_RADIUS = {
  * @returns {object} Naive UI themeOverrides 配置
  */
 export function createNaiveTheme(isDark) {
-    const themeColors = isDark ? DARK_THEME_COLORS : LIGHT_THEME_COLORS
+    const themeColors = readCssThemeTokens(isDark)
 
     return {
         common: {
-            ...BRAND_COLORS,
-            ...FUNCTIONAL_COLORS,
             ...themeColors,
             ...FONT_CONFIG,
             borderRadius: BORDER_RADIUS.medium,
@@ -116,9 +122,9 @@ export function createNaiveTheme(isDark) {
             borderRadius: BORDER_RADIUS.large,
             paddingMedium: '24px',
             color: themeColors.cardColor,
-            colorEmbedded: isDark ? '#0E1015' : '#F8F9FA',
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
-            boxShadow: isDark ? '0 2px 8px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.06)'
+            colorEmbedded: themeColors.codeColor,
+            borderColor: themeColors.borderSecondary,
+            boxShadow: themeColors.boxShadow1
         },
 
         Button: {
@@ -129,11 +135,11 @@ export function createNaiveTheme(isDark) {
             fontSizeMedium: '16px',
             fontWeightStrong: '500',
             textColorText: themeColors.textColor2,
-            textColorTextHover: '#2ADB5C',
-            textColorTextPressed: '#1FC049',
+            textColorTextHover: themeColors.primary,
+            textColorTextPressed: themeColors.primaryPressed,
             textColorGhost: themeColors.textColor2,
-            textColorGhostHover: '#2ADB5C',
-            textColorGhostPressed: '#1FC049'
+            textColorGhostHover: themeColors.primary,
+            textColorGhostPressed: themeColors.primaryPressed
         },
 
         Input: {
@@ -143,9 +149,9 @@ export function createNaiveTheme(isDark) {
             color: themeColors.inputColor,
             colorFocus: themeColors.inputColor,
             border: `1px solid ${themeColors.borderColor}`,
-            borderHover: '1px solid #2ADB5C',
-            borderFocus: '1px solid #2ADB5C',
-            boxShadowFocus: '0 0 0 3px rgba(42, 219, 92, 0.1)'
+            borderHover: `1px solid ${themeColors.primary}`,
+            borderFocus: `1px solid ${themeColors.primary}`,
+            boxShadowFocus: `0 0 0 3px ${themeColors.primaryAlpha20}`
         },
 
         Tag: {

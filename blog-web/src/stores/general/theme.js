@@ -34,12 +34,10 @@ export const useThemeStore = defineStore('theme', () => {
       root.style.setProperty('--theme-transition', 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)')
     }
 
-    // 切换主题类
+    // 切换主题类（浅色主题使用 :root 默认 token，无需额外类名）
     if (dark) {
       root.classList.add('dark-theme')
-      root.classList.remove('light-theme')
     } else {
-      root.classList.add('light-theme')
       root.classList.remove('dark-theme')
     }
 
@@ -62,7 +60,11 @@ export const useThemeStore = defineStore('theme', () => {
       metaThemeColor.name = 'theme-color'
       document.head.appendChild(metaThemeColor)
     }
-    metaThemeColor.content = dark ? '#0A0B0D' : '#FFFFFF'
+    const bgPrimary = getComputedStyle(document.documentElement)
+      .getPropertyValue('--bg-primary')
+      .trim()
+
+    metaThemeColor.content = bgPrimary || (dark ? '#070A12' : '#F7F9FC')
   }
 
   // 切换主题（循环：light -> dark -> auto）

@@ -1,9 +1,9 @@
 <template>
-    <n-card class="article-list-card">
+    <n-card class="article-list-card panel-card">
         <template #header>
             <n-space :size="8" align="center">
-                <n-icon :component="DocumentTextOutline" size="20" color="#3D7EAE" />
-                <span style="font-weight: 600; font-size: 16px; color: var(--text-primary);">最新文章</span>
+                <n-icon :component="DocumentTextOutline" size="20" color="var(--color-primary)" />
+                <span class="article-list-title">最新文章</span>
             </n-space>
         </template>
         <n-spin :show="loading">
@@ -15,8 +15,8 @@
             <n-empty v-else description="暂无文章" />
         </n-spin>
 
-        <n-pagination v-if="totalPages > 1" v-model:page="currentPage" :page-count="totalPages"
-            style="margin-top: 20px; justify-content: center" @update:page="changePage" />
+        <n-pagination v-if="totalPages > 1" v-model:page="currentPage" :page-count="totalPages" class="article-list-pagination"
+            @update:page="changePage" />
     </n-card>
 </template>
 
@@ -49,11 +49,14 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.article-list-card {
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-md);
-    transition: all var(--transition-base);
-    border: 1px solid var(--border-secondary);
-    background: var(--surface-primary);
+.article-list-title {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-primary);
+}
+
+.article-list-pagination {
+    margin-top: 20px;
+    justify-content: center;
 }
 </style>

@@ -1,15 +1,15 @@
 <template>
-    <n-card style="margin-bottom: 20px" class="category-card">
+    <n-card class="category-card panel-card panel-card-hoverable">
         <template #header>
             <n-space :size="8" align="center">
-                <n-icon :component="FolderOutline" size="20" color="#3D7EAE" />
-                <span style="font-weight: 600; font-size: 16px; color: var(--text-primary);">分类</span>
+                <n-icon :component="FolderOutline" size="20" color="var(--color-primary)" />
+                <span class="category-title">分类</span>
             </n-space>
         </template>
         <n-spin :show="loading" size="small">
             <n-space v-if="!loading && categories.length > 0" vertical>
                 <div v-for="cat in displayCategories" :key="cat.id" class="category-item" @click="goToCategory(cat.id)">
-                    <span style="color: var(--text-primary);">{{ cat.categoryName }}</span>
+                    <span class="category-name">{{ cat.categoryName }}</span>
                     <n-tag :bordered="false" size="small">{{ cat.articleCount || 0 }}</n-tag>
                 </div>
             </n-space>
@@ -62,17 +62,17 @@ onMounted(() => {
 
 <style scoped>
 .category-card {
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-md);
-    transition: all var(--transition-base);
-    border: 1px solid var(--border-secondary);
-    background: var(--surface-primary);
+    margin-bottom: 20px;
 }
 
-.category-card:hover {
-    box-shadow: var(--shadow-elevated);
-    transform: translateY(-2px);
-    border-color: var(--color-primary-alpha-30);
+.category-title {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-primary);
+}
+
+.category-name {
+    color: var(--text-primary);
 }
 
 .category-item {

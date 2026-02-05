@@ -11,7 +11,7 @@
       </n-spin>
 
       <n-pagination v-if="totalPages > 1" v-model:page="currentPage" :page-count="totalPages"
-        style="margin-top: 20px; justify-content: center" @update:page="handlePageChange" />
+        class="tag-pagination" @update:page="handlePageChange" />
     </n-card>
   </div>
 </template>
@@ -100,6 +100,11 @@ onMounted(() => {
   max-width: 900px;
   margin: 0 auto;
   padding: 20px;
+}
+
+.tag-pagination {
+  margin-top: 20px;
+  justify-content: center;
 }
 
 @media (max-width: 768px) {

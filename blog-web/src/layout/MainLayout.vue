@@ -4,8 +4,8 @@
       <div class="header-content">
         <div class="logo" @click="router.push('/')">
           <n-space :size="8" align="center">
-            <n-icon :component="BookOutline" size="32" color="#3D7EAE" />
-            <h2 style="color: #3D7EAE; margin: 0; font-weight: 600; font-size: 24px;">技术博客</h2>
+            <n-icon :component="BookOutline" size="32" color="var(--color-primary)" />
+            <h2 class="site-title">技术博客</h2>
           </n-space>
         </div>
 
@@ -28,11 +28,12 @@
             </template>
             标签
           </n-button>
-          <n-input v-model:value="searchKeyword" placeholder="搜索文章..." style="width: 200px" @keyup.enter="handleSearch">
-            <template #suffix>
-              <n-icon :component="SearchOutline" @click="handleSearch" style="cursor: pointer" />
+          <n-button text @click="router.push('/search')" class="nav-button">
+            <template #icon>
+              <n-icon :component="SearchOutline" />
             </template>
-          </n-input>
+            搜索
+          </n-button>
           <ThemeToggle />
         </n-space>
 
@@ -65,7 +66,7 @@
   <n-drawer v-model:show="showCategoryDrawer" width="400" placement="right" :trap-focus="true" :block-scroll="true"
     @after-enter="handleCategoryDrawerOpen">
     <n-drawer-content title="文章分类">
-      <n-spin v-if="loadingCategories" style="width: 100%; padding: 40px 0" />
+      <n-spin v-if="loadingCategories" class="drawer-loading" />
       <n-list v-else hoverable clickable>
         <n-list-item v-for="cat in categories" :key="cat.id" @click="goToCategory(cat.id)" tabindex="0"
           @keyup.enter="goToCategory(cat.id)">
@@ -82,9 +83,9 @@
   <n-drawer v-model:show="showTagDrawer" width="400" placement="right" :trap-focus="true" :block-scroll="true"
     @after-enter="handleTagDrawerOpen">
     <n-drawer-content title="文章标签">
-      <n-spin v-if="loadingTags" style="width: 100%; padding: 40px 0" />
+      <n-spin v-if="loadingTags" class="drawer-loading" />
       <n-space v-else>
-        <n-tag v-for="tag in tags" :key="tag.id" :bordered="false" round style="cursor: pointer" tabindex="0"
+        <n-tag v-for="tag in tags" :key="tag.id" :bordered="false" round class="clickable-tag" tabindex="0"
           @click="goToTag(tag.id)" @keyup.enter="goToTag(tag.id)">
           {{ tag.tagName }} ({{ tag.articleCount }})
         </n-tag>
@@ -105,7 +106,6 @@ import {
   NLayoutFooter,
   NButton,
   NSpace,
-  NInput,
   NIcon,
   NDropdown,
   NDrawer,
@@ -128,8 +128,6 @@ import {
 const router = useRouter()
 const themeStore = useThemeStore()
 const cacheStore = useCacheStore()
-
-const searchKeyword = ref('')
 const showCategoryDrawer = ref(false)
 const showTagDrawer = ref(false)
 
@@ -137,15 +135,6 @@ const categories = ref([])
 const tags = ref([])
 const loadingCategories = ref(false)
 const loadingTags = ref(false)
-
-const handleSearch = () => {
-  if (searchKeyword.value.trim()) {
-    router.push({
-      path: '/search',
-      query: { keyword: searchKeyword.value }
-    })
-  }
-}
 
 const goToCategory = (id) => {
   showCategoryDrawer.value = false
@@ -228,6 +217,13 @@ onMounted(() => {
   user-select: none;
 }
 
+.site-title {
+  color: var(--color-primary);
+  margin: 0;
+  font-weight: 600;
+  font-size: 24px;
+}
+
 .nav-button {
   color: var(--text-secondary);
   font-size: 16px;
@@ -237,8 +233,8 @@ onMounted(() => {
 }
 
 .nav-button:hover {
-  color: #3D7EAE;
-  background-color: rgba(61, 126, 174, 0.1);
+  color: var(--color-primary);
+  background-color: var(--color-primary-alpha-10);
 }
 
 .theme-toggle {
@@ -276,6 +272,15 @@ onMounted(() => {
   color: var(--text-tertiary);
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.drawer-loading {
+  width: 100%;
+  padding: 40px 0;
+}
+
+.clickable-tag {
+  cursor: pointer;
 }
 
 .content {

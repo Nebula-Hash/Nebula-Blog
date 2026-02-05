@@ -3,7 +3,7 @@
     <!-- 轮播图 -->
     <BannerCarousel />
 
-    <n-grid :cols="4" :x-gap="20" :y-gap="20" style="margin-top: 30px">
+    <n-grid :cols="4" :x-gap="20" :y-gap="20" class="home-grid">
       <n-gi :span="3">
         <!-- 推荐文章 -->
         <RecommendArticles />
@@ -61,5 +61,9 @@ const TagCloud = createLazyComponent(
 <style scoped>
 .home-page {
   width: 100%;
+}
+
+.home-grid {
+  margin-top: 30px;
 }
 </style>

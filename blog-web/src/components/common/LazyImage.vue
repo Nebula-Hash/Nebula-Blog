@@ -194,7 +194,12 @@ watch(() => props.src, () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(
+    90deg,
+    var(--surface-secondary) 25%,
+    var(--surface-tertiary) 50%,
+    var(--surface-secondary) 75%
+  );
   background-size: 200% 100%;
   animation: loading 1.5s ease-in-out infinite;
 }

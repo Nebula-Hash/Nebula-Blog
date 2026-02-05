@@ -4,26 +4,29 @@
         <!-- 轮播图容器 -->
         <div class="carousel-container" ref="carouselRef">
             <!-- 轮播图片列表 -->
-            <transition-group :name="slideDirection" tag="div" class="carousel-slides">
-                <div v-for="(banner, index) in banners" v-show="index === currentIndex" :key="banner.id"
-                    class="carousel-slide" @click="handleBannerClick(banner)">
-                    <!-- 图片 - 使用picture标签支持WebP -->
-                    <picture>
-                        <source v-if="banner.imageUrl.endsWith('.webp')" :srcset="banner.imageUrl" type="image/webp" />
-                        <source v-else-if="supportsWebP && /\/\d{4}-\d{2}-\d{2}/.test(banner.imageUrl)"
-                            :srcset="banner.imageUrl" type="image/webp" />
-                        <img :src="banner.imageUrl" :alt="banner.title" class="banner-image" />
-                    </picture>
+            <div class="carousel-slides">
+                <div ref="trackRef" class="carousel-track" :class="{ 'no-transition': !enableTransition }"
+                    :style="trackStyle" @transitionend="handleTrackTransitionEnd">
+                    <div v-for="(banner, index) in displayBanners" :key="`${banner.id}-${index}`" class="carousel-slide"
+                        @click="handleBannerClick(banner)">
+                        <!-- 图片 - 使用picture标签支持WebP -->
+                        <picture>
+                            <source v-if="banner.imageUrl.endsWith('.webp')" :srcset="banner.imageUrl" type="image/webp" />
+                            <source v-else-if="supportsWebP && /\/\d{4}-\d{2}-\d{2}/.test(banner.imageUrl)"
+                                :srcset="banner.imageUrl" type="image/webp" />
+                            <img :src="banner.imageUrl" :alt="banner.title" class="banner-image" />
+                        </picture>
 
-                    <!-- 渐变遮罩层 -->
-                    <div class="banner-overlay"></div>
+                        <!-- 渐变遮罩层 -->
+                        <div class="banner-overlay"></div>
 
-                    <!-- 标题信息 -->
-                    <div class="banner-info">
-                        <h2 class="banner-title">{{ banner.title }}</h2>
+                        <!-- 标题信息 -->
+                        <div class="banner-info">
+                            <h2 class="banner-title">{{ banner.title }}</h2>
+                        </div>
                     </div>
                 </div>
-            </transition-group>
+            </div>
 
             <!-- 左右导航箭头 -->
             <button class="carousel-arrow carousel-arrow-left" @click="prevSlide" aria-label="上一张">
@@ -46,7 +49,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { NIcon, NSpin, NEmpty } from 'naive-ui'
 import { ChevronBackOutline, ChevronForwardOutline } from '@vicons/ionicons5'
@@ -71,12 +74,28 @@ supportsWebP.value = checkWebPSupport()
 
 // 状态管理
 const banners = ref([])
-const currentIndex = ref(0)
+const currentIndex = ref(0) // 指示器索引（真实列表）
+const trackIndex = ref(1) // 轨道索引（包含首尾克隆）
 const loading = ref(true)
 const isAutoPlaying = ref(true)
 const autoPlayTimer = ref(null)
 const carouselRef = ref(null)
-const slideDirection = ref('slide-left') // 控制动画方向
+const trackRef = ref(null)
+const enableTransition = ref(true)
+const isTransitioning = ref(false)
+
+const displayBanners = computed(() => {
+    if (!banners.value || banners.value.length === 0) return []
+    const first = banners.value[0]
+    const last = banners.value[banners.value.length - 1]
+    return [last, ...banners.value, first]
+})
+
+const trackStyle = computed(() => {
+    return {
+        transform: `translateX(-${trackIndex.value * 100}%)`
+    }
+})
 
 // 配置项
 const AUTO_PLAY_INTERVAL = 5000 // 自动播放间隔（毫秒）
@@ -87,6 +106,8 @@ const fetchBanners = async () => {
         loading.value = true
         banners.value = await cacheStore.fetchBannerList()
         if (banners.value.length > 0) {
+            currentIndex.value = 0
+            trackIndex.value = 1
             startAutoPlay()
         }
     } catch (error) {
@@ -96,29 +117,96 @@ const fetchBanners = async () => {
     }
 }
 
-// 切换到下一张（动画向左，显示右边的图）
+// 切换到下一张（向左滑动）
 const nextSlide = () => {
     if (banners.value.length === 0) return
-    slideDirection.value = 'slide-left'
+    if (isTransitioning.value) return
+    isTransitioning.value = true
+    enableTransition.value = true
+    trackIndex.value = trackIndex.value + 1
     currentIndex.value = (currentIndex.value + 1) % banners.value.length
 }
 
-// 切换到上一张（动画向右，显示左边的图）
+// 切换到上一张（向右滑动）
 const prevSlide = () => {
     if (banners.value.length === 0) return
-    slideDirection.value = 'slide-right'
+    if (isTransitioning.value) return
+    isTransitioning.value = true
+    enableTransition.value = true
+    trackIndex.value = trackIndex.value - 1
     currentIndex.value = (currentIndex.value - 1 + banners.value.length) % banners.value.length
 }
 
 // 跳转到指定幻灯片
 const goToSlide = (index) => {
-    // 根据目标位置决定动画方向
-    if (index > currentIndex.value) {
-        slideDirection.value = 'slide-left'
-    } else if (index < currentIndex.value) {
-        slideDirection.value = 'slide-right'
-    }
+    if (banners.value.length === 0) return
+    if (isTransitioning.value) return
+    isTransitioning.value = true
+    enableTransition.value = true
     currentIndex.value = index
+    trackIndex.value = index + 1
+}
+
+const handleTrackTransitionEnd = (event) => {
+    if (event.target !== trackRef.value) return
+    if (event.propertyName && event.propertyName !== 'transform') return
+    const len = banners.value.length
+    if (len === 0) return
+
+    const el = trackRef.value
+
+    // 到达克隆页时：先在下一帧关闭过渡，再在随后一帧跳回真实位置，避免出现“走马灯回滚”动画
+    if (trackIndex.value === 0) {
+        enableTransition.value = false
+        if (el) {
+            el.style.transition = 'none'
+            void el.offsetHeight
+        }
+        trackIndex.value = len
+        nextTick(() => {
+            if (el) {
+                el.style.transform = `translateX(-${trackIndex.value * 100}%)`
+                void el.offsetHeight
+            }
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    if (el) {
+                        el.style.transition = ''
+                    }
+                    enableTransition.value = true
+                    isTransitioning.value = false
+                })
+            })
+        })
+        return
+    }
+
+    if (trackIndex.value === len + 1) {
+        enableTransition.value = false
+        if (el) {
+            el.style.transition = 'none'
+            void el.offsetHeight
+        }
+        trackIndex.value = 1
+        nextTick(() => {
+            if (el) {
+                el.style.transform = `translateX(-${trackIndex.value * 100}%)`
+                void el.offsetHeight
+            }
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    if (el) {
+                        el.style.transition = ''
+                    }
+                    enableTransition.value = true
+                    isTransitioning.value = false
+                })
+            })
+        })
+        return
+    }
+
+    isTransitioning.value = false
 }
 
 // 开始自动播放
@@ -244,12 +332,23 @@ onUnmounted(() => {
     height: 100%;
 }
 
-.carousel-slide {
-    position: absolute;
-    top: 0;
-    left: 0;
+.carousel-track {
+    display: flex;
     width: 100%;
     height: 100%;
+    will-change: transform;
+    transition: transform 600ms ease;
+}
+
+.carousel-track.no-transition {
+    transition: none;
+}
+
+.carousel-slide {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    flex: 0 0 100%;
     cursor: pointer;
 }
 

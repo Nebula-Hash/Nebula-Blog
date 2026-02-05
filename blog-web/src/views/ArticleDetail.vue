@@ -1,7 +1,7 @@
 <template>
   <div class="article-detail">
     <n-spin :show="loading">
-      <n-card v-if="article">
+      <n-card v-if="article" class="panel-card">
         <!-- 文章头部（包含标签） -->
         <ArticleHeader :article="article" :liking="liking" :collecting="collecting" @like="handleLike"
           @collect="handleCollect" />

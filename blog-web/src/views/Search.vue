@@ -1,10 +1,10 @@
 <template>
   <div class="search-page">
-    <n-card class="search-card">
+    <n-card class="search-card panel-card">
       <template #header>
         <n-space :size="12" align="center">
-          <n-icon :component="SearchOutline" size="24" color="#3D7EAE" />
-          <span style="font-weight: 600; font-size: 18px;">搜索文章</span>
+          <n-icon :component="SearchOutline" size="24" color="var(--color-primary)" />
+          <span class="search-title">搜索文章</span>
         </n-space>
       </template>
 
@@ -33,7 +33,7 @@
           </n-gi>
         </n-grid>
 
-        <n-space justify="end" style="margin-top: 10px">
+        <n-space justify="end" class="search-actions">
           <n-button @click="handleReset">重置</n-button>
           <n-button type="primary" @click="handleSearch" :loading="loading">
             <template #icon>
@@ -46,7 +46,7 @@
     </n-card>
 
     <!-- 搜索结果 -->
-    <n-card class="result-card" style="margin-top: 20px">
+    <n-card class="result-card panel-card">
       <template #header>
         <n-space justify="space-between" align="center">
           <span>搜索结果</span>
@@ -63,8 +63,8 @@
         <n-empty v-else description="暂无搜索结果" />
       </n-spin>
 
-      <n-pagination v-if="totalPages > 1" v-model:page="currentPage" :page-count="totalPages"
-        style="margin-top: 20px; justify-content: center" @update:page="handlePageChange" />
+      <n-pagination v-if="totalPages > 1" v-model:page="currentPage" :page-count="totalPages" class="search-pagination"
+        @update:page="handlePageChange" />
     </n-card>
   </div>
 </template>
@@ -156,11 +156,27 @@ onMounted(() => {
   margin: 0 auto;
 }
 
+.search-title {
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.search-actions {
+  margin-top: 10px;
+}
+
+.result-card {
+  margin-top: 20px;
+}
+
+.search-pagination {
+  margin-top: 20px;
+  justify-content: center;
+}
+
 .search-card,
 .result-card {
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-secondary);
-  background: var(--surface-primary);
+  width: 100%;
 }
 </style>

@@ -100,7 +100,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   height: 3px;
-  background-color: rgba(150, 150, 150, 0.1);
+  background-color: var(--divider-secondary);
   z-index: 1000;
   opacity: 0;
   transition: opacity 0.3s ease;

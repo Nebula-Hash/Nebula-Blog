@@ -1,9 +1,9 @@
 <template>
-    <n-card v-if="recommendArticles.length > 0" style="margin-bottom: 20px" class="recommend-card">
+    <n-card v-if="recommendArticles.length > 0" class="recommend-card panel-card panel-card-hoverable">
         <template #header>
             <n-space :size="8" align="center">
-                <n-icon :component="BookmarkOutline" size="20" color="#3D7EAE" />
-                <span style="font-weight: 600; font-size: 16px; color: var(--text-primary);">推荐文章</span>
+                <n-icon :component="BookmarkOutline" size="20" color="var(--color-primary)" />
+                <span class="recommend-title">推荐文章</span>
             </n-space>
         </template>
         <n-spin :show="loading">
@@ -12,11 +12,11 @@
                     <template #prefix>
                         <n-tag type="warning" size="small">置顶</n-tag>
                     </template>
-                    <span style="color: var(--text-primary);">{{ article.title }}</span>
+                    <span class="recommend-item-title">{{ article.title }}</span>
                     <template #suffix>
-                        <n-space :size="6" align="center" style="white-space: nowrap;">
+                        <n-space :size="6" align="center" class="recommend-item-suffix">
                             <n-icon :component="EyeOutline" size="16" />
-                            <span style="color: var(--text-tertiary);">{{ article.viewCount }}</span>
+                            <span class="recommend-item-view">{{ article.viewCount }}</span>
                         </n-space>
                     </template>
                 </n-list-item>
@@ -57,16 +57,24 @@ onMounted(() => {
 
 <style scoped>
 .recommend-card {
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-md);
-    transition: all var(--transition-base);
-    border: 1px solid var(--color-primary-alpha-10);
-    background: var(--surface-primary);
+    margin-bottom: 20px;
 }
 
-.recommend-card:hover {
-    box-shadow: var(--shadow-elevated);
-    transform: translateY(-2px);
-    border-color: var(--color-primary-alpha-30);
+.recommend-title {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-primary);
+}
+
+.recommend-item-title {
+    color: var(--text-primary);
+}
+
+.recommend-item-suffix {
+    white-space: nowrap;
+}
+
+.recommend-item-view {
+    color: var(--text-tertiary);
 }
 </style>

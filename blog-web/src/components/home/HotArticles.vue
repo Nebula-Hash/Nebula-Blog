@@ -1,9 +1,9 @@
 <template>
-    <n-card style="margin-bottom: 20px" class="hot-card">
+    <n-card class="hot-card panel-card panel-card-hoverable">
         <template #header>
             <n-space :size="8" align="center">
-                <n-icon :component="FlameOutline" size="20" color="#3D7EAE" />
-                <span style="font-weight: 600; font-size: 16px; color: var(--text-primary);">热门文章</span>
+                <n-icon :component="FlameOutline" size="20" color="var(--color-primary)" />
+                <span class="hot-title">热门文章</span>
             </n-space>
         </template>
         <n-spin :show="loading">
@@ -14,11 +14,11 @@
                             {{ index + 1 }}
                         </n-tag>
                     </template>
-                    <n-ellipsis style="max-width: 180px; color: var(--text-primary);">
+                    <n-ellipsis class="hot-article-title">
                         {{ article.title }}
                     </n-ellipsis>
                     <template #suffix>
-                        <span style="font-size: 12px; color: var(--text-tertiary); white-space: nowrap;">
+                        <span class="hot-article-suffix">
                             {{ article.viewCount }}
                         </span>
                     </template>
@@ -62,16 +62,34 @@ onMounted(() => {
 
 <style scoped>
 .hot-card {
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-md);
-    transition: all var(--transition-base);
-    border: 1px solid var(--color-primary-alpha-10);
-    background: var(--surface-primary);
+    margin-bottom: 20px;
 }
 
-.hot-card:hover {
-    box-shadow: var(--shadow-elevated);
-    transform: translateY(-2px);
-    border-color: var(--color-primary-alpha-30);
+.hot-title {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-primary);
+}
+
+.hot-card :deep(.n-list-item) {
+    width: 100%;
+    overflow: hidden;
+}
+
+.hot-card :deep(.n-list-item__main) {
+    min-width: 0;
+}
+
+.hot-article-title {
+    flex: 1;
+    min-width: 0;
+    color: var(--text-primary);
+}
+
+.hot-article-suffix {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    flex: none;
 }
 </style>
