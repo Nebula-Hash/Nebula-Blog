@@ -6,7 +6,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useThrottle } from '@/composables/helper/useThrottle'
+import { throttle } from '@/utils/performance'
 
 const props = defineProps({
   target: {
@@ -52,7 +52,7 @@ const calculateProgress = () => {
 }
 
 // 使用节流优化性能（100ms）
-const throttledCalculate = useThrottle(calculateProgress, 100)
+const throttledCalculate = throttle(calculateProgress, 100)
 
 // 滚动事件处理
 const handleScroll = () => {

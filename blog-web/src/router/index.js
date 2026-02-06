@@ -14,7 +14,7 @@ const routes = [
         }
       },
       {
-        path: '/article/:id',
+        path: 'article/:id',
         name: 'ArticleDetail',
         component: () => import(/* webpackChunkName: "article" */ '@/views/ArticleDetail.vue'),
         meta: {
@@ -22,7 +22,7 @@ const routes = [
         }
       },
       {
-        path: '/category/:id',
+        path: 'category/:id',
         name: 'Category',
         component: () => import(/* webpackChunkName: "category" */ '@/views/Category.vue'),
         meta: {
@@ -30,7 +30,7 @@ const routes = [
         }
       },
       {
-        path: '/tag/:id',
+        path: 'tag/:id',
         name: 'Tag',
         component: () => import(/* webpackChunkName: "tag" */ '@/views/Tag.vue'),
         meta: {
@@ -38,7 +38,7 @@ const routes = [
         }
       },
       {
-        path: '/search',
+        path: 'search',
         name: 'Search',
         component: () => import(/* webpackChunkName: "search" */ '@/views/Search.vue'),
         meta: {
@@ -58,26 +58,25 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.path !== from.path) {
+      return { top: 0, left: 0, behavior: 'smooth' }
+    }
+    return undefined
+  }
 })
 
 // 路由守卫
-router.beforeEach(async (to, from, next) => {
+router.beforeEach((to, from, next) => {
   // 设置页面标题
   if (to.meta.title) {
     document.title = `${to.meta.title} - 技术博客`
   }
 
   next()
-})
-
-// 路由后置守卫 - 滚动到顶部
-router.afterEach((to, from) => {
-  // 页面切换时滚动到顶部
-  if (to.path !== from.path) {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
 })
 
 export default router

@@ -11,7 +11,7 @@ import axios from 'axios'
  * @returns {boolean}
  */
 export const isCancelError = (error) => {
-    return axios.isCancel(error) || error?.name === 'AbortError' || error?.name === 'CanceledError'
+    return axios.isCancel(error) || error?.code === 'ERR_CANCELED' || error?.name === 'AbortError' || error?.name === 'CanceledError'
 }
 
 /**

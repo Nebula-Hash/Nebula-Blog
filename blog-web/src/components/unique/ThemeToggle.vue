@@ -19,7 +19,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--color-primary);
+  background-color: #2196f3;
   -webkit-transition: 0.4s;
   transition: 0.4s;
   z-index: 0;
@@ -33,17 +33,17 @@
   width: 26px;
   left: 4px;
   bottom: 4px;
-  background-color: var(--color-warning);
+  background-color: yellow;
   -webkit-transition: 0.4s;
   transition: 0.4s;
 }
 
 #input:checked+.slider {
-  background-color: var(--bg-tertiary);
+  background-color: black;
 }
 
 #input:focus+.slider {
-  box-shadow: 0 0 1px var(--color-primary);
+  box-shadow: 0 0 1px #2196f3;
 }
 
 #input:checked+.slider .sun-moon {
@@ -58,7 +58,7 @@
 .moon-dot {
   opacity: 0;
   transition: 0.4s;
-  fill: var(--text-tertiary);
+  fill: gray;
 }
 
 #input:checked+.slider .sun-moon .moon-dot {
@@ -135,7 +135,7 @@
 
 .cloud-light {
   position: absolute;
-  fill: var(--surface-secondary);
+  fill: #eee;
   animation-name: cloud-move;
   animation-duration: 6s;
   animation-iteration-count: infinite;
@@ -143,7 +143,7 @@
 
 .cloud-dark {
   position: absolute;
-  fill: var(--surface-tertiary);
+  fill: #ccc;
   animation-name: cloud-move;
   animation-duration: 6s;
   animation-iteration-count: infinite;
@@ -271,16 +271,6 @@
     transform: scale(1);
   }
 }
-
-@keyframes rotate-center {
-  0% {
-    transform: translateX(26px) rotate(0deg);
-  }
-
-  100% {
-    transform: translateX(26px) rotate(360deg);
-  }
-}
 </style>
 
 <template>
@@ -351,6 +341,7 @@
     </div>
   </label>
 </template>
+
 
 <script setup>
 import { useThemeStore } from '@/stores'

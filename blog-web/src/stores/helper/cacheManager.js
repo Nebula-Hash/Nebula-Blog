@@ -4,6 +4,41 @@
  */
 import { getItem, setItem } from '../../utils/storage'
 
+function stableStringify(value) {
+    if (value === null || value === undefined) return String(value)
+    const type = typeof value
+    if (type === 'string') return JSON.stringify(value)
+    if (type === 'number' || type === 'boolean' || type === 'bigint') return String(value)
+    if (type === 'function' || type === 'symbol') return JSON.stringify(String(value))
+
+    if (Array.isArray(value)) {
+        return `[${value.map(stableStringify).join(',')}]`
+    }
+
+    if (value instanceof Date) {
+        return JSON.stringify(value.toISOString())
+    }
+
+    if (value instanceof Map) {
+        const entries = Array.from(value.entries()).map(([k, v]) => [stableStringify(k), stableStringify(v)])
+        entries.sort((a, b) => (a[0] > b[0] ? 1 : a[0] < b[0] ? -1 : 0))
+        return `{${entries.map(([k, v]) => `${k}:${v}`).join(',')}}`
+    }
+
+    if (value instanceof Set) {
+        const items = Array.from(value.values()).map(stableStringify).sort()
+        return `[${items.join(',')}]`
+    }
+
+    if (type === 'object') {
+        const keys = Object.keys(value).sort()
+        const pairs = keys.map((k) => `${JSON.stringify(k)}:${stableStringify(value[k])}`)
+        return `{${pairs.join(',')}}`
+    }
+
+    return JSON.stringify(String(value))
+}
+
 /**
  * 创建缓存管理器
  * @param {Object} options - 配置选项
@@ -18,7 +53,7 @@ export function createCacheManager(options = {}) {
         storageKey = 'cache',
         ttl = 5 * 60 * 1000, // 默认 5 分钟
         maxSize = 50,
-        keyGenerator = (key) => JSON.stringify(key)
+        keyGenerator = (key) => stableStringify(key)
     } = options
 
     let cache = {}

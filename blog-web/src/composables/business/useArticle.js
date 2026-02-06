@@ -4,7 +4,7 @@
  */
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useArticleStore } from '@/stores'
+import { ArticleQueryService } from '@/services/articleService'
 import { showWarning } from '@/utils/common'
 import { createErrorHandler } from '@/utils/errorHandler'
 
@@ -21,7 +21,6 @@ export function useArticleList(options = {}) {
         pageSize = 10
     } = options
 
-    const articleStore = useArticleStore()
     const errorHandler = createErrorHandler('ArticleList')
 
     const loading = ref(false)
@@ -43,7 +42,7 @@ export function useArticleList(options = {}) {
                 ...params
             }
 
-            const data = await articleStore.fetchArticleList(queryParams, useCache)
+            const data = await ArticleQueryService.getList(queryParams, useCache)
             articles.value = data.records || []
             total.value = data.total || 0
         } catch (error) {
@@ -92,7 +91,6 @@ export function useArticleDetail(options = {}) {
         useCache = true
     } = options
 
-    const articleStore = useArticleStore()
     const errorHandler = createErrorHandler('ArticleDetail')
 
     const loading = ref(false)
@@ -105,7 +103,7 @@ export function useArticleDetail(options = {}) {
     const loadArticle = async (articleId) => {
         loading.value = true
         try {
-            const data = await articleStore.fetchArticleDetail(articleId, useCache)
+            const data = await ArticleQueryService.getDetail(articleId, useCache)
             article.value = data
         } catch (error) {
             errorHandler.handleLoad(error, '文章详情')
@@ -119,7 +117,7 @@ export function useArticleDetail(options = {}) {
      * 刷新文章详情（强制从服务器获取）
      */
     const refresh = async (articleId) => {
-        await articleStore.fetchArticleDetail(articleId, false)
+        await ArticleQueryService.getDetail(articleId, false)
     }
 
     return {
@@ -135,8 +133,6 @@ export function useArticleDetail(options = {}) {
  * @returns {Object}
  */
 export function useArticleInteraction() {
-    const articleStore = useArticleStore()
-
     const liking = ref(false)
     const collecting = ref(false)
 

@@ -3,14 +3,7 @@
  * 封装文章相关的业务逻辑，提供统一的数据处理接口
  * 类似后端的 BlogArticleService
  */
-import {
-    getArticleList as getArticleListApi,
-    getArticleDetail as getArticleDetailApi,
-    getHotArticles as getHotArticlesApi,
-    getRecommendArticles as getRecommendArticlesApi,
-    likeArticle as likeArticleApi,
-    collectArticle as collectArticleApi
-} from '@/api/article'
+import { useArticleStore } from '@/stores'
 
 /**
  * 文章查询服务
@@ -19,41 +12,59 @@ export class ArticleQueryService {
     /**
      * 获取文章列表
      * @param {Object} params - 查询参数
+     * @param {boolean} useCache - 是否使用缓存
      * @returns {Promise<Object>}
      */
-    static async getList(params = {}) {
-        const response = await getArticleListApi(params)
-        return response.data
+    static async getList(params = {}, useCache = true) {
+        const articleStore = useArticleStore()
+        const data = await articleStore.fetchArticleList(params, useCache)
+
+        if (data?.records) {
+            return {
+                ...data,
+                records: ArticleConverterService.formatArticleList(data.records)
+            }
+        }
+
+        return data
     }
 
     /**
      * 获取文章详情
      * @param {number|string} articleId - 文章ID
+     * @param {boolean} useCache - 是否使用缓存
      * @returns {Promise<Object>}
      */
-    static async getDetail(articleId) {
-        const response = await getArticleDetailApi(articleId)
-        return response.data
+    static async getDetail(articleId, useCache = true) {
+        const articleStore = useArticleStore()
+        const data = await articleStore.fetchArticleDetail(articleId, useCache)
+        return ArticleConverterService.formatArticleDetail(data)
     }
 
     /**
      * 获取热门文章
      * @param {number} limit - 数量限制
+     * @param {boolean} useCache - 是否使用缓存
      * @returns {Promise<Array>}
      */
-    static async getHotArticles(limit = 5) {
-        const response = await getHotArticlesApi(limit)
-        return response.data
+    static async getHotArticles(limit = 5, useCache = true) {
+        const articleStore = useArticleStore()
+        const data = await articleStore.fetchArticleList({ current: 1, size: limit, hot: true }, useCache)
+        const records = data?.records || []
+        return ArticleConverterService.formatArticleList(records)
     }
 
     /**
      * 获取推荐文章
      * @param {number} limit - 数量限制
+     * @param {boolean} useCache - 是否使用缓存
      * @returns {Promise<Array>}
      */
-    static async getRecommendArticles(limit = 5) {
-        const response = await getRecommendArticlesApi(limit)
-        return response.data
+    static async getRecommendArticles(limit = 5, useCache = true) {
+        const articleStore = useArticleStore()
+        const data = await articleStore.fetchArticleList({ current: 1, size: limit, recommend: true }, useCache)
+        const records = data?.records || []
+        return ArticleConverterService.formatArticleList(records)
     }
 
     /**
@@ -82,7 +93,8 @@ export class ArticleInteractionService {
      * @returns {Promise<void>}
      */
     static async like(articleId) {
-        await likeArticleApi(articleId)
+        const articleStore = useArticleStore()
+        await articleStore.toggleLike(articleId)
     }
 
     /**
@@ -91,7 +103,8 @@ export class ArticleInteractionService {
      * @returns {Promise<void>}
      */
     static async collect(articleId) {
-        await collectArticleApi(articleId)
+        const articleStore = useArticleStore()
+        await articleStore.toggleFavorite(articleId)
     }
 }
 

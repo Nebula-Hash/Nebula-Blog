@@ -22,5 +22,6 @@
     "cSpell.words": [
         "persistedstate",
         "vicons"
-    ]
+    ],
+    "chatgpt.openOnStartup": true
 }

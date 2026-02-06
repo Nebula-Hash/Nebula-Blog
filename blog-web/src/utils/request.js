@@ -6,11 +6,9 @@
 // 3. 使用 silent: true 可完全静默处理错误（拦截器和业务层都不显示）
 
 import axios from 'axios'
-import { showError } from '@/utils/common'
 import {
   HTTP_CONFIG,
-  HTTP_STATUS,
-  CACHE_CONFIG
+  HTTP_STATUS
 } from '@/config/constants'
 
 const request = axios.create({
@@ -18,42 +16,9 @@ const request = axios.create({
   timeout: HTTP_CONFIG.TIMEOUT
 })
 
-// 错误去重机制：防止短时间内相同错误重复弹窗
-const errorMessageCache = new Map()
-
-/**
- * 显示错误消息（带去重）
- */
-function showErrorMessage(message) {
-  const now = Date.now()
-  const cached = errorMessageCache.get(message)
-
-  // 如果缓存时长内已经显示过相同消息，则跳过
-  if (cached && now - cached < CACHE_CONFIG.ERROR_MESSAGE_TTL) {
-    return
-  }
-
-  errorMessageCache.set(message, now)
-  showError(message)
-
-  // 清理过期缓存
-  setTimeout(() => {
-    errorMessageCache.delete(message)
-  }, CACHE_CONFIG.ERROR_MESSAGE_TTL)
-}
-
 // 请求拦截器
 request.interceptors.request.use(
   config => {
-    // 支持 AbortController signal
-    if (config.signal) {
-      config.cancelToken = new axios.CancelToken((cancel) => {
-        config.signal.addEventListener('abort', () => {
-          cancel('Request canceled by user')
-        })
-      })
-    }
-
     return config
   },
   error => {
@@ -105,16 +70,16 @@ function handleBusinessError(res) {
   // 特殊错误码处理
   switch (status) {
     case HTTP_STATUS.FORBIDDEN:
-      showErrorMessage('权限不足，无法访问')
+      console.error('[Request] 权限不足，无法访问')
       break
     case HTTP_STATUS.NOT_FOUND:
-      showErrorMessage('请求的资源不存在')
+      console.error('[Request] 请求的资源不存在')
       break
     case HTTP_STATUS.INTERNAL_SERVER_ERROR:
-      showErrorMessage('服务器错误，请稍后重试')
+      console.error('[Request] 服务器错误，请稍后重试')
       break
     default:
-      showErrorMessage(message)
+      console.error('[Request] 请求失败:', message)
   }
 }
 
@@ -123,32 +88,32 @@ function handleBusinessError(res) {
  */
 function handleNetworkError(error) {
   if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-    showErrorMessage('请求超时，请检查网络连接')
+    console.error('[Request] 请求超时，请检查网络连接')
   } else if (error.response) {
     // 服务器返回了错误状态码
     const status = error.response.status
     switch (status) {
       case HTTP_STATUS.FORBIDDEN:
-        showErrorMessage('权限不足，无法访问')
+        console.error('[Request] 权限不足，无法访问')
         break
       case HTTP_STATUS.NOT_FOUND:
-        showErrorMessage('请求的资源不存在')
+        console.error('[Request] 请求的资源不存在')
         break
       case HTTP_STATUS.INTERNAL_SERVER_ERROR:
       case HTTP_STATUS.BAD_GATEWAY:
       case HTTP_STATUS.SERVICE_UNAVAILABLE:
       case HTTP_STATUS.GATEWAY_TIMEOUT:
-        showErrorMessage('服务器错误，请稍后重试')
+        console.error('[Request] 服务器错误，请稍后重试')
         break
       default:
-        showErrorMessage(error.message || '网络错误')
+        console.error('[Request] 网络错误:', error.message || '网络错误')
     }
   } else if (error.request) {
     // 请求已发送但没有收到响应
-    showErrorMessage('网络连接失败，请检查网络')
+    console.error('[Request] 网络连接失败，请检查网络')
   } else {
     // 其他错误
-    showErrorMessage(error.message || '请求失败')
+    console.error('[Request] 请求失败:', error.message || '请求失败')
   }
 }
 

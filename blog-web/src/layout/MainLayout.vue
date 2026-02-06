@@ -98,7 +98,7 @@
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useThemeStore, useCacheStore } from '@/stores'
-import ThemeToggle from '@/components/common/ThemeToggle.vue'
+import ThemeToggle from '@/components/unique/ThemeToggle.vue'
 import {
   NLayout,
   NLayoutHeader,

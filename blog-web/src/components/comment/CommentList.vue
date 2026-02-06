@@ -45,7 +45,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { NText, NSpin, NEmpty, useMessage, useDialog } from 'naive-ui'
 import { useCommentStore } from '@/stores'
 import { useInfiniteScroll } from '@/composables/helper/useInfiniteScroll'
-import { useDebounce } from '@/composables/helper/useDebounce'
+import { debounce } from '@/utils/performance'
 import { asyncWrapper } from '@/utils/errorHandler'
 import CommentInput from './CommentInput.vue'
 import CommentTree from './CommentTree.vue'
@@ -100,7 +100,7 @@ const handlePublish = async (content) => {
 }
 
 // 回复评论 - 已禁用
-const handleReply = useDebounce(async (replyData) => {
+const handleReply = debounce(async (replyData) => {
   message.warning('回复功能需要登录，请前往权限测试项目体验')
 }, 500)
 
@@ -115,7 +115,7 @@ const handleLoadMoreReplies = async ({ rootId, currentPage }) => {
 }
 
 // 点赞评论 - 已禁用
-const handleLike = useDebounce(async (commentId) => {
+const handleLike = debounce(async (commentId) => {
   message.warning('点赞功能需要登录，请前往权限测试项目体验')
 }, 300)
 
