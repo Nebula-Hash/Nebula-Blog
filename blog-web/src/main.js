@@ -9,6 +9,8 @@ import './css/style.css'
 // 导入 Naive UI
 import naive from 'naive-ui'
 
+import { setupTheme } from './app/setupTheme'
+
 // 性能监控（仅在开发环境）
 if (import.meta.env.DEV) {
     import('./composables/helper/usePerformance').then(({ createGlobalPerformanceMonitor }) => {
@@ -43,6 +45,8 @@ pinia.use(piniaPluginPersistedstate)
 app.use(pinia)
 app.use(router)
 app.use(naive)
+
+setupTheme(pinia)
 
 // 全局配置 - 禁用 Naive UI 的 aria-hidden 警告（这是库的已知问题）
 // 参考：https://github.com/tusen-ai/naive-ui/issues/4820

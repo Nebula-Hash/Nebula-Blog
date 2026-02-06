@@ -11,7 +11,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, unref } from 'vue'
 import { NConfigProvider, NMessageProvider, NDialogProvider, NNotificationProvider } from 'naive-ui'
 import { useThemeStore } from '@/stores'
 import { createNaiveTheme } from '@/config/theme'
@@ -19,7 +19,7 @@ import { createNaiveTheme } from '@/config/theme'
 const themeStore = useThemeStore()
 
 // 动态主题配置，根据当前主题切换
-const themeOverrides = computed(() => createNaiveTheme(themeStore.isDark))
+const themeOverrides = computed(() => createNaiveTheme(unref(themeStore.isDark)))
 </script>
 
 <style>

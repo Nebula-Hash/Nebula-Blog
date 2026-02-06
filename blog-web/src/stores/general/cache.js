@@ -4,47 +4,45 @@ import { getBannerList } from '@/api/banner'
 import { getCategoryList } from '@/api/category'
 import { getTagList } from '@/api/tag'
 import { getHotArticles, getRecommendArticles } from '@/api/article'
-import { useGlobalStore } from './global'
+import { LOCAL_CACHE_CONFIG } from '@/config/constants'
 
 /**
  * 统一缓存管理 Store
  * 为 banner、category、tag 等提供统一的缓存策略
  */
 export const useCacheStore = defineStore('cache', () => {
-    const globalStore = useGlobalStore()
-
     // Banner 缓存管理器
     const bannerCacheManager = createCacheManager({
-        storageKey: 'bannerCache',
-        ttl: 30 * 60 * 1000, // 30分钟
+        storageKey: `${LOCAL_CACHE_CONFIG.KEY_PREFIX}banner`,
+        ttl: LOCAL_CACHE_CONFIG.TTL.THIRTY_MINUTES,
         maxSize: 5
     })
 
     // Category 缓存管理器
     const categoryCacheManager = createCacheManager({
-        storageKey: 'categoryCache',
-        ttl: 30 * 60 * 1000, // 30分钟
+        storageKey: `${LOCAL_CACHE_CONFIG.KEY_PREFIX}category`,
+        ttl: LOCAL_CACHE_CONFIG.TTL.THIRTY_MINUTES,
         maxSize: 5
     })
 
     // Tag 缓存管理器
     const tagCacheManager = createCacheManager({
-        storageKey: 'tagCache',
-        ttl: 30 * 60 * 1000, // 30分钟
+        storageKey: `${LOCAL_CACHE_CONFIG.KEY_PREFIX}tag`,
+        ttl: LOCAL_CACHE_CONFIG.TTL.THIRTY_MINUTES,
         maxSize: 5
     })
 
     // 热门文章缓存管理器
     const hotArticlesCacheManager = createCacheManager({
-        storageKey: 'hotArticlesCache',
-        ttl: 10 * 60 * 1000, // 10分钟
+        storageKey: `${LOCAL_CACHE_CONFIG.KEY_PREFIX}hotArticles`,
+        ttl: LOCAL_CACHE_CONFIG.TTL.TEN_MINUTES,
         maxSize: 5
     })
 
     // 推荐文章缓存管理器
     const recommendArticlesCacheManager = createCacheManager({
-        storageKey: 'recommendArticlesCache',
-        ttl: 10 * 60 * 1000, // 10分钟
+        storageKey: `${LOCAL_CACHE_CONFIG.KEY_PREFIX}recommendArticles`,
+        ttl: LOCAL_CACHE_CONFIG.TTL.TEN_MINUTES,
         maxSize: 5
     })
 
@@ -65,8 +63,6 @@ export const useCacheStore = defineStore('cache', () => {
             bannerCacheManager.set(cacheKey, data)
             return data
         } catch (error) {
-            globalStore.setError(error)
-            console.error('[CacheStore] 获取 Banner 列表失败:', error)
             throw error
         }
     }
@@ -88,8 +84,6 @@ export const useCacheStore = defineStore('cache', () => {
             categoryCacheManager.set(cacheKey, data)
             return data
         } catch (error) {
-            globalStore.setError(error)
-            console.error('[CacheStore] 获取分类列表失败:', error)
             throw error
         }
     }
@@ -111,8 +105,6 @@ export const useCacheStore = defineStore('cache', () => {
             tagCacheManager.set(cacheKey, data)
             return data
         } catch (error) {
-            globalStore.setError(error)
-            console.error('[CacheStore] 获取标签列表失败:', error)
             throw error
         }
     }
@@ -134,8 +126,6 @@ export const useCacheStore = defineStore('cache', () => {
             hotArticlesCacheManager.set(cacheKey, data)
             return data
         } catch (error) {
-            globalStore.setError(error)
-            console.error('[CacheStore] 获取热门文章失败:', error)
             throw error
         }
     }
@@ -157,8 +147,6 @@ export const useCacheStore = defineStore('cache', () => {
             recommendArticlesCacheManager.set(cacheKey, data)
             return data
         } catch (error) {
-            globalStore.setError(error)
-            console.error('[CacheStore] 获取推荐文章失败:', error)
             throw error
         }
     }

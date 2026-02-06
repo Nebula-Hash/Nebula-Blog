@@ -7,21 +7,19 @@ import {
     collectArticle
 } from '@/api/article'
 import { createCacheManager } from '../helper/cacheManager'
-import { useGlobalStore } from '../general/global'
+import { LOCAL_CACHE_CONFIG } from '@/config/constants'
 
 export const useArticleStore = defineStore('article', () => {
-    const globalStore = useGlobalStore()
-
     // 创建缓存管理器
     const listCacheManager = createCacheManager({
-        storageKey: 'articleListCache',
-        ttl: 5 * 60 * 1000, // 5分钟
+        storageKey: `${LOCAL_CACHE_CONFIG.KEY_PREFIX}articleList`,
+        ttl: LOCAL_CACHE_CONFIG.TTL.FIVE_MINUTES,
         maxSize: 10
     })
 
     const detailCacheManager = createCacheManager({
-        storageKey: 'articleDetailCache',
-        ttl: 10 * 60 * 1000, // 10分钟
+        storageKey: `${LOCAL_CACHE_CONFIG.KEY_PREFIX}articleDetail`,
+        ttl: LOCAL_CACHE_CONFIG.TTL.TEN_MINUTES,
         maxSize: 20
     })
 
@@ -106,9 +104,6 @@ export const useArticleStore = defineStore('article', () => {
                 cached.isLiked = originalState
                 detailCacheManager.set(articleId, cached)
             }
-
-            globalStore.setError(error)
-            console.error('[ArticleStore] 点赞操作失败:', error)
             throw error
         }
     }
@@ -144,9 +139,6 @@ export const useArticleStore = defineStore('article', () => {
                 cached.isCollected = originalState
                 detailCacheManager.set(articleId, cached)
             }
-
-            globalStore.setError(error)
-            console.error('[ArticleStore] 收藏操作失败:', error)
             throw error
         }
     }

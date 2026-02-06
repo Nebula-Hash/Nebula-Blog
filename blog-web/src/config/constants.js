@@ -63,6 +63,15 @@ export const CACHE_CONFIG = {
     ERROR_MESSAGE_TTL: 1000
 }
 
+export const LOCAL_CACHE_CONFIG = {
+    KEY_PREFIX: 'nebula:cache:',
+    TTL: {
+        THIRTY_MINUTES: 30 * 60 * 1000,
+        TEN_MINUTES: 10 * 60 * 1000,
+        FIVE_MINUTES: 5 * 60 * 1000
+    }
+}
+
 // ==================== WebP 配置 ====================
 export const WEBP_CONFIG = {
     // 是否启用WebP支持
@@ -82,5 +91,6 @@ export default {
     HTTP_STATUS,
     DEFAULTS,
     CACHE_CONFIG,
+    LOCAL_CACHE_CONFIG,
     WEBP_CONFIG
 }

@@ -7,15 +7,12 @@ import {
     deleteComment,
     getMoreReplies
 } from '@/api/comment'
-import { useGlobalStore } from '../general/global'
 
 /**
  * 评论状态管理 - 优化版
  * 使用扁平化数据结构提升性能
  */
 export const useCommentStore = defineStore('comment', () => {
-    const globalStore = useGlobalStore()
-
     // 扁平化存储所有评论 { [commentId]: comment }
     const commentsById = ref(new Map())
 
@@ -163,8 +160,6 @@ export const useCommentStore = defineStore('comment', () => {
 
             return pageData
         } catch (error) {
-            globalStore.setError(error)
-            console.error('[CommentStore] 加载评论失败:', error)
             throw error
         } finally {
             loading.value[articleId] = false
@@ -205,8 +200,6 @@ export const useCommentStore = defineStore('comment', () => {
 
             return pageData
         } catch (error) {
-            globalStore.setError(error)
-            console.error('[CommentStore] 加载更多评论失败:', error)
             throw error
         } finally {
             loading.value[articleId] = false
@@ -244,8 +237,6 @@ export const useCommentStore = defineStore('comment', () => {
                 currentPage: pageData.current
             }
         } catch (error) {
-            globalStore.setError(error)
-            console.error('[CommentStore] 加载更多回复失败:', error)
             throw error
         } finally {
             replyLoading.value[rootId] = false
@@ -273,8 +264,6 @@ export const useCommentStore = defineStore('comment', () => {
 
             return newCommentId
         } catch (error) {
-            globalStore.setError(error)
-            console.error('[CommentStore] 发布评论失败:', error)
             throw error
         }
     }
@@ -307,9 +296,6 @@ export const useCommentStore = defineStore('comment', () => {
             likedComments.value[commentId] = originalState
             comment.likeCount = (comment.likeCount || 0) + (originalState ? 1 : -1)
             comment.isLiked = originalState
-
-            globalStore.setError(error)
-            console.error('[CommentStore] 点赞操作失败:', error)
             throw error
         }
     }
@@ -337,8 +323,6 @@ export const useCommentStore = defineStore('comment', () => {
                 articleData.total = Math.max(0, articleData.total - idsToDelete.length)
             }
         } catch (error) {
-            globalStore.setError(error)
-            console.error('[CommentStore] 删除评论失败:', error)
             throw error
         }
     }
@@ -417,24 +401,6 @@ export const useCommentStore = defineStore('comment', () => {
     // 使用 Pinia 持久化插件
     persist: {
         key: 'comment-store',
-        paths: ['likedComments'],
-        // Map 需要自定义序列化
-        serializer: {
-            serialize: (state) => {
-                return JSON.stringify({
-                    ...state,
-                    commentsById: Array.from(state.commentsById.entries()),
-                    commentsByArticle: Array.from(state.commentsByArticle.entries())
-                })
-            },
-            deserialize: (value) => {
-                const state = JSON.parse(value)
-                return {
-                    ...state,
-                    commentsById: new Map(state.commentsById || []),
-                    commentsByArticle: new Map(state.commentsByArticle || [])
-                }
-            }
-        }
+        paths: ['likedComments']
     }
 })
