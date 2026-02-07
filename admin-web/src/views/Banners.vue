@@ -35,8 +35,9 @@
           </n-space>
         </n-form-item>
 
-        <n-form-item label="跳转链接">
-          <n-input v-model:value="formData.linkUrl" placeholder="请输入文章详情页路由" />
+        <n-form-item label="关联文章" path="articleId">
+          <n-select v-model:value="formData.articleId" :options="articleOptions" placeholder="请选择文章"
+            filterable :loading="articlesLoading" />
         </n-form-item>
 
         <n-form-item label="排序">
@@ -65,15 +66,17 @@
 import { ref, h, onMounted, computed } from 'vue'
 import { NButton, NTag, NSpace, NIcon, NPopconfirm, NImage, NText } from 'naive-ui'
 import { AddOutline, CreateOutline, TrashOutline } from '@vicons/ionicons5'
-import { getBannerList, getBannerDetail, uploadBannerImage, addBanner, updateBanner, deleteBanner } from '@/api/banner'
+import { getBannerList, getBannerDetail, getPublishedArticles, uploadBannerImage, addBanner, updateBanner, deleteBanner } from '@/api/banner'
 import { formatDateTime, showSuccess, showError, showInfo, createPagination, updatePagination } from '@/utils/common'
 
 const loading = ref(false)
 const saveLoading = ref(false)
 const uploadLoading = ref(false)
+const articlesLoading = ref(false)
 const showModal = ref(false)
 const bannerList = ref([])
 const imageFileList = ref([])
+const articleOptions = ref([])
 
 const pagination = ref(createPagination(10))
 
@@ -82,14 +85,15 @@ const formData = ref({
   id: null,
   title: '',
   imageUrl: '',
-  linkUrl: '',
+  articleId: null,
   sort: 0,
   status: 1
 })
 
 const rules = {
   title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
-  imageUrl: [{ required: true, message: '请上传图片', trigger: 'change' }]
+  imageUrl: [{ required: true, message: '请上传图片', trigger: 'change' }],
+  articleId: [{ required: true, type: 'number', message: '请选择关联文章', trigger: 'change' }]
 }
 
 const modalTitle = computed(() => (formData.value.id ? '编辑轮播图' : '新增轮播图'))
@@ -104,10 +108,11 @@ const columns = [
     render: (row) => h(NImage, { src: row.imageUrl, width: 120, height: 60, objectFit: 'cover' })
   },
   {
-    title: '跳转链接',
-    key: 'linkUrl',
+    title: '关联文章',
+    key: 'articleTitle',
     width: 200,
-    ellipsis: { tooltip: true }
+    ellipsis: { tooltip: true },
+    render: (row) => row.articleTitle || '未关联'
   },
   { title: '排序', key: 'sort', width: 80 },
   {
@@ -160,6 +165,23 @@ const columns = [
   }
 ]
 
+// 加载文章列表
+const loadArticles = async () => {
+  try {
+    articlesLoading.value = true
+    const res = await getPublishedArticles()
+    articleOptions.value = res.data.map(article => ({
+      label: article.title,
+      value: article.id
+    }))
+  } catch (error) {
+    console.error('加载文章列表失败:', error)
+    showError(error, '加载文章列表失败')
+  } finally {
+    articlesLoading.value = false
+  }
+}
+
 // 加载轮播图列表
 const loadBanners = async () => {
   try {
@@ -189,8 +211,9 @@ const handlePageSizeChange = (pageSize) => {
 }
 
 // 新增轮播图
-const handleAdd = () => {
+const handleAdd = async () => {
   resetForm()
+  await loadArticles()
   showModal.value = true
 }
 
@@ -198,6 +221,7 @@ const handleAdd = () => {
 const handleEdit = async (id) => {
   try {
     loading.value = true
+    await loadArticles()
     const res = await getBannerDetail(id)
     const banner = res.data
 
@@ -205,7 +229,7 @@ const handleEdit = async (id) => {
       id: banner.id,
       title: banner.title,
       imageUrl: banner.imageUrl,
-      linkUrl: banner.linkUrl,
+      articleId: banner.articleId,
       sort: banner.sort,
       status: banner.status
     }
@@ -338,7 +362,7 @@ const resetForm = () => {
     id: null,
     title: '',
     imageUrl: '',
-    linkUrl: '',
+    articleId: null,
     sort: 0,
     status: 1
   }

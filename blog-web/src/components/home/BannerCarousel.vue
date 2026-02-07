@@ -233,12 +233,9 @@ const resumeAutoPlay = () => {
 
 // 处理轮播图点击
 const handleBannerClick = (banner) => {
-    if (banner.linkUrl) {
-        if (banner.linkUrl.startsWith('http')) {
-            window.open(banner.linkUrl, '_blank')
-        } else {
-            router.push(banner.linkUrl)
-        }
+    if (banner.articleId) {
+        // 跳转到文章详情页
+        router.push(`/article/${banner.articleId}`)
     }
 }
 

@@ -37,9 +37,9 @@ public class BlogBanner implements Serializable {
     private String imageUrl;
 
     /**
-     * 链接URL
+     * 关联文章ID
      */
-    private String linkUrl;
+    private Long articleId;
 
     /**
      * 排序

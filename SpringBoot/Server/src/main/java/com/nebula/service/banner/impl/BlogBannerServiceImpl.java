@@ -3,9 +3,11 @@ package com.nebula.service.banner.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nebula.dto.BannerDTO;
+import com.nebula.entity.BlogArticle;
 import com.nebula.entity.BlogBanner;
 import com.nebula.enumeration.StatusEnum;
 import com.nebula.exception.BusinessException;
+import com.nebula.mapper.BlogArticleMapper;
 import com.nebula.mapper.BlogBannerMapper;
 import com.nebula.service.banner.BlogBannerService;
 import com.nebula.upload.FileUploadUtil;
@@ -17,7 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -31,6 +35,7 @@ import java.util.stream.Collectors;
 public class BlogBannerServiceImpl implements BlogBannerService {
 
     private final BlogBannerMapper bannerMapper;
+    private final BlogArticleMapper articleMapper;
     private final FileUploadUtil fileUploadUtil;
 
     @Override
@@ -48,25 +53,56 @@ public class BlogBannerServiceImpl implements BlogBannerService {
 
     @Override
     public Page<BannerAdminVO> getBannerList(Long current, Long size) {
-        Page<BlogBanner> page = new Page<>(current, size);
-        LambdaQueryWrapper<BlogBanner> wrapper = new LambdaQueryWrapper<>();
-        wrapper.orderByAsc(BlogBanner::getSort);
-        wrapper.orderByDesc(BlogBanner::getCreateTime);
-        Page<BlogBanner> bannerPage = bannerMapper.selectPage(page, wrapper);
-
-        Page<BannerAdminVO> resultPage = new Page<>(bannerPage.getCurrent(), bannerPage.getSize(), bannerPage.getTotal());
-        List<BannerAdminVO> records = bannerPage.getRecords().stream().map(banner -> {
-            BannerAdminVO vo = new BannerAdminVO();
-            BeanUtils.copyProperties(banner, vo);
-            return vo;
-        }).collect(Collectors.toList());
-        resultPage.setRecords(records);
+        // 使用自定义SQL查询，包含文章标题
+        List<BannerAdminVO> allBanners = bannerMapper.selectBannerListWithArticle();
+        
+        // 手动分页
+        int start = (int) ((current - 1) * size);
+        int end = Math.min(start + size.intValue(), allBanners.size());
+        List<BannerAdminVO> pageRecords = allBanners.subList(start, end);
+        
+        Page<BannerAdminVO> resultPage = new Page<>(current, size, allBanners.size());
+        resultPage.setRecords(pageRecords);
         return resultPage;
+    }
+
+    @Override
+    public BannerAdminVO getBannerDetail(Long id) {
+        BannerAdminVO banner = bannerMapper.selectBannerDetailWithArticle(id);
+        if (banner == null) {
+            throw new BusinessException("轮播图不存在");
+        }
+        return banner;
+    }
+
+    @Override
+    public List<Map<String, Object>> getPublishedArticles() {
+        LambdaQueryWrapper<BlogArticle> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(BlogArticle::getIsDraft, 0); // 非草稿
+        wrapper.select(BlogArticle::getId, BlogArticle::getTitle);
+        wrapper.orderByDesc(BlogArticle::getCreateTime);
+        
+        List<BlogArticle> articles = articleMapper.selectList(wrapper);
+        return articles.stream().map(article -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", article.getId());
+            map.put("title", article.getTitle());
+            return map;
+        }).collect(Collectors.toList());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long addBanner(BannerDTO bannerDTO) {
+        // 验证文章是否存在
+        BlogArticle article = articleMapper.selectById(bannerDTO.getArticleId());
+        if (article == null) {
+            throw new BusinessException("关联的文章不存在");
+        }
+        if (article.getIsDraft() == 1) {
+            throw new BusinessException("不能关联草稿文章");
+        }
+
         BlogBanner banner = new BlogBanner();
         BeanUtils.copyProperties(bannerDTO, banner);
 
@@ -97,6 +133,15 @@ public class BlogBannerServiceImpl implements BlogBannerService {
         BlogBanner existBanner = bannerMapper.selectById(bannerDTO.getId());
         if (existBanner == null) {
             throw new BusinessException("轮播图不存在");
+        }
+
+        // 验证文章是否存在
+        BlogArticle article = articleMapper.selectById(bannerDTO.getArticleId());
+        if (article == null) {
+            throw new BusinessException("关联的文章不存在");
+        }
+        if (article.getIsDraft() == 1) {
+            throw new BusinessException("不能关联草稿文章");
         }
 
         String newImageUrl = bannerDTO.getImageUrl();
@@ -143,16 +188,5 @@ public class BlogBannerServiceImpl implements BlogBannerService {
         } catch (Exception e) {
             // 移动文件失败不影响删除操作
         }
-    }
-
-    @Override
-    public BannerAdminVO getBannerDetail(Long id) {
-        BlogBanner banner = bannerMapper.selectById(id);
-        if (banner == null) {
-            throw new BusinessException("轮播图不存在");
-        }
-        BannerAdminVO vo = new BannerAdminVO();
-        BeanUtils.copyProperties(banner, vo);
-        return vo;
     }
 }

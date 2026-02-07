@@ -29,9 +29,14 @@ public class BannerAdminVO {
     private String imageUrl;
 
     /**
-     * 链接URL
+     * 关联文章ID
      */
-    private String linkUrl;
+    private Long articleId;
+
+    /**
+     * 文章标题
+     */
+    private String articleTitle;
 
     /**
      * 排序

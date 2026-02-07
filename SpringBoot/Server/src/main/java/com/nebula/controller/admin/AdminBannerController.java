@@ -12,6 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * 轮播图控制器（管理端）
  *
@@ -45,6 +48,15 @@ public class AdminBannerController {
     public Result<BannerAdminVO> getBannerDetail(@PathVariable Long id) {
         BannerAdminVO bannerVO = bannerService.getBannerDetail(id);
         return Result.success(bannerVO);
+    }
+
+    /**
+     * 获取已发布的文章列表（用于选择）
+     */
+    @GetMapping("/articles")
+    public Result<List<Map<String, Object>>> getPublishedArticles() {
+        List<Map<String, Object>> articles = bannerService.getPublishedArticles();
+        return Result.success(articles);
     }
 
     /**

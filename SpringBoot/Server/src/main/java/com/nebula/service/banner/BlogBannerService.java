@@ -6,6 +6,7 @@ import com.nebula.vo.admin.BannerAdminVO;
 import com.nebula.vo.client.BannerClientVO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 轮播图服务接口
@@ -39,6 +40,12 @@ public interface BlogBannerService {
      */
     BannerAdminVO getBannerDetail(Long id);
 
+    /**
+     * 获取已发布的文章列表（用于选择）
+     *
+     * @return 文章列表（id和title）
+     */
+    List<Map<String, Object>> getPublishedArticles();
 
     /**
      * 添加轮播图

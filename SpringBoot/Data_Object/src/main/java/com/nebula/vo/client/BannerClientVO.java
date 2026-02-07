@@ -27,7 +27,7 @@ public class BannerClientVO {
     private String imageUrl;
 
     /**
-     * 链接URL
+     * 关联文章ID
      */
-    private String linkUrl;
+    private Long articleId;
 }

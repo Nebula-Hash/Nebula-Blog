@@ -26,6 +26,16 @@ export const getBannerDetail = (id) => {
 }
 
 /**
+ * 获取已发布的文章列表（用于选择）
+ */
+export const getPublishedArticles = () => {
+    return request({
+        url: '/banner/articles',
+        method: 'get'
+    })
+}
+
+/**
  * 上传轮播图图片（上传到临时目录）
  * @param {File} file - 图片文件
  */

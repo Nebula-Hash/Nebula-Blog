@@ -1,6 +1,7 @@
 package com.nebula.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
@@ -30,9 +31,10 @@ public class BannerDTO {
     private String imageUrl;
 
     /**
-     * 链接URL
+     * 关联文章ID
      */
-    private String linkUrl;
+    @NotNull(message = "关联文章不能为空")
+    private Long articleId;
 
     /**
      * 排序
