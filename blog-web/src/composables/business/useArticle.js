@@ -32,8 +32,10 @@ export function useArticleList(options = {}) {
     /**
      * 加载文章列表
      * @param {Object} params - 查询参数
+     * @param {Object} options - 行为选项
+     * @param {boolean} options.useCacheOverride - 是否覆盖默认缓存策略
      */
-    const loadArticles = async (params = {}) => {
+    const loadArticles = async (params = {}, options = {}) => {
         loading.value = true
         try {
             const queryParams = {
@@ -42,7 +44,8 @@ export function useArticleList(options = {}) {
                 ...params
             }
 
-            const data = await ArticleQueryService.getList(queryParams, useCache)
+            const shouldUseCache = options.useCacheOverride ?? useCache
+            const data = await ArticleQueryService.getList(queryParams, shouldUseCache)
             articles.value = data.records || []
             total.value = data.total || 0
         } catch (error) {
@@ -57,7 +60,7 @@ export function useArticleList(options = {}) {
      */
     const refresh = async (params = {}) => {
         currentPage.value = 1
-        await loadArticles(params)
+        await loadArticles(params, { useCacheOverride: false })
     }
 
     /**
@@ -99,11 +102,14 @@ export function useArticleDetail(options = {}) {
     /**
      * 加载文章详情
      * @param {number|string} articleId - 文章ID
+     * @param {Object} options - 行为选项
+     * @param {boolean} options.useCacheOverride - 是否覆盖默认缓存策略
      */
-    const loadArticle = async (articleId) => {
+    const loadArticle = async (articleId, options = {}) => {
         loading.value = true
         try {
-            const data = await ArticleQueryService.getDetail(articleId, useCache)
+            const shouldUseCache = options.useCacheOverride ?? useCache
+            const data = await ArticleQueryService.getDetail(articleId, shouldUseCache)
             article.value = data
         } catch (error) {
             errorHandler.handleLoad(error, '文章详情')
@@ -117,7 +123,7 @@ export function useArticleDetail(options = {}) {
      * 刷新文章详情（强制从服务器获取）
      */
     const refresh = async (articleId) => {
-        await ArticleQueryService.getDetail(articleId, false)
+        await loadArticle(articleId, { useCacheOverride: false })
     }
 
     return {
@@ -126,6 +132,60 @@ export function useArticleDetail(options = {}) {
         loadArticle,
         refresh
     }
+}
+
+/**
+ * 通用文章集合加载器（热门/推荐等）
+ */
+function createArticleCollection(fetcher, resourceName) {
+    const errorHandler = createErrorHandler(resourceName)
+    const loading = ref(false)
+    const articles = ref([])
+
+    const load = async () => {
+        loading.value = true
+        try {
+            articles.value = await fetcher()
+        } catch (error) {
+            errorHandler.handleLoad(error, resourceName)
+        } finally {
+            loading.value = false
+        }
+    }
+
+    return {
+        loading,
+        articles,
+        load
+    }
+}
+
+/**
+ * 热门文章
+ * @param {Object} options - 配置选项
+ * @param {number} options.limit - 数量限制
+ * @param {boolean} options.useCache - 是否使用缓存
+ */
+export function useHotArticles(options = {}) {
+    const { limit = 5, useCache = true } = options
+    return createArticleCollection(
+        () => ArticleQueryService.getHotArticles(limit, useCache),
+        '热门文章'
+    )
+}
+
+/**
+ * 推荐文章
+ * @param {Object} options - 配置选项
+ * @param {number} options.limit - 数量限制
+ * @param {boolean} options.useCache - 是否使用缓存
+ */
+export function useRecommendArticles(options = {}) {
+    const { limit = 3, useCache = true } = options
+    return createArticleCollection(
+        () => ArticleQueryService.getRecommendArticles(limit, useCache),
+        '推荐文章'
+    )
 }
 
 /**

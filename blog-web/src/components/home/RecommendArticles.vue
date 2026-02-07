@@ -26,29 +26,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useArticleNavigation } from '@/composables/business/useArticle'
-import { useCacheStore } from '@/stores'
+import { onMounted } from 'vue'
+import { useArticleNavigation, useRecommendArticles } from '@/composables/business/useArticle'
 import { NCard, NList, NListItem, NTag, NSpace, NIcon, NSpin } from 'naive-ui'
 import { EyeOutline, BookmarkOutline } from '@vicons/ionicons5'
+import { PAGINATION_CONFIG } from '@/config/constants'
 
-const cacheStore = useCacheStore()
 const { goToDetail } = useArticleNavigation()
 
-const loading = ref(false)
-const recommendArticles = ref([])
-
-// 加载推荐文章
-const loadRecommendArticles = async () => {
-    loading.value = true
-    try {
-        recommendArticles.value = await cacheStore.fetchRecommendArticles(3)
-    } catch (error) {
-        console.error('[RecommendArticles] 加载推荐文章失败:', error)
-    } finally {
-        loading.value = false
-    }
-}
+const { loading, articles: recommendArticles, load: loadRecommendArticles } = useRecommendArticles({
+    limit: PAGINATION_CONFIG.RECOMMEND_ARTICLES_SIZE
+})
 
 onMounted(() => {
     loadRecommendArticles()

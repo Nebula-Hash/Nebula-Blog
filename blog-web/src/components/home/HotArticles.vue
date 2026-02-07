@@ -30,30 +30,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useArticleNavigation } from '@/composables/business/useArticle'
-import { useCacheStore } from '@/stores'
+import { onMounted } from 'vue'
+import { useArticleNavigation, useHotArticles } from '@/composables/business/useArticle'
 import { NCard, NList, NListItem, NTag, NSpace, NEllipsis, NIcon, NSpin, NEmpty } from 'naive-ui'
 import { FlameOutline } from '@vicons/ionicons5'
 import { PAGINATION_CONFIG } from '@/config/constants'
 
-const cacheStore = useCacheStore()
 const { goToDetail } = useArticleNavigation()
 
-const loading = ref(false)
-const hotArticles = ref([])
-
-// 加载热门文章
-const loadHotArticles = async () => {
-    loading.value = true
-    try {
-        hotArticles.value = await cacheStore.fetchHotArticles(PAGINATION_CONFIG.HOT_ARTICLES_SIZE)
-    } catch (error) {
-        console.error('[HotArticles] 加载热门文章失败:', error)
-    } finally {
-        loading.value = false
-    }
-}
+const { loading, articles: hotArticles, load: loadHotArticles } = useHotArticles({
+    limit: PAGINATION_CONFIG.HOT_ARTICLES_SIZE
+})
 
 onMounted(() => {
     loadHotArticles()

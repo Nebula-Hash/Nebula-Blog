@@ -35,7 +35,7 @@
 
         <n-space justify="end" class="search-actions">
           <n-button @click="handleReset">重置</n-button>
-          <n-button type="primary" @click="handleSearch" :loading="loading">
+          <n-button type="primary" @click="handleSearch" :loading="loading" :disabled="!hasKeywords">
             <template #icon>
               <n-icon :component="SearchOutline" />
             </template>
@@ -70,7 +70,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useArticleList, useArticleNavigation } from '@/composables/business/useArticle'
 import ArticleCard from '@/components/article/ArticleCard.vue'
@@ -105,6 +105,11 @@ const searchForm = reactive({
   tagName: ''
 })
 
+const hasKeywords = computed(() => {
+  return [searchForm.title, searchForm.authorName, searchForm.categoryName, searchForm.tagName]
+    .some((value) => typeof value === 'string' && value.trim().length > 0)
+})
+
 // 使用文章列表组合式函数
 const {
   loading,
@@ -120,6 +125,9 @@ const {
 
 // 执行搜索
 const handleSearch = async () => {
+  if (!hasKeywords.value) {
+    return
+  }
   currentPage.value = 1
   await loadArticles(searchForm)
 }
@@ -131,21 +139,27 @@ const handleReset = () => {
   searchForm.categoryName = ''
   searchForm.tagName = ''
   currentPage.value = 1
-  loadArticles()
+  articles.value = []
+  total.value = 0
 }
 
 // 页码变化
 const handlePageChange = async (page) => {
+  if (!hasKeywords.value) {
+    return
+  }
   await changePage(page, searchForm)
 }
 
 onMounted(() => {
   // 如果URL中有搜索关键词，自动填充并搜索
-  if (route.query.keyword) {
-    searchForm.title = route.query.keyword
+  const keyword = typeof route.query.keyword === 'string' ? route.query.keyword.trim() : ''
+  if (keyword) {
+    searchForm.title = keyword
     handleSearch()
   } else {
-    loadArticles()
+    articles.value = []
+    total.value = 0
   }
 })
 </script>

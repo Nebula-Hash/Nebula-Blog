@@ -250,6 +250,41 @@ export function createCacheManager(options = {}) {
         return result
     }
 
+    /**
+     * 批量更新缓存数据
+     * @param {Function} updater - (data, cacheKey) => newData | undefined
+     */
+    function updateAll(updater) {
+        if (typeof updater !== 'function') return
+
+        let hasChanged = false
+        const cacheKeys = Object.keys(cache)
+
+        cacheKeys.forEach(cacheKey => {
+            const entry = cache[cacheKey]
+            if (!entry) return
+
+            if (isExpired(entry.timestamp)) {
+                delete cache[cacheKey]
+                hasChanged = true
+                return
+            }
+
+            const nextData = updater(entry.data, cacheKey)
+            if (nextData !== undefined) {
+                cache[cacheKey] = {
+                    ...entry,
+                    data: nextData
+                }
+                hasChanged = true
+            }
+        })
+
+        if (hasChanged) {
+            save()
+        }
+    }
+
     // 初始化
     initialize()
 
@@ -263,6 +298,7 @@ export function createCacheManager(options = {}) {
         getStats,
         keys,
         values,
+        updateAll,
         initialize
     }
 }

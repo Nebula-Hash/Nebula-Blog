@@ -21,8 +21,12 @@
 
                 <n-form ref="formRef" :model="formData" :rules="rules" size="large">
                     <n-form-item path="username">
-                        <n-input v-model:value="formData.username" placeholder="请输入用户名" autocomplete="username"
-                            @keyup.enter="handleLogin">
+                        <n-input
+                            v-model:value="formData.username"
+                            placeholder="??????"
+                            :input-props="{ autocomplete: 'username' }"
+                            @keyup.enter="handleLogin"
+                        >
                             <template #prefix>
                                 <n-icon :component="PersonOutline" />
                             </template>
@@ -30,8 +34,14 @@
                     </n-form-item>
 
                     <n-form-item path="password">
-                        <n-input v-model:value="formData.password" type="password" show-password-on="click"
-                            placeholder="请输入密码" autocomplete="current-password" @keyup.enter="handleLogin">
+                        <n-input
+                            v-model:value="formData.password"
+                            type="password"
+                            show-password-on="click"
+                            placeholder="?????"
+                            :input-props="{ autocomplete: 'current-password' }"
+                            @keyup.enter="handleLogin"
+                        >
                             <template #prefix>
                                 <n-icon :component="LockClosedOutline" />
                             </template>

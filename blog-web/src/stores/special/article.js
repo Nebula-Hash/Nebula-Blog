@@ -3,6 +3,8 @@ import { ref, computed } from 'vue'
 import {
     getArticleList,
     getArticleDetail,
+    getHotArticles,
+    getRecommendArticles,
     likeArticle,
     collectArticle
 } from '@/api/article'
@@ -21,6 +23,18 @@ export const useArticleStore = defineStore('article', () => {
         storageKey: `${LOCAL_CACHE_CONFIG.KEY_PREFIX}articleDetail`,
         ttl: LOCAL_CACHE_CONFIG.TTL.TEN_MINUTES,
         maxSize: 20
+    })
+
+    const hotArticlesCacheManager = createCacheManager({
+        storageKey: `${LOCAL_CACHE_CONFIG.KEY_PREFIX}hotArticles`,
+        ttl: LOCAL_CACHE_CONFIG.TTL.TEN_MINUTES,
+        maxSize: 5
+    })
+
+    const recommendArticlesCacheManager = createCacheManager({
+        storageKey: `${LOCAL_CACHE_CONFIG.KEY_PREFIX}recommendArticles`,
+        ttl: LOCAL_CACHE_CONFIG.TTL.TEN_MINUTES,
+        maxSize: 5
     })
 
     // 用户点赞状态 { [articleId]: boolean }
@@ -74,36 +88,113 @@ export const useArticleStore = defineStore('article', () => {
     }
 
     /**
+     * 获取热门文章（带缓存）
+     */
+    async function fetchHotArticles(limit = 5, useCache = true) {
+        const cacheKey = `hotArticles_${limit}`
+
+        if (useCache) {
+            const cached = hotArticlesCacheManager.get(cacheKey)
+            if (cached) return cached
+        }
+
+        const response = await getHotArticles(limit)
+        const data = response.data || []
+        hotArticlesCacheManager.set(cacheKey, data)
+
+        return data
+    }
+
+    /**
+     * 获取推荐文章（带缓存）
+     */
+    async function fetchRecommendArticles(limit = 5, useCache = true) {
+        const cacheKey = `recommendArticles_${limit}`
+
+        if (useCache) {
+            const cached = recommendArticlesCacheManager.get(cacheKey)
+            if (cached) return cached
+        }
+
+        const response = await getRecommendArticles(limit)
+        const data = response.data || []
+        recommendArticlesCacheManager.set(cacheKey, data)
+
+        return data
+    }
+
+    /**
+     * 更新所有缓存中的文章数据
+     */
+    function updateCachedArticle(articleId, updater) {
+        if (!articleId || typeof updater !== 'function') return
+
+        const updateRecords = (records) => {
+            let changed = false
+            const nextRecords = records.map((item) => {
+                if (item.id !== articleId) return item
+                changed = true
+                return updater({ ...item })
+            })
+            return changed ? nextRecords : null
+        }
+
+        const detail = detailCacheManager.get(articleId)
+        if (detail) {
+            const updatedDetail = updater({ ...detail })
+            if (updatedDetail !== undefined) {
+                detailCacheManager.set(articleId, updatedDetail)
+            }
+        }
+
+        listCacheManager.updateAll((data) => {
+            if (!data || !Array.isArray(data.records)) return undefined
+            const nextRecords = updateRecords(data.records)
+            if (!nextRecords) return undefined
+            return {
+                ...data,
+                records: nextRecords
+            }
+        })
+
+        hotArticlesCacheManager.updateAll((data) => {
+            if (!Array.isArray(data)) return undefined
+            const nextRecords = updateRecords(data)
+            return nextRecords || undefined
+        })
+
+        recommendArticlesCacheManager.updateAll((data) => {
+            if (!Array.isArray(data)) return undefined
+            const nextRecords = updateRecords(data)
+            return nextRecords || undefined
+        })
+    }
+
+    /**
      * 点赞文章（乐观更新）
      */
     async function toggleLike(articleId) {
         const originalState = likedArticles.value[articleId] || false
+        const nextState = !originalState
+        const applyLikeUpdate = (state) => {
+            updateCachedArticle(articleId, (article) => ({
+                ...article,
+                likeCount: (article.likeCount || 0) + (state ? 1 : -1),
+                isLiked: state
+            }))
+        }
 
         try {
             // 乐观更新UI
-            likedArticles.value[articleId] = !originalState
-
-            // 更新缓存中的点赞数
-            const cached = detailCacheManager.get(articleId)
-            if (cached) {
-                cached.likeCount = (cached.likeCount || 0) + (originalState ? -1 : 1)
-                cached.isLiked = !originalState
-                detailCacheManager.set(articleId, cached)
-            }
+            likedArticles.value[articleId] = nextState
+            applyLikeUpdate(nextState)
 
             // 发送请求
             await likeArticle(articleId)
         } catch (error) {
             // 回滚状态
             likedArticles.value[articleId] = originalState
-
-            // 回滚缓存
-            const cached = detailCacheManager.get(articleId)
-            if (cached) {
-                cached.likeCount = (cached.likeCount || 0) + (originalState ? 1 : -1)
-                cached.isLiked = originalState
-                detailCacheManager.set(articleId, cached)
-            }
+            applyLikeUpdate(originalState)
             throw error
         }
     }
@@ -113,32 +204,26 @@ export const useArticleStore = defineStore('article', () => {
      */
     async function toggleFavorite(articleId) {
         const originalState = favoriteArticles.value[articleId] || false
+        const nextState = !originalState
+        const applyFavoriteUpdate = (state) => {
+            updateCachedArticle(articleId, (article) => ({
+                ...article,
+                collectCount: (article.collectCount || 0) + (state ? 1 : -1),
+                isCollected: state
+            }))
+        }
 
         try {
             // 乐观更新UI
-            favoriteArticles.value[articleId] = !originalState
-
-            // 更新缓存中的收藏数
-            const cached = detailCacheManager.get(articleId)
-            if (cached) {
-                cached.collectCount = (cached.collectCount || 0) + (originalState ? -1 : 1)
-                cached.isCollected = !originalState
-                detailCacheManager.set(articleId, cached)
-            }
+            favoriteArticles.value[articleId] = nextState
+            applyFavoriteUpdate(nextState)
 
             // 发送请求
             await collectArticle(articleId)
         } catch (error) {
             // 回滚状态
             favoriteArticles.value[articleId] = originalState
-
-            // 回滚缓存
-            const cached = detailCacheManager.get(articleId)
-            if (cached) {
-                cached.collectCount = (cached.collectCount || 0) + (originalState ? 1 : -1)
-                cached.isCollected = originalState
-                detailCacheManager.set(articleId, cached)
-            }
+            applyFavoriteUpdate(originalState)
             throw error
         }
     }
@@ -163,6 +248,8 @@ export const useArticleStore = defineStore('article', () => {
     function clearAllCache() {
         listCacheManager.clear()
         detailCacheManager.clear()
+        hotArticlesCacheManager.clear()
+        recommendArticlesCacheManager.clear()
     }
 
     /**
@@ -171,6 +258,8 @@ export const useArticleStore = defineStore('article', () => {
     function clearExpiredCache() {
         listCacheManager.clearExpired()
         detailCacheManager.clearExpired()
+        hotArticlesCacheManager.clearExpired()
+        recommendArticlesCacheManager.clearExpired()
     }
 
     /**
@@ -179,7 +268,9 @@ export const useArticleStore = defineStore('article', () => {
     function getCacheStats() {
         return {
             list: listCacheManager.getStats(),
-            detail: detailCacheManager.getStats()
+            detail: detailCacheManager.getStats(),
+            hot: hotArticlesCacheManager.getStats(),
+            recommend: recommendArticlesCacheManager.getStats()
         }
     }
 
@@ -205,6 +296,8 @@ export const useArticleStore = defineStore('article', () => {
         // Actions
         fetchArticleList,
         fetchArticleDetail,
+        fetchHotArticles,
+        fetchRecommendArticles,
         toggleLike,
         toggleFavorite,
         clearAllCache,

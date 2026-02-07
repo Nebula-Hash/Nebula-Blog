@@ -4,6 +4,11 @@ import * as tokenService from '@/services/tokenService'
 import { getItem, setItem, removeItem } from '@/utils/storage'
 
 export const useUserStore = defineStore('user', () => {
+  const authVersion = ref(0)
+
+  const touchAuth = () => {
+    authVersion.value += 1
+  }
   // 用户信息状态
   const userInfo = ref(null)
 
@@ -11,6 +16,7 @@ export const useUserStore = defineStore('user', () => {
    * 检查Token是否已过期
    */
   const isTokenExpired = computed(() => {
+    authVersion.value
     return tokenService.isTokenExpired()
   })
 
@@ -18,6 +24,7 @@ export const useUserStore = defineStore('user', () => {
    * 检查是否已登录（Token存在且未过期）
    */
   const isLoggedIn = computed(() => {
+    authVersion.value
     return !!tokenService.getToken() && !isTokenExpired.value
   })
 
@@ -28,6 +35,7 @@ export const useUserStore = defineStore('user', () => {
   const setUserInfo = (info) => {
     userInfo.value = info
     setItem('admin_userInfo', info)
+    touchAuth()
   }
 
   /**
@@ -36,6 +44,7 @@ export const useUserStore = defineStore('user', () => {
   const clearUserInfo = () => {
     userInfo.value = null
     removeItem('admin_userInfo')
+    touchAuth()
   }
 
   /**
@@ -45,6 +54,7 @@ export const useUserStore = defineStore('user', () => {
     userInfo.value = null
     tokenService.clearToken()
     removeItem('admin_userInfo')
+    touchAuth()
   }
 
   /**
@@ -61,15 +71,18 @@ export const useUserStore = defineStore('user', () => {
     if (tokenService.isTokenExpired()) {
       clearAuth()
     }
+    touchAuth()
   }
 
   return {
     userInfo,
+    authVersion,
     isTokenExpired,
     isLoggedIn,
     setUserInfo,
     clearUserInfo,
     clearAuth,
+    touchAuth,
     initialize
   }
 })

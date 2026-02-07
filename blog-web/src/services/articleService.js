@@ -49,9 +49,8 @@ export class ArticleQueryService {
      */
     static async getHotArticles(limit = 5, useCache = true) {
         const articleStore = useArticleStore()
-        const data = await articleStore.fetchArticleList({ current: 1, size: limit, hot: true }, useCache)
-        const records = data?.records || []
-        return ArticleConverterService.formatArticleList(records)
+        const data = await articleStore.fetchHotArticles(limit, useCache)
+        return ArticleConverterService.formatArticleList(data || [])
     }
 
     /**
@@ -62,9 +61,8 @@ export class ArticleQueryService {
      */
     static async getRecommendArticles(limit = 5, useCache = true) {
         const articleStore = useArticleStore()
-        const data = await articleStore.fetchArticleList({ current: 1, size: limit, recommend: true }, useCache)
-        const records = data?.records || []
-        return ArticleConverterService.formatArticleList(records)
+        const data = await articleStore.fetchRecommendArticles(limit, useCache)
+        return ArticleConverterService.formatArticleList(data || [])
     }
 
     /**
