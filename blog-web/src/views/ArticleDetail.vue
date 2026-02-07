@@ -19,7 +19,7 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useArticleDetail, useArticleInteraction } from '@/composables/business/useArticle'
 import ArticleHeader from '@/components/article/ArticleHeader.vue'
@@ -44,9 +44,15 @@ const handleCollect = async () => {
   showWarning('收藏功能需要登录，请前往权限测试项目体验')
 }
 
-onMounted(() => {
-  loadArticle(route.params.id)
-})
+watch(
+  () => route.params.id,
+  (id) => {
+    if (id) {
+      loadArticle(id)
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>

@@ -27,7 +27,6 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent } from 'vue'
 import { NGrid, NGi } from 'naive-ui'
 import { createLazyComponent } from '@/utils/lazyComponent'
 

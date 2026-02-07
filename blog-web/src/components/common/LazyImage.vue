@@ -150,12 +150,6 @@ onUnmounted(() => {
 const handleLoad = (event) => {
   isLoaded.value = true
 
-  // 记录图片加载性能
-  if (window.performance && window.performance.now) {
-    const loadTime = window.performance.now()
-    console.debug(`[LazyImage] 图片加载完成: ${props.src}, 耗时: ${loadTime.toFixed(2)}ms`)
-  }
-
   emit('load', event)
 }
 
@@ -175,10 +169,10 @@ const handleError = (event) => {
 }
 
 // 监听src变化，重置状态
-watch(() => props.src, () => {
+watch(() => props.src, (newSrc) => {
   isLoaded.value = false
   error.value = false
-  currentSrc.value = null
+  currentSrc.value = isVisible.value ? newSrc : null
 })
 </script>
 

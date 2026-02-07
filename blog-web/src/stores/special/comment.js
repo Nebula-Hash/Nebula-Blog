@@ -7,6 +7,10 @@ import {
     deleteComment,
     getMoreReplies
 } from '@/api/comment'
+import { PAGINATION_CONFIG } from '@/config/constants'
+
+const COMMENT_PAGE_SIZE = PAGINATION_CONFIG.COMMENT_PAGE_SIZE
+const COMMENT_REPLY_PAGE_SIZE = PAGINATION_CONFIG.COMMENT_REPLY_PAGE_SIZE || COMMENT_PAGE_SIZE
 
 /**
  * 评论状态管理 - 优化版
@@ -136,7 +140,7 @@ export const useCommentStore = defineStore('comment', () => {
         try {
             const response = await getCommentList(articleId, {
                 current: 1,
-                size: 10,
+                size: COMMENT_PAGE_SIZE,
                 ...params
             })
 
@@ -154,7 +158,7 @@ export const useCommentStore = defineStore('comment', () => {
                 ids: commentIds,
                 total: pageData.total || 0,
                 current: pageData.current || 1,
-                size: pageData.size || 10,
+                size: pageData.size || COMMENT_PAGE_SIZE,
                 pages: pageData.pages || 1
             })
 
@@ -215,7 +219,7 @@ export const useCommentStore = defineStore('comment', () => {
         try {
             const response = await getMoreReplies(rootId, {
                 current: currentPage + 1,
-                size: 10
+                size: COMMENT_REPLY_PAGE_SIZE
             })
 
             const pageData = response.data
@@ -259,7 +263,7 @@ export const useCommentStore = defineStore('comment', () => {
             const articleData = commentsByArticle.value.get(data.articleId)
             await loadComments(data.articleId, {
                 current: 1,
-                size: articleData?.size || 10
+                size: articleData?.size || COMMENT_PAGE_SIZE
             })
 
             return newCommentId

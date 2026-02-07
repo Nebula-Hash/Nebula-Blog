@@ -67,7 +67,8 @@ import { ref, h, onMounted, computed } from 'vue'
 import { NButton, NTag, NSpace, NIcon, NPopconfirm, NImage, NText } from 'naive-ui'
 import { AddOutline, CreateOutline, TrashOutline } from '@vicons/ionicons5'
 import { getBannerList, getBannerDetail, getPublishedArticles, uploadBannerImage, addBanner, updateBanner, deleteBanner } from '@/api/banner'
-import { formatDateTime, showSuccess, showError, showInfo, createPagination, updatePagination } from '@/utils/common'
+import { formatDateTime, showSuccess, showInfo, createPagination, updatePagination } from '@/utils/common'
+import { createErrorHandler } from '@/utils/errorHandler'
 
 const loading = ref(false)
 const saveLoading = ref(false)
@@ -79,6 +80,7 @@ const imageFileList = ref([])
 const articleOptions = ref([])
 
 const pagination = ref(createPagination(10))
+const errorHandler = createErrorHandler('Banners')
 
 const formRef = ref(null)
 const formData = ref({
@@ -175,8 +177,7 @@ const loadArticles = async () => {
       value: article.id
     }))
   } catch (error) {
-    console.error('加载文章列表失败:', error)
-    showError(error, '加载文章列表失败')
+    errorHandler.handleLoad(error, '文章列表')
   } finally {
     articlesLoading.value = false
   }
@@ -190,8 +191,7 @@ const loadBanners = async () => {
     bannerList.value = res.data.records
     updatePagination(pagination.value, res.data)
   } catch (error) {
-    console.error('加载轮播图列表失败:', error)
-    showError(error, '加载轮播图列表失败')
+    errorHandler.handleLoad(error, '轮播图列表')
   } finally {
     loading.value = false
   }
@@ -248,8 +248,7 @@ const handleEdit = async (id) => {
 
     showModal.value = true
   } catch (error) {
-    console.error('获取轮播图详情失败:', error)
-    showError(error, '获取轮播图详情失败')
+    errorHandler.handleLoad(error, '轮播图详情')
   } finally {
     loading.value = false
   }
@@ -266,22 +265,18 @@ const handleDelete = async (id) => {
     }
     loadBanners()
   } catch (error) {
-    console.error('删除失败:', error)
-    showError(error, '删除失败')
+    errorHandler.handleDelete(error, '轮播图')
   }
 }
 
 // 上传图片
 const handleImageUpload = async ({ file, onFinish, onError }) => {
-  console.log('handleImageUpload 被调用, file:', file)
-
   try {
     // 获取原始 File 对象
     const rawFile = file.file
-    console.log('原始文件对象:', rawFile)
 
     if (!rawFile) {
-      showError('无法获取文件，请重试')
+      errorHandler.handle(null, '无法获取文件，请重试')
       onError()
       return
     }
@@ -307,12 +302,11 @@ const handleImageUpload = async ({ file, onFinish, onError }) => {
       showSuccess('图片上传成功')
       onFinish()
     } else {
-      showError(res.message || '上传失败')
+      errorHandler.handle(null, res.message || '上传失败')
       onError()
     }
   } catch (error) {
-    console.error('上传失败:', error)
-    showError(error, '上传失败')
+    errorHandler.handle(error, '上传失败')
     onError()
   } finally {
     uploadLoading.value = false
@@ -349,8 +343,7 @@ const handleSave = async () => {
       // 表单验证错误
       return
     }
-    console.error('保存失败:', error)
-    showError(error, '保存失败')
+    errorHandler.handleSave(error)
   } finally {
     saveLoading.value = false
   }

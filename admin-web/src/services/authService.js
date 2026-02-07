@@ -151,7 +151,7 @@ export async function initializeSession() {
     const userStore = useUserStore()
     userStore.initialize()
 
-    if (tokenService.getToken() && !tokenService.isTokenExpired() && !userStore.userInfo) {
+    if (tokenService.getToken() && !userStore.userInfo) {
         try {
             await getCurrentUser()
         } catch (error) {

@@ -24,7 +24,9 @@ export const PAGINATION_CONFIG = {
     // 推荐文章数量
     RECOMMEND_ARTICLES_SIZE: 3,
     // 评论列表每页大小
-    COMMENT_PAGE_SIZE: 100
+    COMMENT_PAGE_SIZE: 10,
+    // 评论回复每页大小
+    COMMENT_REPLY_PAGE_SIZE: 10
 }
 
 // ==================== HTTP 配置 ====================

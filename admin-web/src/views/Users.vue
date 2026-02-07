@@ -207,7 +207,7 @@ const pagination = ref(createPagination())
 // 表单验证规则
 const rules = {
   username: usernameRules,
-  password: passwordRulesOptional(formData.value),
+  password: passwordRulesOptional(formData),
   nickname: nicknameRules,
   email: emailRules,
   intro: introRules

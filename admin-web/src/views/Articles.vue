@@ -416,12 +416,9 @@ const handleDelete = async (id) => {
 
 // 上传封面图
 const handleCoverUpload = async ({ file, onFinish, onError }) => {
-  console.log('handleCoverUpload 被调用, file:', file)
-
   try {
     // 获取原始 File 对象
     const rawFile = file.file
-    console.log('原始文件对象:', rawFile)
 
     if (!rawFile) {
       errorHandler.handle(null, '无法获取文件，请重试')
@@ -466,12 +463,9 @@ const handleCoverRemove = () => {
 
 // 导入 Markdown 文件
 const handleMdFileUpload = async ({ file, onFinish, onError }) => {
-  console.log('handleMdFileUpload 被调用, file:', file)
-
   try {
     // 获取原始 File 对象
     const rawFile = file.file
-    console.log('原始文件对象:', rawFile)
 
     if (!rawFile) {
       errorHandler.handle(null, '无法获取文件，请重试')

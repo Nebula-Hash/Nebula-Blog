@@ -6,7 +6,7 @@
   height: 34px;
 }
 
-.switch #input {
+.switch .toggle-input {
   opacity: 0;
   width: 0;
   height: 0;
@@ -38,15 +38,15 @@
   transition: 0.4s;
 }
 
-#input:checked+.slider {
+.toggle-input:checked + .slider {
   background-color: black;
 }
 
-#input:focus+.slider {
+.toggle-input:focus + .slider {
   box-shadow: 0 0 1px #2196f3;
 }
 
-#input:checked+.slider .sun-moon {
+.toggle-input:checked + .slider .sun-moon {
   -webkit-transform: translateX(26px);
   -ms-transform: translateX(26px);
   transform: translateX(26px);
@@ -61,7 +61,7 @@
   fill: gray;
 }
 
-#input:checked+.slider .sun-moon .moon-dot {
+.toggle-input:checked + .slider .sun-moon .moon-dot {
   opacity: 1;
 }
 
@@ -220,7 +220,7 @@
   animation-iteration-count: infinite;
 }
 
-#input:checked+.slider .stars {
+.toggle-input:checked + .slider .stars {
   -webkit-transform: translateY(0);
   -ms-transform: translateY(0);
   transform: translateY(0);
@@ -275,7 +275,7 @@
 
 <template>
   <label class="switch">
-    <input id="input" type="checkbox" :checked="themeStore.isDark" @change="handleToggle" />
+    <input class="toggle-input" type="checkbox" :checked="themeStore.isDark" @change="handleToggle" />
     <div class="slider round">
       <div class="sun-moon">
         <svg id="moon-dot-1" class="moon-dot" viewBox="0 0 100 100">

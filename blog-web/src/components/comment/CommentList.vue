@@ -9,8 +9,7 @@
 
     <!-- 发布评论输入框 -->
     <div class="publish-comment">
-      <CommentInput ref="publishInputRef" placeholder="写下你的评论..." submit-text="发布评论" :loading="publishing"
-        @submit="handlePublish" />
+      <CommentInput placeholder="写下你的评论..." submit-text="发布评论" @submit="handlePublish" />
     </div>
 
     <!-- 评论列表 -->
@@ -41,8 +40,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { NText, NSpin, NEmpty, useMessage, useDialog } from 'naive-ui'
+import { computed, onMounted, watch } from 'vue'
+import { NText, NSpin, NEmpty, useMessage } from 'naive-ui'
 import { useCommentStore } from '@/stores'
 import { useInfiniteScroll } from '@/composables/helper/useInfiniteScroll'
 import { debounce } from '@/utils/performance'
@@ -59,11 +58,8 @@ const props = defineProps({
 })
 
 const message = useMessage()
-const dialog = useDialog()
 const commentStore = useCommentStore()
 
-const publishInputRef = ref(null)
-const publishing = ref(false)
 
 // 从store获取数据
 const comments = computed(() => commentStore.getArticleComments(props.articleId))

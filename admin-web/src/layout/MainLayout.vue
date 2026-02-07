@@ -54,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, computed, h } from 'vue'
+import { ref, computed, h, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { NIcon } from 'naive-ui'
 import {
@@ -145,6 +145,13 @@ const handleUserSelect = async (key) => {
     await logout()
   }
 }
+
+watch(
+  () => route.path,
+  (path) => {
+    activeKey.value = path
+  }
+)
 </script>
 
 <style scoped>

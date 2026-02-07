@@ -96,12 +96,13 @@ import {
 import {
   TrashOutline, CheckmarkCircleOutline, CloseCircleOutline, EyeOutline
 } from '@vicons/ionicons5'
-import { showSuccess, showError, showWarning, createPagination, updatePagination } from '@/utils/common'
+import { showSuccess, showWarning, createPagination, updatePagination } from '@/utils/common'
 import { COMMENT_AUDIT_STATUS, COMMENT_AUDIT_STATUS_MAP } from '@/config/constants'
 import {
   getCommentList, auditComment, deleteComment,
   batchAuditComments, batchDeleteComments, getPendingAuditCount
 } from '@/api/comment'
+import { createErrorHandler } from '@/utils/errorHandler'
 
 // ==================== 数据定义 ====================
 const loading = ref(false)
@@ -112,6 +113,7 @@ const pendingCount = ref(0)
 const showDetailModal = ref(false)
 const currentComment = ref(null)
 const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyNCIgY3k9IjI0IiByPSIyNCIgZmlsbD0iI0U1RTdFQiIvPjxwYXRoIGQ9Ik0yNCAyNkMyNy4zMTM3IDI2IDMwIDIzLjMxMzcgMzAgMjBDMzAgMTYuNjg2MyAyNy4zMTM3IDE0IDI0IDE0QzIwLjY4NjMgMTQgMTggMTYuNjg2MyAxOCAyMEMxOCAyMy4zMTM3IDIwLjY4NjMgMjYgMjQgMjZaIiBmaWxsPSIjOUM5RkE2Ii8+PHBhdGggZD0iTTEyIDM4QzEyIDMyLjQ3NzIgMTYuNDc3MiAyOCAyMiAyOEgyNkMzMS41MjI4IDI4IDM2IDMyLjQ3NzIgMzYgMzhWNDBIMTJWMzhaIiBmaWxsPSIjOUM5RkE2Ii8+PC9zdmc+'
+const errorHandler = createErrorHandler('Comments')
 
 // 筛选表单
 const filterForm = reactive({
@@ -298,7 +300,7 @@ const loadComments = async () => {
     commentList.value = res.data.records
     updatePagination(pagination.value, res.data)
   } catch (error) {
-    showError(error, '加载评论列表失败')
+    errorHandler.handleLoad(error, '评论列表')
   } finally {
     loading.value = false
   }
@@ -312,7 +314,7 @@ const loadPendingCount = async () => {
     const res = await getPendingAuditCount()
     pendingCount.value = res.data
   } catch (error) {
-    console.error('加载待审核数量失败:', error)
+    errorHandler.handleLoad(error, '待审核数量', true)
   }
 }
 
@@ -388,7 +390,7 @@ const handleAudit = async (id, auditStatus) => {
     loadComments()
     loadPendingCount()
   } catch (error) {
-    showError(error, '审核失败')
+    errorHandler.handleSave(error, '审核')
   }
 }
 
@@ -402,7 +404,7 @@ const handleDelete = async (id) => {
     loadComments()
     loadPendingCount()
   } catch (error) {
-    showError(error, '删除失败')
+    errorHandler.handleDelete(error, '评论')
   }
 }
 
@@ -423,7 +425,7 @@ const handleBatchAudit = async (auditStatus) => {
     loadComments()
     loadPendingCount()
   } catch (error) {
-    showError(error, '批量审核失败')
+    errorHandler.handleSave(error, '批量审核')
   }
 }
 
@@ -444,7 +446,7 @@ const handleBatchDelete = async () => {
     loadComments()
     loadPendingCount()
   } catch (error) {
-    showError(error, '批量删除失败')
+    errorHandler.handleDelete(error, '评论')
   }
 }
 

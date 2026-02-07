@@ -25,7 +25,7 @@ export const useUserStore = defineStore('user', () => {
    */
   const isLoggedIn = computed(() => {
     authVersion.value
-    return !!tokenService.getToken() && !isTokenExpired.value
+    return !!tokenService.getToken()
   })
 
   /**
@@ -67,10 +67,6 @@ export const useUserStore = defineStore('user', () => {
       userInfo.value = savedUserInfo
     }
 
-    // 检查Token是否过期
-    if (tokenService.isTokenExpired()) {
-      clearAuth()
-    }
     touchAuth()
   }
 

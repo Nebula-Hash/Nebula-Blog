@@ -63,8 +63,7 @@
   </n-layout>
 
   <!-- 分类抽屉 -->
-  <n-drawer v-model:show="showCategoryDrawer" width="400" placement="right" :trap-focus="true" :block-scroll="true"
-    @after-enter="handleCategoryDrawerOpen">
+  <n-drawer v-model:show="showCategoryDrawer" width="400" placement="right" :trap-focus="true" :block-scroll="true">
     <n-drawer-content title="文章分类">
       <n-spin v-if="loadingCategories" class="drawer-loading" />
       <n-list v-else hoverable clickable>
@@ -80,8 +79,7 @@
   </n-drawer>
 
   <!-- 标签抽屉 -->
-  <n-drawer v-model:show="showTagDrawer" width="400" placement="right" :trap-focus="true" :block-scroll="true"
-    @after-enter="handleTagDrawerOpen">
+  <n-drawer v-model:show="showTagDrawer" width="400" placement="right" :trap-focus="true" :block-scroll="true">
     <n-drawer-content title="文章标签">
       <n-spin v-if="loadingTags" class="drawer-loading" />
       <n-space v-else>
@@ -95,9 +93,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useThemeStore, useCacheStore } from '@/stores'
+import { useCacheStore } from '@/stores'
 import ThemeToggle from '@/components/unique/ThemeToggle.vue'
 import {
   NLayout,
@@ -107,7 +105,6 @@ import {
   NButton,
   NSpace,
   NIcon,
-  NDropdown,
   NDrawer,
   NDrawerContent,
   NList,
@@ -126,7 +123,6 @@ import {
 } from '@vicons/ionicons5'
 
 const router = useRouter()
-const themeStore = useThemeStore()
 const cacheStore = useCacheStore()
 const showCategoryDrawer = ref(false)
 const showTagDrawer = ref(false)
@@ -144,19 +140,6 @@ const goToCategory = (id) => {
 const goToTag = (id) => {
   showTagDrawer.value = false
   router.push(`/tag/${id}`)
-}
-
-// 抽屉打开后的焦点管理
-const handleCategoryDrawerOpen = () => {
-  nextTick(() => {
-    console.log('[MainLayout] 分类抽屉已打开')
-  })
-}
-
-const handleTagDrawerOpen = () => {
-  nextTick(() => {
-    console.log('[MainLayout] 标签抽屉已打开')
-  })
 }
 
 const loadCategories = async () => {

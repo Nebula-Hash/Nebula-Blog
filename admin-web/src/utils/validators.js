@@ -100,8 +100,12 @@ export const passwordRules = [
  */
 export const passwordRulesOptional = (formData) => [
     custom((rule, value) => {
+        const formId = formData && Object.prototype.hasOwnProperty.call(formData, 'value')
+            ? formData.value?.id
+            : formData?.id
+
         // 新增时密码必填
-        if (!formData.id && !value) {
+        if (!formId && !value) {
             return new Error('请输入密码')
         }
         // 如果有输入密码，验证长度

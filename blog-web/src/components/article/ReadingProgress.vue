@@ -5,17 +5,60 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { throttle } from '@/utils/performance'
 
 const props = defineProps({
   target: {
-    type: [String, HTMLElement],
+    type: [String, Object],
     default: null
   }
 })
 
 const progress = ref(0)
+
+const resolveTarget = () => {
+  if (!props.target) return null
+  if (typeof props.target === 'string') {
+    if (typeof document === 'undefined') return null
+    return document.querySelector(props.target)
+  }
+  if (typeof HTMLElement !== 'undefined' && props.target instanceof HTMLElement) {
+    return props.target
+  }
+  return null
+}
+
+const boundTarget = ref(null)
+const boundToWindow = ref(false)
+
+const bindScroll = () => {
+  unbindScroll()
+
+  if (props.target) {
+    const element = resolveTarget()
+    if (element) {
+      boundTarget.value = element
+      element.addEventListener('scroll', handleScroll, { passive: true })
+    }
+    return
+  }
+
+  if (typeof window === 'undefined') return
+  window.addEventListener('scroll', handleScroll, { passive: true })
+  boundToWindow.value = true
+}
+
+const unbindScroll = () => {
+  if (boundTarget.value) {
+    boundTarget.value.removeEventListener('scroll', handleScroll)
+    boundTarget.value = null
+  }
+  if (boundToWindow.value) {
+    window.removeEventListener('scroll', handleScroll)
+    boundToWindow.value = false
+  }
+}
 
 // 计算阅读进度
 const calculateProgress = () => {
@@ -23,9 +66,7 @@ const calculateProgress = () => {
 
   if (props.target) {
     // 如果指定了目标元素
-    const element = typeof props.target === 'string'
-      ? document.querySelector(props.target)
-      : props.target
+    const element = resolveTarget()
 
     if (!element) return
 
@@ -33,6 +74,7 @@ const calculateProgress = () => {
     scrollHeight = element.scrollHeight
     clientHeight = element.clientHeight
   } else {
+    if (typeof window === 'undefined') return
     // 默认使用整个页面
     scrollTop = window.pageYOffset || document.documentElement.scrollTop
     scrollHeight = document.documentElement.scrollHeight
@@ -63,34 +105,21 @@ onMounted(() => {
   // 初始计算
   calculateProgress()
 
-  // 监听滚动事件
-  if (props.target) {
-    const element = typeof props.target === 'string'
-      ? document.querySelector(props.target)
-      : props.target
-
-    if (element) {
-      element.addEventListener('scroll', handleScroll, { passive: true })
-    }
-  } else {
-    window.addEventListener('scroll', handleScroll, { passive: true })
-  }
+  bindScroll()
 })
 
 onUnmounted(() => {
-  // 移除事件监听
-  if (props.target) {
-    const element = typeof props.target === 'string'
-      ? document.querySelector(props.target)
-      : props.target
-
-    if (element) {
-      element.removeEventListener('scroll', handleScroll)
-    }
-  } else {
-    window.removeEventListener('scroll', handleScroll)
-  }
+  unbindScroll()
 })
+
+watch(
+  () => props.target,
+  async () => {
+    await nextTick()
+    calculateProgress()
+    bindScroll()
+  }
+)
 </script>
 
 <style scoped>

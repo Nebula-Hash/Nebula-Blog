@@ -23,7 +23,7 @@
                     <n-form-item path="username">
                         <n-input
                             v-model:value="formData.username"
-                            placeholder="??????"
+                            placeholder="请输入用户名"
                             :input-props="{ autocomplete: 'username' }"
                             @keyup.enter="handleLogin"
                         >
@@ -38,7 +38,7 @@
                             v-model:value="formData.password"
                             type="password"
                             show-password-on="click"
-                            placeholder="?????"
+                            placeholder="请输入密码"
                             :input-props="{ autocomplete: 'current-password' }"
                             @keyup.enter="handleLogin"
                         >

@@ -42,12 +42,14 @@ import { ref, h, onMounted, computed } from 'vue'
 import { NButton, NSpace, NIcon, NPopconfirm, NTag } from 'naive-ui'
 import { AddOutline, CreateOutline, TrashOutline } from '@vicons/ionicons5'
 import { getTagList, createTag, updateTag, deleteTag } from '@/api/tag'
-import { formatDateTime, showSuccess, showError } from '@/utils/common'
+import { formatDateTime, showSuccess } from '@/utils/common'
+import { createErrorHandler } from '@/utils/errorHandler'
 
 const loading = ref(false)
 const saveLoading = ref(false)
 const showModal = ref(false)
 const tagList = ref([])
+const errorHandler = createErrorHandler('Tags')
 
 const formRef = ref(null)
 const formData = ref({
@@ -132,8 +134,7 @@ const loadTags = async () => {
     const res = await getTagList()
     tagList.value = res.data
   } catch (error) {
-    console.error('加载标签列表失败:', error)
-    showError(error, '加载标签列表失败，请稍后重试')
+    errorHandler.handleLoad(error, '标签列表')
   } finally {
     loading.value = false
   }
@@ -155,8 +156,7 @@ const handleDelete = async (id, articleCount) => {
     showSuccess('删除成功')
     await loadTags()
   } catch (error) {
-    console.error('删除失败:', error)
-    showError(error, '删除失败，请稍后重试')
+    errorHandler.handleDelete(error, '标签')
   }
 }
 
@@ -176,12 +176,11 @@ const handleSave = async () => {
     showModal.value = false
     await loadTags()
   } catch (error) {
-    console.error('保存失败:', error)
     if (error.errors) {
       // 表单验证错误
       return
     }
-    showError(error, '保存失败，请稍后重试')
+    errorHandler.handleSave(error)
   } finally {
     saveLoading.value = false
   }

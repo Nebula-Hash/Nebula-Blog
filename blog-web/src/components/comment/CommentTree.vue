@@ -24,10 +24,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { NButton, NIcon } from 'naive-ui'
 import { ChevronDownOutline } from '@vicons/ionicons5'
 import { useCommentStore } from '@/stores'
+import { PAGINATION_CONFIG } from '@/config/constants'
 import CommentItem from './CommentItem.vue'
 
 const props = defineProps({
@@ -38,10 +39,6 @@ const props = defineProps({
   articleId: {
     type: [String, Number],
     required: true
-  },
-  collapseThreshold: {
-    type: Number,
-    default: 3
   },
   likedComments: {
     type: Object,
@@ -57,6 +54,7 @@ const emit = defineEmits(['reply', 'like', 'delete', 'loadMoreReplies'])
 
 const commentStore = useCommentStore()
 const replyLoading = computed(() => commentStore.replyLoading)
+const replyPageSize = PAGINATION_CONFIG.COMMENT_REPLY_PAGE_SIZE || PAGINATION_CONFIG.DEFAULT_PAGE_SIZE
 
 // 显示的子评论（处理折叠逻辑）
 const displayChildren = (comment) => {
@@ -99,7 +97,7 @@ const handleDelete = (commentId) => {
 
 // 处理加载更多回复
 const handleLoadMoreReplies = (comment) => {
-  const currentPage = Math.ceil(comment.children.length / 10)
+  const currentPage = Math.ceil(comment.children.length / replyPageSize)
   emit('loadMoreReplies', {
     rootId: comment.id,
     currentPage

@@ -63,7 +63,16 @@ export const showSuccess = (content, duration = MESSAGE_CONFIG.SUCCESS_DURATION)
  * @param {number} duration - 显示时长（毫秒）
  */
 export const showError = (error, defaultMessage = DEFAULTS.DEFAULT_ERROR_MESSAGE, duration = MESSAGE_CONFIG.ERROR_DURATION) => {
-    const content = error?.response?.data?.message || error?.message || defaultMessage
+    let content = defaultMessage
+
+    if (typeof error === 'string') {
+        content = error
+    } else if (error?.response?.data?.message) {
+        content = error.response.data.message
+    } else if (error?.message) {
+        content = error.message
+    }
+
     message.error(content, { duration })
 }
 

@@ -2,7 +2,7 @@
     <div v-if="!loading && banners.length > 0" class="banner-carousel" @mouseenter="pauseAutoPlay"
         @mouseleave="resumeAutoPlay">
         <!-- 轮播图容器 -->
-        <div class="carousel-container" ref="carouselRef">
+        <div class="carousel-container" ref="carouselRef" tabindex="0" @keydown="handleKeydown">
             <!-- 轮播图片列表 -->
             <div class="carousel-slides">
                 <div ref="trackRef" class="carousel-track" :class="{ 'no-transition': !enableTransition }"
@@ -51,7 +51,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { NIcon, NSpin, NEmpty } from 'naive-ui'
+import { NIcon } from 'naive-ui'
 import { ChevronBackOutline, ChevronForwardOutline } from '@vicons/ionicons5'
 import { useCacheStore } from '@/stores'
 
@@ -275,7 +275,6 @@ const handleSwipe = () => {
 // 生命周期
 onMounted(() => {
     fetchBanners()
-    window.addEventListener('keydown', handleKeydown)
 
     if (carouselRef.value) {
         // 添加 passive 选项以提高滚动性能
@@ -288,7 +287,6 @@ onUnmounted(() => {
     if (autoPlayTimer.value) {
         clearInterval(autoPlayTimer.value)
     }
-    window.removeEventListener('keydown', handleKeydown)
 
     if (carouselRef.value) {
         carouselRef.value.removeEventListener('touchstart', handleTouchStart)

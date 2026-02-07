@@ -9,7 +9,7 @@
       </template>
 
       <!-- 搜索表单 -->
-      <n-form ref="formRef" :model="searchForm" label-placement="left" label-width="80">
+      <n-form :model="searchForm" label-placement="left" label-width="80">
         <n-grid :cols="2" :x-gap="20">
           <n-gi>
             <n-form-item label="标题" path="title">
