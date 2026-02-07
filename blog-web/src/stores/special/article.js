@@ -43,6 +43,51 @@ export const useArticleStore = defineStore('article', () => {
     // 用户收藏状态 { [articleId]: boolean }
     const favoriteArticles = ref({})
 
+    function applyLocalInteraction(article) {
+        if (!article || !article.id) return article
+
+        const localLiked = likedArticles.value[article.id]
+        const localCollected = favoriteArticles.value[article.id]
+        const serverLiked = !!article.isLiked
+        const serverCollected = !!article.isCollected
+
+        let next = { ...article }
+
+        if (localLiked === undefined && serverLiked) {
+            likedArticles.value[article.id] = true
+        }
+
+        if (localCollected === undefined && serverCollected) {
+            favoriteArticles.value[article.id] = true
+        }
+
+        if (localLiked !== undefined) {
+            if (localLiked !== serverLiked) {
+                const delta = localLiked ? 1 : -1
+                next.likeCount = Math.max(0, (next.likeCount || 0) + delta)
+            }
+            next.isLiked = localLiked
+        } else {
+            next.isLiked = serverLiked
+        }
+
+        if (localCollected !== undefined) {
+            if (localCollected !== serverCollected) {
+                const delta = localCollected ? 1 : -1
+                next.collectCount = Math.max(0, (next.collectCount || 0) + delta)
+            }
+            next.isCollected = localCollected
+        } else {
+            next.isCollected = serverCollected
+        }
+
+        return next
+    }
+
+    function applyLocalInteractionToList(records = []) {
+        return records.map((item) => applyLocalInteraction(item))
+    }
+
     /**
      * 获取文章列表（带缓存）
      */
@@ -58,11 +103,14 @@ export const useArticleStore = defineStore('article', () => {
         // 从服务器获取
         const response = await getArticleList(params)
         const data = response.data
+        const mergedData = data && Array.isArray(data.records)
+            ? { ...data, records: applyLocalInteractionToList(data.records) }
+            : data
 
         // 缓存数据
-        listCacheManager.set(params, data)
+        listCacheManager.set(params, mergedData)
 
-        return data
+        return mergedData
     }
 
     /**
@@ -80,11 +128,12 @@ export const useArticleStore = defineStore('article', () => {
         // 从服务器获取
         const response = await getArticleDetail(articleId)
         const data = response.data
+        const mergedData = applyLocalInteraction(data)
 
         // 缓存数据
-        detailCacheManager.set(articleId, data)
+        detailCacheManager.set(articleId, mergedData)
 
-        return data
+        return mergedData
     }
 
     /**
@@ -100,9 +149,10 @@ export const useArticleStore = defineStore('article', () => {
 
         const response = await getHotArticles(limit)
         const data = response.data || []
-        hotArticlesCacheManager.set(cacheKey, data)
+        const mergedData = applyLocalInteractionToList(data)
+        hotArticlesCacheManager.set(cacheKey, mergedData)
 
-        return data
+        return mergedData
     }
 
     /**
@@ -118,9 +168,10 @@ export const useArticleStore = defineStore('article', () => {
 
         const response = await getRecommendArticles(limit)
         const data = response.data || []
-        recommendArticlesCacheManager.set(cacheKey, data)
+        const mergedData = applyLocalInteractionToList(data)
+        recommendArticlesCacheManager.set(cacheKey, mergedData)
 
-        return data
+        return mergedData
     }
 
     /**

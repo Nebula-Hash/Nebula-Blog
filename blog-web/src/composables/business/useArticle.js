@@ -4,9 +4,10 @@
  */
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArticleQueryService } from '@/services/articleService'
+import { ArticleQueryService, ArticleInteractionService } from '@/services/articleService'
 import { showWarning } from '@/utils/common'
 import { createErrorHandler } from '@/utils/errorHandler'
+import { useArticleStore } from '@/stores'
 
 /**
  * 文章列表管理
@@ -192,24 +193,113 @@ export function useRecommendArticles(options = {}) {
  * 文章交互操作（点赞、收藏）- 已禁用，需要登录功能
  * @returns {Object}
  */
-export function useArticleInteraction() {
+export function useArticleInteraction(options = {}) {
+    const {
+        checkAuth = null,
+        onAuthFail = null
+    } = options
+
     const liking = ref(false)
     const collecting = ref(false)
+    const errorHandler = createErrorHandler('ArticleInteraction')
+    const articleStore = useArticleStore()
 
-    /**
-     * 点赞文章 - 已禁用
-     */
-    const toggleLike = async (articleId, articleRef = null) => {
-        showWarning('点赞功能需要登录，请前往权限测试项目体验')
+    const resolveAuth = () => {
+        if (typeof checkAuth === 'function') {
+            return !!checkAuth()
+        }
         return false
     }
 
+    const handleAuthFail = () => {
+        if (typeof onAuthFail === 'function') {
+            onAuthFail()
+            return
+        }
+        showWarning('操作需要登录，请先登录')
+    }
+
+    const updateArticleRef = (articleRef, updater) => {
+        if (!articleRef || typeof updater !== 'function') return
+
+        if (Object.prototype.hasOwnProperty.call(articleRef, 'value')) {
+            const current = articleRef.value || {}
+            articleRef.value = updater(current)
+            return
+        }
+
+        const next = updater(articleRef)
+        Object.assign(articleRef, next)
+    }
+
     /**
-     * 收藏文章 - 已禁用
+     * 点赞文章
+     */
+    const toggleLike = async (articleId, articleRef = null) => {
+        if (!resolveAuth()) {
+            handleAuthFail()
+            return false
+        }
+
+        const currentState = !!(articleRef?.value?.isLiked ?? articleRef?.isLiked ?? articleStore.isArticleLiked(articleId))
+        const nextState = !currentState
+
+        liking.value = true
+        updateArticleRef(articleRef, (article) => ({
+            ...article,
+            isLiked: nextState,
+            likeCount: Math.max(0, (article.likeCount || 0) + (nextState ? 1 : -1))
+        }))
+
+        try {
+            await ArticleInteractionService.like(articleId)
+            return true
+        } catch (error) {
+            updateArticleRef(articleRef, (article) => ({
+                ...article,
+                isLiked: currentState,
+                likeCount: Math.max(0, (article.likeCount || 0) + (currentState ? 1 : -1))
+            }))
+            errorHandler.handle(error, '点赞')
+            return false
+        } finally {
+            liking.value = false
+        }
+    }
+
+    /**
+     * 收藏文章
      */
     const toggleCollect = async (articleId, articleRef = null) => {
-        showWarning('收藏功能需要登录，请前往权限测试项目体验')
-        return false
+        if (!resolveAuth()) {
+            handleAuthFail()
+            return false
+        }
+
+        const currentState = !!(articleRef?.value?.isCollected ?? articleRef?.isCollected ?? articleStore.isArticleFavorited(articleId))
+        const nextState = !currentState
+
+        collecting.value = true
+        updateArticleRef(articleRef, (article) => ({
+            ...article,
+            isCollected: nextState,
+            collectCount: Math.max(0, (article.collectCount || 0) + (nextState ? 1 : -1))
+        }))
+
+        try {
+            await ArticleInteractionService.collect(articleId)
+            return true
+        } catch (error) {
+            updateArticleRef(articleRef, (article) => ({
+                ...article,
+                isCollected: currentState,
+                collectCount: Math.max(0, (article.collectCount || 0) + (currentState ? 1 : -1))
+            }))
+            errorHandler.handle(error, '收藏')
+            return false
+        } finally {
+            collecting.value = false
+        }
     }
 
     return {
