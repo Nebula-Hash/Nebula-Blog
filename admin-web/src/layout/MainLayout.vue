@@ -1,15 +1,7 @@
 <template>
   <n-layout has-sider style="height: 100vh">
-    <n-layout-sider
-      bordered
-      collapse-mode="width"
-      :collapsed-width="64"
-      :width="240"
-      :collapsed="collapsed"
-      show-trigger
-      @collapse="collapsed = true"
-      @expand="collapsed = false"
-    >
+    <n-layout-sider bordered collapse-mode="width" :collapsed-width="64" :width="240" :collapsed="collapsed"
+      show-trigger @collapse="collapsed = true" @expand="collapsed = false">
       <div class="logo-container">
         <n-icon v-if="collapsed" :component="RocketOutline" size="28" color="#18A058" />
         <template v-else>
@@ -18,18 +10,13 @@
         </template>
       </div>
 
-      <n-menu
-        v-model:value="activeKey"
-        :collapsed="collapsed"
-        :collapsed-width="64"
-        :collapsed-icon-size="22"
-        :options="menuOptions"
-        @update:value="handleMenuSelect"
-      />
+      <n-menu v-model:value="activeKey" :collapsed="collapsed" :collapsed-width="64" :collapsed-icon-size="22"
+        :options="menuOptions" @update:value="handleMenuSelect" />
     </n-layout-sider>
 
     <n-layout>
-      <n-layout-header bordered style="height: 60px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between;">
+      <n-layout-header bordered
+        style="height: 60px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between;">
         <n-breadcrumb>
           <n-breadcrumb-item v-for="item in breadcrumbs" :key="item.name">
             {{ item.title }}
@@ -60,6 +47,7 @@ import { NIcon } from 'naive-ui'
 import {
   RocketOutline,
   DocumentTextOutline,
+  FolderOutline,
   PricetagsOutline,
   PeopleOutline,
   ImagesOutline,
@@ -95,7 +83,7 @@ const menuOptions = [
   {
     label: '分类管理',
     key: '/categories',
-    icon: renderIcon(PricetagsOutline)
+    icon: renderIcon(FolderOutline)
   },
   {
     label: '标签管理',
