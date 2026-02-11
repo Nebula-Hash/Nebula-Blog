@@ -27,8 +27,9 @@ lerna-debug.log*
 .env.production.local
 
 # Local configuration files with secrets
-**/application-secret.properties
 **/application-prod.properties
+**/application-secret-dev.properties
+**/application-secret-prod.properties
 
 # Java / Maven / Spring Boot
 target/
