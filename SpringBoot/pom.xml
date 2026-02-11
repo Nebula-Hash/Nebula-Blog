@@ -45,7 +45,7 @@
         <druid.version>1.2.23</druid.version>
 
         <!-- 对象存储 -->
-        <minio.version>8.5.7</minio.version>
+        <minio.version>8.6.0</minio.version>
         <aliyun-oss.version>3.18.4</aliyun-oss.version>
 
         <!-- 文档 -->
@@ -54,8 +54,8 @@
         <!-- 开发工具 -->
         <lombok.version>1.18.42</lombok.version>
         <hutool.version>5.8.25</hutool.version>
-        <commons-lang3.version>3.14.0</commons-lang3.version>
-<!--        <jackson.version>2.15.2</jackson.version>-->
+        <commons-lang3.version>3.18.0</commons-lang3.version>
+        <!--        <jackson.version>2.15.2</jackson.version>-->
 
         <!-- Markdown 解析 -->
         <commonmark.version>0.21.0</commonmark.version>
@@ -157,11 +157,11 @@
             </dependency>
 
             <!-- Jackson -->
-<!--            <dependency>-->
-<!--                <groupId>com.fasterxml.jackson.core</groupId>-->
-<!--                <artifactId>jackson-databind</artifactId>-->
-<!--                <version>${jackson.version}</version>-->
-<!--            </dependency>-->
+            <!--            <dependency>-->
+            <!--                <groupId>com.fasterxml.jackson.core</groupId>-->
+            <!--                <artifactId>jackson-databind</artifactId>-->
+            <!--                <version>${jackson.version}</version>-->
+            <!--            </dependency>-->
 
             <!-- Apache Commons -->
             <dependency>
