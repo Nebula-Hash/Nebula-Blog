@@ -58,12 +58,6 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- MinIO -->
-		<dependency>
-			<groupId>io.minio</groupId>
-			<artifactId>minio</artifactId>
-		</dependency>
-
 		<!-- 阿里云 OSS -->
 		<dependency>
 			<groupId>com.aliyun.oss</groupId>

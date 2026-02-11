@@ -20,7 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FileUploadUtil {
 
-    private final UploadStrategyFactory uploadStrategyFactory;
+    private final OssUploadService ossUploadService;
 
     /**
      * 临时文件路径前缀
@@ -35,7 +35,7 @@ public class FileUploadUtil {
      * @return 文件访问URL
      */
     public String upload(MultipartFile file, String path) {
-        return uploadStrategyFactory.getStrategy().uploadFile(file, path);
+        return ossUploadService.uploadFile(file, path);
     }
 
     /**
@@ -80,7 +80,7 @@ public class FileUploadUtil {
      * @param fileUrl 文件访问URL
      */
     public void delete(String fileUrl) {
-        uploadStrategyFactory.getStrategy().deleteFile(fileUrl);
+        ossUploadService.deleteFile(fileUrl);
     }
 
     /**
@@ -91,7 +91,7 @@ public class FileUploadUtil {
      * @return 移动后的文件URL
      */
     public String move(String sourceUrl, String targetPath) {
-        return uploadStrategyFactory.getStrategy().moveFile(sourceUrl, targetPath);
+        return ossUploadService.moveFile(sourceUrl, targetPath);
     }
 
     /**
@@ -141,8 +141,8 @@ public class FileUploadUtil {
      *
      * @return 文件信息列表
      */
-    public List<UploadStrategy.FileInfo> listTempFiles() {
-        return uploadStrategyFactory.getStrategy().listFiles(TEMP_PREFIX);
+    public List<OssUploadService.FileInfo> listTempFiles() {
+        return ossUploadService.listFiles(TEMP_PREFIX);
     }
 
     /**
@@ -152,11 +152,11 @@ public class FileUploadUtil {
      * @return 清理的文件数量
      */
     public int cleanExpiredTempFiles(int expiredHours) {
-        List<UploadStrategy.FileInfo> tempFiles = listTempFiles();
+        List<OssUploadService.FileInfo> tempFiles = listTempFiles();
         LocalDateTime expiredTime = LocalDateTime.now().minusHours(expiredHours);
         int count = 0;
 
-        for (UploadStrategy.FileInfo fileInfo : tempFiles) {
+        for (OssUploadService.FileInfo fileInfo : tempFiles) {
             if (fileInfo.lastModified().isBefore(expiredTime)) {
                 try {
                     delete(fileInfo.url());

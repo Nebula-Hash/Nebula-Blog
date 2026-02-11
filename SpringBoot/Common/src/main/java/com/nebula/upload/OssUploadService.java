@@ -1,17 +1,18 @@
-package com.nebula.upload.impl;
+package com.nebula.upload;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
+import com.aliyun.oss.OSS;
+import com.aliyun.oss.model.ListObjectsRequest;
+import com.aliyun.oss.model.OSSObjectSummary;
+import com.aliyun.oss.model.ObjectListing;
+import com.aliyun.oss.model.PutObjectRequest;
 import com.nebula.exception.BusinessException;
 import com.nebula.properties.UploadProperties;
 import com.nebula.utils.WebPImageConversion;
-import com.nebula.upload.UploadStrategy;
-import io.minio.*;
-import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,22 +23,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * MinIO上传策略实现
+ * 阿里云OSS上传服务
  *
  * @author Nebula-Hash
  * @date 2026/1/22
  */
 @Slf4j
-@Service("minioUploadStrategy")
+@Service
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "upload.mode", havingValue = "minio")
-public class MinioUploadStrategyImpl implements UploadStrategy {
+public class OssUploadService {
 
-    private final MinioClient minioClient;
+    private final OSS ossClient;
     private final UploadProperties uploadProperties;
     private final WebPImageConversion imageConversionService;
 
-    @Override
+    /**
+     * 上传文件
+     *
+     * @param file 文件
+     * @param path 路径
+     * @return 文件访问地址
+     */
     public String uploadFile(MultipartFile file, String path) {
         try {
             // 判断是否需要转换为WebP
@@ -46,7 +52,6 @@ public class MinioUploadStrategyImpl implements UploadStrategy {
             String suffix;
             InputStream inputStream;
             long fileSize;
-            String contentType;
 
             if (shouldConvert) {
                 // 转换为WebP
@@ -58,38 +63,33 @@ public class MinioUploadStrategyImpl implements UploadStrategy {
                     inputStream = webpStream;
                     suffix = imageConversionService.getWebPExtension();
                     fileSize = imageConversionService.estimateWebPSize(file.getSize());
-                    contentType = "image/webp";
                 } else {
                     // 转换失败，使用原图
                     log.warn("WebP转换失败，保留原图格式: {}", file.getOriginalFilename());
                     suffix = getFileSuffix(file.getOriginalFilename());
                     inputStream = file.getInputStream();
                     fileSize = file.getSize();
-                    contentType = file.getContentType();
                 }
             } else {
                 // 保持原格式
                 suffix = getFileSuffix(file.getOriginalFilename());
                 inputStream = file.getInputStream();
                 fileSize = file.getSize();
-                contentType = file.getContentType();
             }
 
             // 生成新文件名：日期/UUID.后缀
-            String fileName = DateUtil.today() + "/" + IdUtil.fastSimpleUUID() + suffix;
+            String fileName = DateUtil.today() + IdUtil.fastSimpleUUID() + suffix;
             // 拼接完整路径
             String objectName = path + "/" + fileName;
 
             // 上传文件
             try {
-                minioClient.putObject(
-                        PutObjectArgs.builder()
-                                .bucket(uploadProperties.getMinio().getBucketName())
-                                .object(objectName)
-                                .stream(inputStream, fileSize, -1)
-                                .contentType(contentType)
-                                .build()
+                PutObjectRequest putObjectRequest = new PutObjectRequest(
+                        uploadProperties.getOss().getBucketName(),
+                        objectName,
+                        inputStream
                 );
+                ossClient.putObject(putObjectRequest);
                 
                 log.info("文件上传成功: {} -> {}, 大小: {}KB", 
                     file.getOriginalFilename(), objectName, fileSize / 1024);
@@ -97,40 +97,43 @@ public class MinioUploadStrategyImpl implements UploadStrategy {
                 inputStream.close();
             }
 
-            // 返回文件访问路径
-            return uploadProperties.getMinio().getEndpoint() + "/" +
-                    uploadProperties.getMinio().getBucketName() + "/" + objectName;
+            // 返回文件访问路径（使用自定义域名）
+            return "https://" + uploadProperties.getOss().getCustomDomain() + "/" + objectName;
 
         } catch (Exception e) {
-            log.error("MinIO文件上传失败：{}", e.getMessage(), e);
+            log.error("OSS文件上传失败：{}", e.getMessage(), e);
             throw new BusinessException("文件上传失败");
         }
     }
 
-    @Override
+    /**
+     * 删除文件
+     *
+     * @param fileUrl 文件地址
+     */
     public void deleteFile(String fileUrl) {
         try {
-            String bucketName = uploadProperties.getMinio().getBucketName();
+            String bucketName = uploadProperties.getOss().getBucketName();
             String objectName = extractObjectName(fileUrl);
-
-            minioClient.removeObject(
-                    RemoveObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(objectName)
-                            .build()
-            );
+            ossClient.deleteObject(bucketName, objectName);
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
-            log.error("MinIO文件删除失败：{}", e.getMessage(), e);
+            log.error("OSS文件删除失败：{}", e.getMessage(), e);
             throw new BusinessException("文件删除失败");
         }
     }
 
-    @Override
+    /**
+     * 移动文件
+     *
+     * @param sourceUrl  源文件URL
+     * @param targetPath 目标路径（不含文件名）
+     * @return 移动后的文件访问URL
+     */
     public String moveFile(String sourceUrl, String targetPath) {
         try {
-            String bucketName = uploadProperties.getMinio().getBucketName();
+            String bucketName = uploadProperties.getOss().getBucketName();
             String sourceObjectName = extractObjectName(sourceUrl);
 
             // 提取文件名
@@ -138,60 +141,50 @@ public class MinioUploadStrategyImpl implements UploadStrategy {
             String targetObjectName = targetPath + "/" + fileName;
 
             // 复制文件到新位置
-            minioClient.copyObject(
-                    CopyObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(targetObjectName)
-                            .source(CopySource.builder()
-                                    .bucket(bucketName)
-                                    .object(sourceObjectName)
-                                    .build())
-                            .build()
-            );
-
+            ossClient.copyObject(bucketName, sourceObjectName, bucketName, targetObjectName);
             // 删除原文件
-            minioClient.removeObject(
-                    RemoveObjectArgs.builder()
-                            .bucket(bucketName)
-                            .object(sourceObjectName)
-                            .build()
-            );
+            ossClient.deleteObject(bucketName, sourceObjectName);
 
             // 返回新的访问URL
-            return uploadProperties.getMinio().getEndpoint() + "/" + bucketName + "/" + targetObjectName;
+            return "https://" + uploadProperties.getOss().getCustomDomain() + "/" + targetObjectName;
         } catch (Exception e) {
-            log.error("MinIO文件移动失败：{}", e.getMessage(), e);
+            log.error("OSS文件移动失败：{}", e.getMessage(), e);
             throw new BusinessException("文件移动失败");
         }
     }
 
-    @Override
+    /**
+     * 列出指定前缀下的文件
+     *
+     * @param prefix 路径前缀
+     * @return 文件信息列表
+     */
     public List<FileInfo> listFiles(String prefix) {
         try {
-            String bucketName = uploadProperties.getMinio().getBucketName();
+            String bucketName = uploadProperties.getOss().getBucketName();
             List<FileInfo> fileInfoList = new ArrayList<>();
 
-            Iterable<Result<Item>> results = minioClient.listObjects(
-                    ListObjectsArgs.builder()
-                            .bucket(bucketName)
-                            .prefix(prefix)
-                            .recursive(true)
-                            .build()
-            );
+            ListObjectsRequest request = new ListObjectsRequest(bucketName);
+            request.setPrefix(prefix);
+            request.setMaxKeys(1000);
 
-            for (Result<Item> result : results) {
-                Item item = result.get();
-                String url = uploadProperties.getMinio().getEndpoint() + "/" + bucketName + "/" + item.objectName();
-                LocalDateTime lastModified = item.lastModified()
-                        .toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime();
-                fileInfoList.add(new FileInfo(item.objectName(), url, lastModified));
-            }
+            ObjectListing listing;
+            do {
+                listing = ossClient.listObjects(request);
+                for (OSSObjectSummary summary : listing.getObjectSummaries()) {
+                    String url = "https://" + uploadProperties.getOss().getCustomDomain() + "/" + summary.getKey();
+                    LocalDateTime lastModified = summary.getLastModified()
+                            .toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime();
+                    fileInfoList.add(new FileInfo(summary.getKey(), url, lastModified));
+                }
+                request.setMarker(listing.getNextMarker());
+            } while (listing.isTruncated());
 
             return fileInfoList;
         } catch (Exception e) {
-            log.error("MinIO文件列表获取失败：{}", e.getMessage(), e);
+            log.error("OSS文件列表获取失败：{}", e.getMessage(), e);
             throw new BusinessException("获取文件列表失败");
         }
     }
@@ -200,12 +193,12 @@ public class MinioUploadStrategyImpl implements UploadStrategy {
      * 从URL中提取对象名称
      */
     private String extractObjectName(String fileUrl) {
-        String bucketName = uploadProperties.getMinio().getBucketName();
-        int bucketIndex = fileUrl.indexOf(bucketName);
-        if (bucketIndex == -1) {
+        String host = uploadProperties.getOss().getCustomDomain();
+        int hostIndex = fileUrl.indexOf(host);
+        if (hostIndex == -1) {
             throw new BusinessException("无效的文件URL");
         }
-        return fileUrl.substring(bucketIndex + bucketName.length() + 1);
+        return fileUrl.substring(hostIndex + host.length() + 1);
     }
 
     /**
@@ -224,4 +217,9 @@ public class MinioUploadStrategyImpl implements UploadStrategy {
         }
         return "";
     }
+
+    /**
+     * 文件信息
+     */
+    public record FileInfo(String objectName, String url, LocalDateTime lastModified) {}
 }

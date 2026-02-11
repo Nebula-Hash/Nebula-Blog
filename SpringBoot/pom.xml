@@ -45,7 +45,6 @@
         <druid.version>1.2.23</druid.version>
 
         <!-- 对象存储 -->
-        <minio.version>8.6.0</minio.version>
         <aliyun-oss.version>3.18.4</aliyun-oss.version>
 
         <!-- 文档 -->
@@ -121,13 +120,6 @@
                 <groupId>cn.dev33</groupId>
                 <artifactId>sa-token-redis-jackson</artifactId>
                 <version>${satoken.version}</version>
-            </dependency>
-
-            <!-- MinIO -->
-            <dependency>
-                <groupId>io.minio</groupId>
-                <artifactId>minio</artifactId>
-                <version>${minio.version}</version>
             </dependency>
 
             <!-- 阿里云 OSS -->

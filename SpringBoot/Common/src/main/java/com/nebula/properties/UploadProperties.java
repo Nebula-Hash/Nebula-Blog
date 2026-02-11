@@ -16,42 +16,9 @@ import org.springframework.context.annotation.Configuration;
 public class UploadProperties {
 
     /**
-     * 上传模式：minio 或 oss
-     */
-    private String mode = "oss"; // 默认值
-
-    /**
-     * MinIO配置
-     */
-    private MinioConfig minio = new MinioConfig();
-
-    /**
      * OSS配置
      */
     private OssConfig oss = new OssConfig();
-
-    @Data
-    public static class MinioConfig {
-        /**
-         * 端点
-         */
-        private String endpoint;
-
-        /**
-         * 访问密钥
-         */
-        private String accessKey;
-
-        /**
-         * 密钥
-         */
-        private String secretKey;
-
-        /**
-         * 存储桶名称
-         */
-        private String bucketName;
-    }
 
     @Data
     public static class OssConfig {
