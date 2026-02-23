@@ -2,7 +2,6 @@ package com.nebula.properties;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * 文件上传配置属性
@@ -11,7 +10,6 @@ import org.springframework.context.annotation.Configuration;
  * @date 2026/1/22
  */
 @Data
-@Configuration
 @ConfigurationProperties(prefix = "upload")
 public class UploadProperties {
 

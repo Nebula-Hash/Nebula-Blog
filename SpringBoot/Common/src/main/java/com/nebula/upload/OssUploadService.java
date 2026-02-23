@@ -13,9 +13,9 @@ import com.nebula.properties.UploadProperties;
 import com.nebula.utils.WebPImageConversion;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -29,7 +29,6 @@ import java.util.List;
  * @date 2026/1/22
  */
 @Slf4j
-@Service
 @RequiredArgsConstructor
 public class OssUploadService {
 
@@ -56,13 +55,13 @@ public class OssUploadService {
             if (shouldConvert) {
                 // 转换为WebP
                 log.info("转换图片为WebP格式: {}", file.getOriginalFilename());
-                InputStream webpStream = imageConversionService.convertToWebPStream(file);
+                byte[] webpBytes = imageConversionService.convertToWebP(file);
                 
-                if (webpStream != null) {
+                if (webpBytes != null) {
                     // 转换成功，使用WebP
-                    inputStream = webpStream;
+                    inputStream = new ByteArrayInputStream(webpBytes);
                     suffix = imageConversionService.getWebPExtension();
-                    fileSize = imageConversionService.estimateWebPSize(file.getSize());
+                    fileSize = webpBytes.length;
                 } else {
                     // 转换失败，使用原图
                     log.warn("WebP转换失败，保留原图格式: {}", file.getOriginalFilename());
@@ -190,9 +189,12 @@ public class OssUploadService {
     }
 
     /**
-     * 从URL中提取对象名称
+     * 从URL中提取OSS对象名称（即域名之后的路径部分）
+     *
+     * @param fileUrl 文件访问URL
+     * @return OSS对象名称
      */
-    private String extractObjectName(String fileUrl) {
+    public String extractObjectName(String fileUrl) {
         String host = uploadProperties.getOss().getCustomDomain();
         int hostIndex = fileUrl.indexOf(host);
         if (hostIndex == -1) {

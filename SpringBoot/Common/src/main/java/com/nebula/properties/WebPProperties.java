@@ -1,7 +1,7 @@
-package com.nebula.config;
+package com.nebula.properties;
 
 import lombok.Data;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * WebP图像优化配置
@@ -9,8 +9,8 @@ import org.springframework.context.annotation.Configuration;
  * @date 2026/02/02
  */
 @Data
-@Configuration
-public class WebPConfig {
+@ConfigurationProperties(prefix = "upload.webp")
+public class WebPProperties {
 
     /**
      * 是否启用WebP自动转换

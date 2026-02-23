@@ -1,11 +1,10 @@
 package com.nebula.utils;
 
-import com.nebula.config.WebPConfig;
+import com.nebula.properties.WebPProperties;
 import com.nebula.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
-import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.IIOImage;
@@ -28,11 +27,10 @@ import java.util.Iterator;
  * @date 2026/02/02
  */
 @Slf4j
-@Service
 @RequiredArgsConstructor
 public class WebPImageConversion {
 
-    private final WebPConfig webPConfig;
+    private final WebPProperties webPProperties;
 
     /**
      * 将图片转换为WebP格式
@@ -41,7 +39,7 @@ public class WebPImageConversion {
      * @return WebP格式的字节数组，转换失败返回null
      */
     public byte[] convertToWebP(MultipartFile file) {
-        if (!webPConfig.isEnabled()) {
+        if (!webPProperties.isEnabled()) {
             log.debug("WebP转换已禁用");
             return null;
         }
@@ -58,16 +56,16 @@ public class WebPImageConversion {
                 image.getWidth(), image.getHeight(), file.getContentType());
 
             // 如果图片过大，进行缩放
-            if (image.getWidth() > webPConfig.getMaxWidth() || image.getHeight() > webPConfig.getMaxHeight()) {
+            if (image.getWidth() > webPProperties.getMaxWidth() || image.getHeight() > webPProperties.getMaxHeight()) {
                 log.info("图片尺寸超过限制，进行缩放: {}x{} -> 最大{}x{}",
-                        image.getWidth(), image.getHeight(), webPConfig.getMaxWidth(), webPConfig.getMaxHeight());
+                        image.getWidth(), image.getHeight(), webPProperties.getMaxWidth(), webPProperties.getMaxHeight());
                 image = resizeImage(image);
             }
 
             // 转换为WebP
             byte[] webpBytes = encodeToWebP(image);
 
-            if (webPConfig.isEnableStats()) {
+            if (webPProperties.isEnableStats()) {
                 double compressionRatio = (1 - (double) webpBytes.length / file.getSize()) * 100;
                 log.info("✓ WebP转换成功: {} | 原始: {}KB -> WebP: {}KB | 压缩率: {:.1f}%",
                         file.getOriginalFilename(),
@@ -83,7 +81,7 @@ public class WebPImageConversion {
             log.error("WebP转换失败: {}, 错误: {}", file.getOriginalFilename(), e.getMessage());
             
             // 根据配置的失败策略处理
-            if (webPConfig.getFailureStrategy() == WebPConfig.FailureStrategy.THROW_EXCEPTION) {
+            if (webPProperties.getFailureStrategy() == WebPProperties.FailureStrategy.THROW_EXCEPTION) {
                 throw new BusinessException("图片转换失败: " + e.getMessage());
             }
             
@@ -118,8 +116,8 @@ public class WebPImageConversion {
 
         // 计算缩放比例（保持宽高比）
         double scale = Math.min(
-                (double) webPConfig.getMaxWidth() / width,
-                (double) webPConfig.getMaxHeight() / height
+                (double) webPProperties.getMaxWidth() / width,
+                (double) webPProperties.getMaxHeight() / height
         );
 
         int newWidth = (int) (width * scale);
@@ -181,8 +179,8 @@ public class WebPImageConversion {
                 }
                 
                 // 设置压缩质量
-                writeParam.setCompressionQuality(webPConfig.getQuality());
-                log.debug("WebP压缩质量: {}", webPConfig.getQuality());
+                writeParam.setCompressionQuality(webPProperties.getQuality());
+                log.debug("WebP压缩质量: {}", webPProperties.getQuality());
             } else {
                 log.warn("WebP编码器不支持压缩参数设置");
             }
@@ -227,7 +225,7 @@ public class WebPImageConversion {
      * @return 是否应该转换
      */
     public boolean shouldConvertToWebP(MultipartFile file) {
-        return webPConfig.isEnabled() && isImage(file) && !isWebP(file);
+        return webPProperties.isEnabled() && isImage(file) && !isWebP(file);
     }
 
     /**

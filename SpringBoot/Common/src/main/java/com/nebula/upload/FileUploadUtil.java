@@ -3,7 +3,6 @@ package com.nebula.upload;
 import com.nebula.enumeration.FileTypeEnum;
 import com.nebula.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
@@ -16,7 +15,6 @@ import java.util.List;
  * @author Nebula-Hash
  * @date 2026/1/22
  */
-@Component
 @RequiredArgsConstructor
 public class FileUploadUtil {
 
@@ -105,9 +103,12 @@ public class FileUploadUtil {
         if (!isTempFile(tempUrl)) {
             throw new BusinessException("不是临时文件");
         }
-        // 提取正式路径：将temp/前缀去掉
-        String formalPath = extractFormalPath(tempUrl);
-        return move(tempUrl, formalPath);
+        // 通过 OSS 对象名提取正式目录：去掉 temp/ 前缀和文件名
+        String objectName = ossUploadService.extractObjectName(tempUrl);
+        String formalObjectName = objectName.substring(TEMP_PREFIX.length());
+        int lastSlash = formalObjectName.lastIndexOf("/");
+        String formalDir = lastSlash > 0 ? formalObjectName.substring(0, lastSlash) : "";
+        return move(tempUrl, formalDir);
     }
 
     /**
@@ -121,9 +122,11 @@ public class FileUploadUtil {
         if (isTempFile(formalUrl)) {
             throw new BusinessException("已经是临时文件");
         }
-        // 提取路径并添加temp前缀
-        String tempPath = TEMP_PREFIX + extractPath(formalUrl);
-        return move(formalUrl, tempPath);
+        // 通过 OSS 对象名提取目录并添加 temp/ 前缀
+        String objectName = ossUploadService.extractObjectName(formalUrl);
+        int lastSlash = objectName.lastIndexOf("/");
+        String dir = lastSlash > 0 ? objectName.substring(0, lastSlash) : "";
+        return move(formalUrl, TEMP_PREFIX + dir);
     }
 
     /**
@@ -188,40 +191,4 @@ public class FileUploadUtil {
         }
     }
 
-    /**
-     * 从URL中提取文件路径（不含文件名）
-     * 例如: <a href="https://cdn.example.com/images/banners/2026-01-24xxx.jpg">...</a> -> images/banners/2026-01-24
-     */
-    private String extractPath(String fileUrl) {
-        // 查找协议后的路径部分
-        int protocolEnd = fileUrl.indexOf("://");
-        if (protocolEnd == -1) {
-            throw new BusinessException("无效的文件URL");
-        }
-        // 查找域名后的路径
-        int pathStart = fileUrl.indexOf("/", protocolEnd + 3);
-        if (pathStart == -1) {
-            throw new BusinessException("无效的文件URL");
-        }
-        String fullPath = fileUrl.substring(pathStart + 1);
-        // 去掉文件名，只保留目录
-        int lastSlash = fullPath.lastIndexOf("/");
-        if (lastSlash == -1) {
-            return "";
-        }
-        return fullPath.substring(0, lastSlash);
-    }
-
-    /**
-     * 从临时URL中提取正式路径
-     * 例如: temp/images/banners/2026-01-24 -> images/banners/2026-01-24
-     */
-    private String extractFormalPath(String tempUrl) {
-        String path = extractPath(tempUrl);
-        // 去除temp/前缀
-        if (path.startsWith(TEMP_PREFIX)) {
-            return path.substring(TEMP_PREFIX.length());
-        }
-        return path;
-    }
 }

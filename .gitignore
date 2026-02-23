@@ -6,6 +6,9 @@
 *.ipr
 .DS_Store
 
+# Agent configuration
+AGENTS.md
+
 # Node.js / Vue / Vite
 node_modules/
 dist/
