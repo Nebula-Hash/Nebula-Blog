@@ -14,6 +14,7 @@ import com.nebula.upload.FileUploadUtil;
 import com.nebula.vo.admin.BannerAdminVO;
 import com.nebula.vo.client.BannerClientVO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BlogBannerServiceImpl implements BlogBannerService {
 
     private final BlogBannerMapper bannerMapper;
@@ -159,9 +161,9 @@ public class BlogBannerServiceImpl implements BlogBannerService {
                 if (StringUtils.hasText(oldImageUrl)) {
                     try {
                         fileUploadUtil.moveToTemp(oldImageUrl);
-                    } catch (Exception e) {
-                        // 移动失败不影响更新操作
-                    }
+                } catch (Exception e) {
+                    log.warn("更新轮播图时移动旧图片到临时目录失败: url={}", oldImageUrl, e);
+                }
                 }
             }
         }
@@ -186,7 +188,7 @@ public class BlogBannerServiceImpl implements BlogBannerService {
                 fileUploadUtil.moveToTemp(banner.getImageUrl());
             }
         } catch (Exception e) {
-            // 移动文件失败不影响删除操作
+            log.warn("删除轮播图后移动图片到临时目录失败: url={}", banner.getImageUrl(), e);
         }
     }
 }

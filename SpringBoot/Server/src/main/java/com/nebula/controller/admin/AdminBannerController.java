@@ -1,12 +1,14 @@
 package com.nebula.controller.admin;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.nebula.config.UploadRateLimiter;
 import com.nebula.controller.config.AdminController;
 import com.nebula.dto.BannerDTO;
 import com.nebula.result.Result;
 import com.nebula.service.banner.BlogBannerService;
 import com.nebula.upload.FileUploadUtil;
 import com.nebula.vo.admin.BannerAdminVO;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +30,7 @@ public class AdminBannerController {
 
     private final BlogBannerService bannerService;
     private final FileUploadUtil fileUploadUtil;
+    private final UploadRateLimiter uploadRateLimiter;
 
     /**
      * 分页查询轮播图列表
@@ -70,7 +73,9 @@ public class AdminBannerController {
      * @return 临时图片的访问URL
      */
     @PostMapping("/upload")
-    public Result<String> uploadBannerImage(@RequestParam("file") MultipartFile file) {
+    public Result<String> uploadBannerImage(@RequestParam("file") MultipartFile file,
+                                            HttpServletRequest request) {
+        uploadRateLimiter.checkLimit(request.getRemoteAddr());
         // 上传到临时目录
         String tempImageUrl = fileUploadUtil.uploadImageToTemp(file, "images/banners");
         return Result.success("上传成功", tempImageUrl);

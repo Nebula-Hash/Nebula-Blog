@@ -67,11 +67,11 @@ public class WebPImageConversion {
 
             if (webPProperties.isEnableStats()) {
                 double compressionRatio = (1 - (double) webpBytes.length / file.getSize()) * 100;
-                log.info("✓ WebP转换成功: {} | 原始: {}KB -> WebP: {}KB | 压缩率: {:.1f}%",
+                log.info("✓ WebP转换成功: {} | 原始: {}KB -> WebP: {}KB | 压缩率: {}%",
                         file.getOriginalFilename(),
                         file.getSize() / 1024,
                         webpBytes.length / 1024,
-                        compressionRatio
+                        String.format("%.1f", compressionRatio)
                 );
             }
 

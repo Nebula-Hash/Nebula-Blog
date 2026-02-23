@@ -30,6 +30,7 @@ import com.nebula.service.article.helper.MarkdownHelper;
 import com.nebula.vo.ArticleListVO;
 import com.nebula.vo.ArticleVO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +48,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BlogArticleServiceImpl implements BlogArticleService {
 
     private final BlogArticleMapper articleMapper;
@@ -133,9 +135,9 @@ public class BlogArticleServiceImpl implements BlogArticleService {
                 if (org.springframework.util.StringUtils.hasText(oldCoverImage)) {
                     try {
                         fileUploadUtil.moveToTemp(oldCoverImage);
-                    } catch (Exception e) {
-                        // 移动失败不影响更新操作
-                    }
+                } catch (Exception e) {
+                    log.warn("更新文章时移动旧封面至临时目录失败: url={}", oldCoverImage, e);
+                }
                 }
             }
         }
@@ -181,7 +183,7 @@ public class BlogArticleServiceImpl implements BlogArticleService {
             try {
                 fileUploadUtil.moveToTemp(article.getCoverImage());
             } catch (Exception e) {
-                // 移动文件失败不影响删除操作
+                log.warn("删除文章后移动封面至临时目录失败: url={}", article.getCoverImage(), e);
             }
         }
 

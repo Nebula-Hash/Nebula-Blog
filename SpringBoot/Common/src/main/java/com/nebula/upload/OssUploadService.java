@@ -1,13 +1,9 @@
 package com.nebula.upload;
 
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.aliyun.oss.OSS;
-import com.aliyun.oss.model.ListObjectsRequest;
-import com.aliyun.oss.model.OSSObjectSummary;
-import com.aliyun.oss.model.ObjectListing;
-import com.aliyun.oss.model.PutObjectRequest;
+import com.aliyun.oss.model.*;
 import com.nebula.exception.BusinessException;
 import com.nebula.properties.UploadProperties;
 import com.nebula.utils.WebPImageConversion;
@@ -17,10 +13,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 阿里云OSS上传服务
@@ -35,6 +34,20 @@ public class OssUploadService {
     private final OSS ossClient;
     private final UploadProperties uploadProperties;
     private final WebPImageConversion imageConversionService;
+
+    private static final DateTimeFormatter DATE_DIR_FMT = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+
+    /**
+     * 扩展名 -> Content-Type 映射，用于服务端设置准确的 Content-Type
+     */
+    private static final Map<String, String> EXT_CONTENT_TYPE_MAP = Map.of(
+            ".jpg", "image/jpeg",
+            ".jpeg", "image/jpeg",
+            ".png", "image/png",
+            ".gif", "image/gif",
+            ".webp", "image/webp",
+            ".md", "text/markdown"
+    );
 
     /**
      * 上传文件
@@ -76,17 +89,26 @@ public class OssUploadService {
                 fileSize = file.getSize();
             }
 
-            // 生成新文件名：日期/UUID.后缀
-            String fileName = DateUtil.today() + IdUtil.fastSimpleUUID() + suffix;
+            // 生成新文件名：yyyy/MM/dd/UUID.后缀
+            String dateDir = LocalDate.now().format(DATE_DIR_FMT);
+            String fileName = IdUtil.fastSimpleUUID() + suffix;
             // 拼接完整路径
-            String objectName = path + "/" + fileName;
+            String objectName = path + "/" + dateDir + "/" + fileName;
 
             // 上传文件
             try {
+                // 构造元数据：显式指定 Content-Type 与 Content-Length，防止 OSS 猜测错误
+                ObjectMetadata metadata = new ObjectMetadata();
+                metadata.setContentLength(fileSize);
+                String resolvedContentType = EXT_CONTENT_TYPE_MAP.getOrDefault(
+                        suffix.toLowerCase(), "application/octet-stream");
+                metadata.setContentType(resolvedContentType);
+
                 PutObjectRequest putObjectRequest = new PutObjectRequest(
                         uploadProperties.getOss().getBucketName(),
                         objectName,
-                        inputStream
+                        inputStream,
+                        metadata
                 );
                 ossClient.putObject(putObjectRequest);
                 
@@ -140,9 +162,16 @@ public class OssUploadService {
             String targetObjectName = targetPath + "/" + fileName;
 
             // 复制文件到新位置
-            ossClient.copyObject(bucketName, sourceObjectName, bucketName, targetObjectName);
-            // 删除原文件
-            ossClient.deleteObject(bucketName, sourceObjectName);
+            CopyObjectResult copyResult = ossClient.copyObject(bucketName, sourceObjectName, bucketName, targetObjectName);
+            if (copyResult == null || StrUtil.isBlank(copyResult.getETag())) {
+                throw new BusinessException("文件复制到目标位置失败");
+            }
+            // 删除原文件（删除失败仅记录警告，不影响业务）
+            try {
+                ossClient.deleteObject(bucketName, sourceObjectName);
+            } catch (Exception deleteEx) {
+                log.warn("文件移动后删除源文件失败（可能产生冗余文件）: {}", sourceObjectName, deleteEx);
+            }
 
             // 返回新的访问URL
             return "https://" + uploadProperties.getOss().getCustomDomain() + "/" + targetObjectName;
@@ -195,12 +224,25 @@ public class OssUploadService {
      * @return OSS对象名称
      */
     public String extractObjectName(String fileUrl) {
+        if (StrUtil.isBlank(fileUrl)) {
+            throw new BusinessException("文件URL不能为空");
+        }
         String host = uploadProperties.getOss().getCustomDomain();
         int hostIndex = fileUrl.indexOf(host);
         if (hostIndex == -1) {
-            throw new BusinessException("无效的文件URL");
+            throw new BusinessException("无效的文件URL: 域名不匹配");
         }
-        return fileUrl.substring(hostIndex + host.length() + 1);
+        int pathStart = hostIndex + host.length() + 1; // 跳过域名后的 '/'
+        if (pathStart >= fileUrl.length()) {
+            throw new BusinessException("无效的文件URL: 缺少对象路径");
+        }
+        // 去除可能的查询参数
+        String objectName = fileUrl.substring(pathStart);
+        int queryIdx = objectName.indexOf('?');
+        if (queryIdx > 0) {
+            objectName = objectName.substring(0, queryIdx);
+        }
+        return objectName;
     }
 
     /**

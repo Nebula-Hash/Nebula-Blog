@@ -5,11 +5,13 @@ import com.nebula.constant.ArticleConstants;
 import com.nebula.constant.CommonConstants;
 import com.nebula.controller.config.AdminController;
 import com.nebula.dto.ArticleDTO;
+import com.nebula.config.UploadRateLimiter;
 import com.nebula.result.Result;
 import com.nebula.service.article.BlogArticleService;
 import com.nebula.upload.FileUploadUtil;
 import com.nebula.vo.ArticleListVO;
 import com.nebula.vo.ArticleVO;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.validation.annotation.Validated;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@ public class AdminArticleController {
 
     private final BlogArticleService articleService;
     private final FileUploadUtil fileUploadUtil;
+    private final UploadRateLimiter uploadRateLimiter;
 
     /**
      * 分页查询/搜索文章列表（包含草稿）
@@ -82,7 +85,9 @@ public class AdminArticleController {
      * @return 临时封面图的访问URL
      */
     @PostMapping("/upload/cover")
-    public Result<String> uploadCoverImage(@RequestParam("file") MultipartFile file) {
+    public Result<String> uploadCoverImage(@RequestParam("file") MultipartFile file,
+                                           HttpServletRequest request) {
+        uploadRateLimiter.checkLimit(request.getRemoteAddr());
         // 上传到临时目录
         String tempCoverUrl = fileUploadUtil.uploadImageToTemp(file, "images/articles/covers");
         return Result.success("上传成功", tempCoverUrl);

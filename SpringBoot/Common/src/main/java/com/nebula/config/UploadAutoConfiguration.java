@@ -28,7 +28,7 @@ public class UploadAutoConfiguration {
     /**
      * OSS客户端
      */
-    @Bean
+    @Bean(destroyMethod = "shutdown")
     @ConditionalOnMissingBean
     public OSS ossClient(UploadProperties uploadProperties) {
         return new OSSClientBuilder().build(
