@@ -1,0 +1,79 @@
+{
+  "properties": [
+    {
+      "name": "upload.directory.images.article-covers",
+      "type": "java.lang.String",
+      "description": "文章封面图片存储目录.",
+      "defaultValue": "images/articles/covers"
+    },
+    {
+      "name": "upload.directory.images.banners",
+      "type": "java.lang.String",
+      "description": "轮播图图片存储目录.",
+      "defaultValue": "images/banners"
+    },
+    {
+      "name": "upload.directory.images.avatars",
+      "type": "java.lang.String",
+      "description": "头像图片存储目录.",
+      "defaultValue": "images/avatars"
+    },
+    {
+      "name": "upload.webp.enabled",
+      "type": "java.lang.Boolean",
+      "description": "是否在图片上传时自动转换为 WebP.",
+      "defaultValue": true
+    },
+    {
+      "name": "upload.webp.quality",
+      "type": "java.lang.Float",
+      "description": "WebP 压缩质量（0.0-1.0）.",
+      "defaultValue": 0.85
+    },
+    {
+      "name": "upload.webp.max-width",
+      "type": "java.lang.Integer",
+      "description": "图片处理最大宽度.",
+      "defaultValue": 2048
+    },
+    {
+      "name": "upload.webp.max-height",
+      "type": "java.lang.Integer",
+      "description": "图片处理最大高度.",
+      "defaultValue": 2048
+    },
+    {
+      "name": "upload.webp.keep-original",
+      "type": "java.lang.Boolean",
+      "description": "WebP 转换成功后是否保留原图.",
+      "defaultValue": false
+    },
+    {
+      "name": "upload.webp.failure-strategy",
+      "type": "java.lang.String",
+      "description": "WebP 转换失败时的处理策略.",
+      "defaultValue": "KEEP_ORIGINAL"
+    },
+    {
+      "name": "upload.webp.enable-stats",
+      "type": "java.lang.Boolean",
+      "description": "是否记录 WebP 转换统计日志.",
+      "defaultValue": true
+    }
+  ],
+  "hints": [
+    {
+      "name": "upload.webp.failure-strategy",
+      "values": [
+        {
+          "value": "KEEP_ORIGINAL",
+          "description": "转换失败时保留原图."
+        },
+        {
+          "value": "THROW_EXCEPTION",
+          "description": "转换失败时抛出异常."
+        }
+      ]
+    }
+  ]
+}
