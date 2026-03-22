@@ -50,6 +50,7 @@ target/
 # Maven
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
+.m2/
 
 # Logs
 logs/
