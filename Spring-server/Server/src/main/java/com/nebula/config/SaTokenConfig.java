@@ -65,16 +65,10 @@ public class SaTokenConfig implements WebMvcConfigurer {
      * 其他放行 URL
      */
     private static final String[] OTHERS_EXCLUDE_PATHS = {
-            /* 自定义检测服务 */
-            "/ping", // 部署测试
-            "/health", // 健康检查
-            "/visits", // 访问统计
-
-            /* Spring Boot Actuator 监控端点 （按需启用）
-            "/actuator/**",          // 或者更精细化控制：
-            "/actuator/health",   // 健康检查（K8s/Docker常用）
-            "/actuator/info",     // 应用信息
-            */
+            /* Spring Boot Actuator 监控端点 */
+            "/actuator/health",
+            "/actuator/health/**",
+            "/actuator/info",
 
             /* 调试 */
             "/test/**", // 测试接口
