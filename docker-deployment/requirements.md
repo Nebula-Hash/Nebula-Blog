@@ -110,6 +110,7 @@
 - 使用 Spring Boot Actuator 作为唯一健康检查方案
 - 容器健康检查默认使用 `GET /actuator/health`
 - 可按需使用 `GET /actuator/health/liveness` 与 `GET /actuator/health/readiness`
+- `readiness` 应明确纳入 `db` 与 `redis`，避免只反映应用可用性状态而不反映外部依赖状态
 - 原有自定义 `/ping`、`/health` 方案不再保留
 
 ## 5. 非功能需求
@@ -193,5 +194,5 @@
 
 ## 9. 本阶段仍需补充的信息
 
-- 部署方式是“在服务器本机构建镜像”还是“本地构建后推送 / 上传镜像”
+- 首轮部署建议采用“本地构建镜像后上传 / 导入服务器”，避免在 2 核 2 GB 服务器上执行三端构建
 - `blog-server.nebula-hash.com` 是否需要对公网开放 Swagger / API 文档
