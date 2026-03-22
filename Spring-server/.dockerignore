@@ -1,0 +1,13 @@
+.git
+.gitignore
+.idea
+.vscode
+.logs
+target
+**/target
+!Server/target
+!Server/target/**
+**/*.log
+**/*.iml
+application-secret-*.properties
+Server/src/main/resources/application-secret-*.properties

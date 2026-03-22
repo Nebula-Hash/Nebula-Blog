@@ -1,0 +1,71 @@
+services:
+  backend:
+    image: ${BACKEND_IMAGE:-nebula-blog-backend:latest}
+    container_name: nebula-blog-backend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${BACKEND_HOST_PORT:-8081}:8081"
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      JAVA_OPTS: "${BACKEND_JAVA_OPTS:--XX:MaxRAMPercentage=70.0 -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai}"
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      LOGGING_FILE_PATH: /app/logs
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_DATA_REDIS_HOST: ${SPRING_DATA_REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${SPRING_DATA_REDIS_PORT}
+      SPRING_DATA_REDIS_PASSWORD: ${SPRING_DATA_REDIS_PASSWORD}
+      SPRING_DATA_REDIS_DATABASE: ${SPRING_DATA_REDIS_DATABASE}
+      UPLOAD_OSS_ENDPOINT: ${UPLOAD_OSS_ENDPOINT}
+      UPLOAD_OSS_ACCESS_KEY_ID: ${UPLOAD_OSS_ACCESS_KEY_ID}
+      UPLOAD_OSS_ACCESS_KEY_SECRET: ${UPLOAD_OSS_ACCESS_KEY_SECRET}
+      UPLOAD_OSS_BUCKET_NAME: ${UPLOAD_OSS_BUCKET_NAME}
+      UPLOAD_OSS_CUSTOM_DOMAIN: ${UPLOAD_OSS_CUSTOM_DOMAIN}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ${BACKEND_LOGS_DIR:-./volumes/backend-logs}:/app/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8081/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    networks:
+      - nebula-network
+
+  blog-web:
+    image: ${BLOG_WEB_IMAGE:-nebula-blog-web:latest}
+    container_name: nebula-blog-web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${BLOG_WEB_HOST_PORT:-3000}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - nebula-network
+
+  admin-web:
+    image: ${ADMIN_WEB_IMAGE:-nebula-blog-admin:latest}
+    container_name: nebula-blog-admin
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${ADMIN_WEB_HOST_PORT:-3001}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - nebula-network
+
+networks:
+  nebula-network:
+    name: ${COMPOSE_PROJECT_NAME:-nebula-blog}-network
+    driver: bridge

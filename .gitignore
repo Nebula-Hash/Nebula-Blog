@@ -1,15 +1,37 @@
-# IDE
-/.vscode
+# ==========================================
+# IDE & Editors
+# ==========================================
+.vscode/
 .idea/
 *.iml
 *.iws
 *.ipr
+*.swp
+*.swo
+*~
+*.bak
+*.orig
+
+# ==========================================
+# Operating System
+# ==========================================
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
 
-# Agent configuration
-AGENTS.md
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
+# Linux
+*~
+
+# ==========================================
 # Node.js / Vue / Vite
+# ==========================================
 node_modules/
 dist/
 dist-ssr/
@@ -20,21 +42,22 @@ dist-ssr/
 .yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+.cache/
 
-# Environment variables
+# ==========================================
+# Environment Variables
+# ==========================================
 .env
 .env.local
+.env.local-test
 .env.*.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# Local configuration files with secrets
-**/application-prod.properties
-**/application-secret-dev.properties
-**/application-secret-prod.properties
-
+# ==========================================
 # Java / Maven / Spring Boot
+# ==========================================
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -43,53 +66,60 @@ target/
 *.jar
 *.war
 *.ear
-*.zip
-*.tar.gz
-*.rar
 
 # Maven
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
 .m2/
 
+# Spring Boot
+**/application-prod.properties
+**/application-secret-dev.properties
+**/application-secret-prod.properties
+
+# ==========================================
 # Logs
+# ==========================================
 logs/
 *.log
 .logs/
 SpringBoot/.logs/
 
-# Temporary files
+# ==========================================
+# Temporary Files
+# ==========================================
 *.tmp
 *.temp
-*.swp
-*.swo
-*~
 .cache/
 
-# OS
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# Build artifacts
+# ==========================================
+# Build Artifacts
+# ==========================================
 build/
 out/
 
-# Package files
+# ==========================================
+# Compressed Files
+# ==========================================
 *.7z
 *.dmg
 *.gz
 *.iso
 *.rar
 *.tar
+*.tar.gz
 *.zip
 
-# Test coverage
+# ==========================================
+# Test Coverage
+# ==========================================
 coverage/
 *.lcov
 .nyc_output/
+.coverage
 
-# Editor backup files
-*~
-*.bak
-*.orig
+# ==========================================
+# Project Specific
+# ==========================================
+# Agent configuration
+AGENTS.md

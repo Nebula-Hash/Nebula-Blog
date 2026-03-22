@@ -1,0 +1,63 @@
+# Java / Maven / Spring Boot
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+.m2/
+
+# Package files
+*.7z
+*.dmg
+*.gz
+*.iso
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.DS_Store
+
+# Local configuration files with secrets
+**/application-prod.properties
+**/application-secret-dev.properties
+**/application-secret-prod.properties
+
+# Logs
+logs/
+*.log
+.logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.cache/
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Build artifacts
+build/
+out/
+
+# Editor backup files
+*~
+*.bak
+*.orig

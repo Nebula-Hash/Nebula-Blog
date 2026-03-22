@@ -1,0 +1,30 @@
+# ==========================================
+# Admin Web - Project Specific Ignores
+# ==========================================
+# Most common ignores are in root .gitignore
+# Only add admin-web specific overrides here
+
+# Local development overrides
+.env.development.local
+.env.production.local
+
+# Build output
+dist/
+dist-ssr/
+
+# Dependencies
+node_modules/
+
+# IDE (project-specific settings)
+.vscode/settings.json
+.vscode/launch.json
+
+# Logs
+logs/
+*.log
+
+# Test coverage
+coverage/
+
+# Temporary files
+.cache/
