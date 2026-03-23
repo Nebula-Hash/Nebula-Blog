@@ -260,7 +260,7 @@ npm install
 npm run dev
 ```
 
-博客前台将在 `http://localhost:5173` 启动
+博客前台将在 `http://localhost:3000` 启动
 
 #### 6. 启动管理后台
 
@@ -270,7 +270,7 @@ npm install
 npm run dev
 ```
 
-管理后台将在 `http://localhost:5174` 启动
+管理后台将在 `http://localhost:3001` 启动
 
 ### 默认账号
 

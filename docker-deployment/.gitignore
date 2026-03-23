@@ -3,6 +3,7 @@
 .env.local
 .env.local-test
 .env.*.local
+.env.production
 
 # Docker volumes data
 volumes/
