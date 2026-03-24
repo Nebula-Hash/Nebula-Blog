@@ -4,6 +4,7 @@
 .env.local-test
 .env.*.local
 .env.production
+init-info/
 
 # Docker volumes data
 volumes/
@@ -27,3 +28,6 @@ Desktop.ini
 *~
 *.bak
 *.orig
+
+# md
+guidance-md/
