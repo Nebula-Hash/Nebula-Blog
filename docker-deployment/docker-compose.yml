@@ -2,14 +2,14 @@ services:
   backend:
     image: ${BACKEND_IMAGE:-nebula-blog-backend:latest}
     container_name: nebula-blog-backend
-    restart: unless-stopped
+    restart: on-failure:1
     ports:
       - "127.0.0.1:${BACKEND_HOST_PORT:-8081}:8081"
     environment:
       TZ: ${TZ:-Asia/Shanghai}
       JAVA_OPTS: "${BACKEND_JAVA_OPTS:--XX:MaxRAMPercentage=70.0 -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai}"
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
-      LOGGING_FILE_PATH: /app/logs
+      LOGGING_FILE_PATH: ${LOGGING_FILE_PATH:-/app/logs}
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
@@ -38,7 +38,7 @@ services:
   blog-web:
     image: ${BLOG_WEB_IMAGE:-nebula-blog-web:latest}
     container_name: nebula-blog-web
-    restart: unless-stopped
+    restart: on-failure:1
     ports:
       - "127.0.0.1:${BLOG_WEB_HOST_PORT:-3000}:80"
     healthcheck:
@@ -53,7 +53,7 @@ services:
   admin-web:
     image: ${ADMIN_WEB_IMAGE:-nebula-blog-admin:latest}
     container_name: nebula-blog-admin
-    restart: unless-stopped
+    restart: on-failure:1
     ports:
       - "127.0.0.1:${ADMIN_WEB_HOST_PORT:-3001}:80"
     healthcheck:
