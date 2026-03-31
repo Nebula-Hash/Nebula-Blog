@@ -122,9 +122,9 @@ coverage/
 # Project Specific
 # ==========================================
 # Agent configuration
-AGENTS.md
+.AGENT/
 
 # ==========================================
 # Resources
 # ==========================================
-resources/
+.RESOURCES/
