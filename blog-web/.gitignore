@@ -28,6 +28,3 @@ coverage/
 
 # Temporary files
 .cache/
-
-# Test
-.TEST/

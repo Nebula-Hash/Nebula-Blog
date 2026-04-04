@@ -1,12 +1,29 @@
-FROM mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm
+FROM mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm AS build
 WORKDIR /app
 
-COPY dist /app/dist
-COPY docker-server.mjs /app/docker-server.mjs
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY .env.production ./
+COPY index.html vite.config.js ./
+COPY public ./public
+COPY src ./src
+
+RUN npm run build
+
+FROM mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends nginx \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -f /etc/nginx/sites-enabled/default
+
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+  CMD wget -q -O /dev/null http://127.0.0.1/healthz || exit 1
 
-CMD ["node", "/app/docker-server.mjs"]
+CMD ["nginx", "-g", "daemon off;"]

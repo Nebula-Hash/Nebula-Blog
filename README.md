@@ -327,6 +327,7 @@ docker-compose logs -f
 
 # 查看特定服务日志
 docker-compose logs -f backend
+docker-compose logs -f frontend-gateway
 docker-compose logs -f blog-web
 docker-compose logs -f admin-web
 ```
