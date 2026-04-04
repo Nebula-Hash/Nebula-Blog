@@ -1,9 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm
-
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends nginx \
-  && rm -rf /var/lib/apt/lists/* \
-  && rm -f /etc/nginx/sites-enabled/default
+FROM nginx:1.27-alpine
 
 COPY gateway/nginx.conf /etc/nginx/nginx.conf
 
